@@ -65,3 +65,19 @@ Die WPF-Anwendung wird für `win-x64` gebaut, verlangt keine Administratorrechte
 Für SQLite wird `Microsoft.Data.Sqlite` 8.0.29 (MIT) mit dem gebündelten lokalen e_sqlite3 verwendet. Das Paket ist klein, ADO.NET-nah und unterstützt die benötigten Transaktionen, FTS5 und asynchronen Aufrufe. SQLitePCLRaw 2.1.6 wird transitiv unter Apache-2.0 eingebunden.
 
 Das Schema wird durch eigene, fortlaufend versionierte SQL-Migrationen verwaltet. Ein vollständiges ORM wurde verworfen: Das normalisierte Schema, FTS5, atomare Massensynchronisierung und die bewusste Erhaltung von Analysetabellen sind mit explizitem SQL transparenter und vermeiden eine zusätzliche produktive Abhängigkeit. Jede Migration und jede Aggregatspeicherung läuft in einer Transaktion; neuere unbekannte Schema-Versionen werden schreibgeschützt abgelehnt.
+
+## ADR-010: Archivimport über Staging und harte Ressourcenlimits
+
+**Status:** angenommen am 19.07.2026
+
+Projektarchive werden streamend verarbeitet. Der Import extrahiert ausschließlich im Manifest gelistete und per SHA-256 geprüfte Dateien in einen neuen temporären Geschwisterordner. Erst nach erfolgreicher Datenbankprüfung wird dieser Ordner auf den endgültigen Workspace-Namen verschoben. Vorhandene Zielordner werden nie überschrieben.
+
+Als Sicherheitsgrenzen gelten derzeit 100.000 Dateien, 64 GiB pro Datei, 512 GiB dekomprimierte Gesamtgröße, 4 MiB für das Manifest und ein maximales Kompressionsverhältnis von 1000:1 für große Einträge. Zusätzlich bleibt eine Reserve von 64 MiB auf dem Ziellaufwerk. Die Werte erlauben die spezifizierten mehrgigabytegroßen Projekte, begrenzen aber ZIP-Bomben und unbeabsichtigte Ressourcenerschöpfung.
+
+Der Export checkpointet SQLite, erzeugt ein neues Archiv im Zielverzeichnis, validiert es nach dem Schließen vollständig und verwendet auf Windows `File.Replace` für den atomaren Austausch eines vorhandenen Archivs. Die bisher gültige Datei bleibt bis zum erfolgreichen Austausch erhalten.
+
+## ADR-011: Projektduplikate erhalten neue Projekt-ID
+
+**Status:** angenommen am 19.07.2026
+
+Eine Projektkopie erhält eine neue Projekt-GUID und einen aus dem Zielnamen abgeleiteten Projektnamen. Ereignis- und Anhangs-IDs bleiben innerhalb des separaten Archivs erhalten, damit alle internen Beziehungen, Analysetexte und Layoutpositionen unverändert bleiben. Das SQLite-Schema verwendet deshalb für Projekt-Fremdschlüssel `ON UPDATE CASCADE`.

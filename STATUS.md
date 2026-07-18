@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1 und 2 abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1, 2 und Projektverwaltung 3A abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 3 – Projektverwaltung und lokale Arbeitsordner
+Meilenstein 3B – Autosave, zuletzt verwendete Projekte, DI und lokale Logs
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -48,6 +48,19 @@ Meilenstein 3 – Projektverwaltung und lokale Arbeitsordner
 - entfernte Ereignisse und abhängige Datensätze werden konsistent bereinigt
 - Integritätstests für Schema, Idempotenz, Roundtrip, FTS, Kaskaden, Rollback und Versionsabwehr ergänzt
 
+### Meilenstein 3A – Projektarchive und lokale Arbeitsordner
+
+- versioniertes `.zeitprojekt`-Manifest mit Projektmetadaten, Dateilängen und SHA-256-Prüfsummen implementiert
+- SQLite-WAL wird vor dem Export checkpointet; das neu geschriebene Archiv wird vor der Übernahme vollständig erneut geprüft
+- bestehende Archive werden erst nach erfolgreicher Erstellung atomar ersetzt
+- Import prüft Format/Version, eindeutiges Manifest, Dateianzahl, Einzel-/Gesamtgröße, freien Speicherplatz, Duplikate, Kompressionsverhältnis und Prüfsummen
+- absolute, nicht normalisierte, reservierte und traversierende Archivpfade werden vor der Extraktion abgelehnt
+- Extraktion erfolgt streamend und abbrechbar in einen neuen Staging-Ordner; vorhandene Ziele werden nicht überschrieben
+- Arbeitsordnerdienst für neues Projekt, Öffnen, Speichern, „Speichern unter“, Duplizieren, Schließen und bestätigtes Löschen implementiert
+- Duplikate erhalten eine neue Projekt-ID, behalten aber vollständige interne Ereignis-/Anhangsbeziehungen
+- manipulierte Archive hinterlassen weder Zielordner noch außerhalb geschriebene Dateien
+- Integrationstests für Transfer samt Anhang, Manifest, fehlendes Manifest, falsche Größe/Prüfsumme, ZIP-Traversal und den vollständigen Workspace-Ablauf ergänzt
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -60,13 +73,13 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 2: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 20 Unit-Tests und 7 Integrationstests bestanden.
+Aktueller Stand nach Meilenstein 3A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 20 Unit-Tests und 12 Integrationstests bestanden.
 
 ## Phasenweiser Implementierungsplan
 
 1. **Solution und Architektur – abgeschlossen:** Schichten, Fachmodellbasis, Ports, Architektur- und Formatdokumentation.
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
-3. **Projektverwaltung – als Nächstes:** Arbeitsordner, Neu/Öffnen/Speichern unter/Duplizieren/Löschen, zuletzt verwendet, atomarer Autosave.
+3. **Projektverwaltung – in Arbeit:** sichere Arbeitsordner, Neu/Öffnen/Speichern unter/Duplizieren/Löschen und vollständiger Archivtransfer sind umgesetzt; zuletzt verwendete Projekte, Autosave und Crash-Recovery folgen in Teil 3B.
 4. **Ereignisse und Fristen:** verbundene MVVM-Bearbeitung, Tags, Links, Undo/Redo, Drag-Sortierung, Audit.
 5. **Anhänge und lokale Dokumentenanalyse:** sichere Kopien, Mehrfach-Drop, PDF/Bild/DOCX/XLSX, Vorschau, lokale OCR, Warteschlange.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
@@ -84,10 +97,10 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 - Produktive Dependency Injection und lokale strukturierte Protokollierung sind noch nicht implementiert.
 - Die WPF-Oberfläche ist weiterhin das Starttemplate; sie ist noch nicht mit den Application-Ports verbunden.
 - Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
-- Große Archive benötigen harte Extraktionslimits und Speicherplatzprüfung; bisher besteht nur Domain-Pfadvalidierung, noch kein ZIP-Importer.
+- Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
 - Inno Setup ist nicht im `PATH`; der Installer kann aktuell noch nicht gebaut werden.
 - Selbstenthaltende Veröffentlichung wurde für diesen frühen Architekturstand bewusst noch nicht als Release-Gate gewertet.
 
 ## Nächster konkreter Arbeitsschritt
 
-Sicheren lokalen Workspace-Dienst implementieren: neues Projekt in eindeutigem Arbeitsordner anlegen, vorhandene Arbeitskopie öffnen, atomar speichern/„Speichern unter“, duplizieren und schließen. Darauf aufbauend die ersten `.zeitprojekt`-Archive mit Manifest und SHA-256 erzeugen und per Integrationstest erneut öffnen.
+Produktive Dependency Injection und rotierende lokale strukturierte Logs einführen. Danach zuletzt verwendete Projekte, serialisiertes zeitgesteuertes Autosave und einen Crash-Recovery-Marker implementieren und den Workspace-Dienst erstmals mit einem MVVM-Startbildschirm verbinden.

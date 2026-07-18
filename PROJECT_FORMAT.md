@@ -2,7 +2,7 @@
 
 ## Überblick
 
-Ein Projektarchiv ist eine versionierte ZIP-Datei mit der Endung `.zeitprojekt`. Die aktuelle geplante Formatversion ist `1`. Innerhalb des Archivs werden ausschließlich `/` als Trennzeichen und UTF-8 für JSON/Text verwendet.
+Ein Projektarchiv ist eine versionierte ZIP-Datei mit der Endung `.zeitprojekt`. Die aktuelle Formatversion ist `1`. Innerhalb des Archivs werden ausschließlich `/` als Trennzeichen und UTF-8 für JSON/Text verwendet.
 
 ```text
 Beispiel.zeitprojekt
@@ -64,11 +64,13 @@ Alle internen Verweise sind relativ. Absolute Quellpfade dürfen nur als nicht b
 7. SQLite-Integritätsprüfung, Schema-Version und notwendige Migrationen prüfen.
 8. Erst danach den Arbeitsordner als geöffnet markieren. Bei Fehlern wird er vollständig verworfen; bestehende Projekte bleiben unverändert.
 
+Aktuelle Schutzgrenzen sind 100.000 Dateien, 64 GiB je Datei, 512 GiB dekomprimierte Gesamtgröße, 4 MiB Manifestgröße und für Dateien über 10 MiB ein maximales Kompressionsverhältnis von 1000:1. Vor dem Import wird außerdem die deklarierte Gesamtgröße zuzüglich einer lokalen Reserve von 64 MiB gegen den freien Speicherplatz geprüft.
+
 Importe überschreiben nie ohne bestätigte Benutzerentscheidung einen vorhandenen Zielnamen. Neuere, nicht unterstützte Formatversionen werden nicht verändert und mit einer verständlichen Meldung abgelehnt. Ältere unterstützte Versionen werden nach einer Sicherung in einer Datenbanktransaktion migriert.
 
 ## Atomarer Export
 
-Der Export arbeitet aus einem konsistenten Snapshot des Arbeitsordners. Er schreibt ein neues Archiv im Zielverzeichnis, berechnet alle Prüfsummen während des Schreibens, öffnet das Archiv anschließend erneut zur Validierung und ersetzt die bestehende Zieldatei erst dann atomar. Bei Abbruch oder Fehler wird nur die unvollständige temporäre Datei entfernt.
+Der Export führt zuerst einen SQLite-WAL-Checkpoint aus und arbeitet dann aus dem konsistenten Arbeitsordner. Er schreibt ein neues Archiv im Zielverzeichnis, berechnet alle Prüfsummen während des Schreibens, öffnet das Archiv anschließend erneut zur vollständigen Validierung und ersetzt die bestehende Zieldatei erst dann atomar. Bei Abbruch oder Fehler wird nur die unvollständige temporäre Datei entfernt.
 
 ## Kompatibilitätsregeln
 

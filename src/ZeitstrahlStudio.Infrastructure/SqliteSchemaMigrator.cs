@@ -36,7 +36,7 @@ public sealed class SqliteSchemaMigrator
             ManualSortPosition TEXT NULL,
             CreatedAtUtc TEXT NOT NULL,
             ModifiedAtUtc TEXT NOT NULL,
-            FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE
+            FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE ON UPDATE CASCADE
         );
 
         CREATE TABLE EventDates (
@@ -139,7 +139,7 @@ public sealed class SqliteSchemaMigrator
             CurrentDayBackupCount INTEGER NOT NULL,
             DailyBackupCount INTEGER NOT NULL,
             WeeklyBackupCount INTEGER NOT NULL,
-            FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE
+            FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE ON UPDATE CASCADE
         );
 
         CREATE TABLE AuditLog (
@@ -152,7 +152,7 @@ public sealed class SqliteSchemaMigrator
             Description TEXT NOT NULL,
             Succeeded INTEGER NOT NULL,
             TechnicalDetails TEXT NULL,
-            FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE
+            FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE ON UPDATE CASCADE
         );
 
         CREATE TABLE ApplicationLogReferences (
@@ -161,7 +161,7 @@ public sealed class SqliteSchemaMigrator
             RelativePath TEXT NOT NULL,
             CreatedAtUtc TEXT NOT NULL,
             FileSize INTEGER NOT NULL CHECK (FileSize >= 0),
-            FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE
+            FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE ON UPDATE CASCADE
         );
 
         CREATE TABLE Backups (
@@ -172,7 +172,7 @@ public sealed class SqliteSchemaMigrator
             FileSize INTEGER NOT NULL CHECK (FileSize >= 0),
             Sha256 TEXT NOT NULL CHECK (length(Sha256) = 64),
             IsAutomatic INTEGER NOT NULL,
-            FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE
+            FOREIGN KEY (ProjectId) REFERENCES Projects(Id) ON DELETE CASCADE ON UPDATE CASCADE
         );
 
         CREATE VIRTUAL TABLE SearchIndex USING fts5(

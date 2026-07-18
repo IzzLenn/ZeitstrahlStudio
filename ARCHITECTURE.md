@@ -59,7 +59,7 @@ Indizes bestehen für Event-/Projektzuordnung, Fristen, Anhangstypen, Tags, Audi
 
 ## Arbeitsordner und Speicherung
 
-Eine `.zeitprojekt`-Datei wird nie direkt bearbeitet. Beim Öffnen wird sie nach vollständiger Validierung in einen eindeutigen lokalen Arbeitsordner importiert. SQLite arbeitet dort im WAL-Modus. Speichern erzeugt im Zielverzeichnis zunächst ein neues vollständiges Archiv, synchronisiert und validiert es und ersetzt dann atomar die vorherige Datei. Ein vorheriger gültiger Stand bleibt bis zum erfolgreichen Abschluss erhalten.
+Eine `.zeitprojekt`-Datei wird nie direkt bearbeitet. Beim Öffnen wird sie nach vollständiger Manifest-, Pfad-, Größen- und Prüfsummenvalidierung in einen eindeutigen Staging-Ordner importiert und erst nach bestandener Datenbankprüfung zum lokalen Arbeitsordner verschoben. SQLite arbeitet dort im WAL-Modus. Speichern checkpointet SQLite und erzeugt im Zielverzeichnis zunächst ein neues vollständiges Archiv, validiert es und ersetzt dann atomar die vorherige Datei. Ein vorheriger gültiger Stand bleibt bis zum erfolgreichen Abschluss erhalten.
 
 Die Verzeichnisse `attachments`, `thumbnails`, `extracted-text`, `logs` und `metadata` sind ausschließlich über normalisierte relative Pfade adressierbar. Das detaillierte Format steht in `PROJECT_FORMAT.md`.
 

@@ -16,9 +16,13 @@ public interface IProjectWorkspaceService
 {
     Task<ProjectWorkspace> CreateAsync(string projectName, string archivePath, CancellationToken cancellationToken);
     Task<ProjectWorkspace> OpenAsync(string archivePath, CancellationToken cancellationToken);
-    Task SaveAsync(ProjectWorkspace workspace, string? targetArchivePath, CancellationToken cancellationToken);
+    Task<ProjectWorkspace> SaveAsync(
+        ProjectWorkspace workspace,
+        string? targetArchivePath,
+        CancellationToken cancellationToken);
     Task<ProjectWorkspace> DuplicateAsync(ProjectWorkspace workspace, string targetArchivePath, CancellationToken cancellationToken);
     Task CloseAsync(ProjectWorkspace workspace, CancellationToken cancellationToken);
+    Task DeleteArchiveAsync(string archivePath, bool deletionConfirmed, CancellationToken cancellationToken);
 }
 
 /// <summary>Erstellt und validiert das versionierte ZIP-basierte Projektformat.</summary>
