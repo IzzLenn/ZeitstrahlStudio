@@ -1,0 +1,23 @@
+# Zeitstrahl Studio
+
+Zeitstrahl Studio wird als vollständig lokale, deutschsprachige Windows-Desktopanwendung für chronologische Projekte entwickelt. Zielplattform ist .NET 8/WPF auf Windows 10 und 11 x64. Die Anwendung wird keine Telemetrie, Cloud-Synchronisation oder automatische Datenübertragung enthalten.
+
+## Aktueller Stand
+
+Das Repository befindet sich nach Meilenstein 1 im Aufbau. Solution, Schichtengrenzen, fachliches Grundmodell und erste automatisierte Tests sind vorhanden und kompilieren. SQLite, die verbundene WPF-Oberfläche, Dokumentverarbeitung, Zeitstrahlansichten, Exporte, Archive, Sicherungen und Auslieferungsartefakte folgen in den in `STATUS.md` dokumentierten Meilensteinen. Dieser Stand ist noch kein Release.
+
+## Lokaler Build
+
+Voraussetzungen:
+
+- Windows 10 oder 11 x64
+- .NET SDK 8.x
+- für den späteren Installer: Inno Setup 6
+
+```powershell
+dotnet restore
+dotnet build ZeitstrahlStudio.sln -c Debug
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore
+```
+
+Die fachliche Spezifikation steht in `SPEC.md`, die Architektur in `ARCHITECTURE.md`, das geplante Archivformat in `PROJECT_FORMAT.md` und der tatsächliche Arbeitsstand in `STATUS.md`.

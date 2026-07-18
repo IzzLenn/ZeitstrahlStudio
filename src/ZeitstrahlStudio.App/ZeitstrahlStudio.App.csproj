@@ -1,0 +1,19 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWPF>true</UseWPF>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ZeitstrahlStudio.Application\ZeitstrahlStudio.Application.csproj" />
+    <ProjectReference Include="..\ZeitstrahlStudio.DocumentProcessing\ZeitstrahlStudio.DocumentProcessing.csproj" />
+    <ProjectReference Include="..\ZeitstrahlStudio.Export\ZeitstrahlStudio.Export.csproj" />
+    <ProjectReference Include="..\ZeitstrahlStudio.Infrastructure\ZeitstrahlStudio.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

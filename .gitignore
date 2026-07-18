@@ -1,0 +1,21 @@
+# Buildausgaben
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+
+# IDE-Zustand
+.vs/
+.idea/
+*.user
+*.suo
+
+# Lokale Laufzeitdaten und Protokolle
+*.log
+*.db-shm
+*.db-wal
+*.tmp
+
+# Reproduzierbare Veröffentlichungsartefakte
+publish/
+release/
