@@ -5,7 +5,7 @@ using ZeitstrahlStudio.Domain;
 namespace ZeitstrahlStudio.Infrastructure;
 
 /// <summary>Verwaltet lokale Arbeitskopien und verbindet sie mit atomaren Projektarchiven.</summary>
-public sealed class LocalProjectWorkspaceService : IProjectWorkspaceService
+public sealed partial class LocalProjectWorkspaceService : IProjectWorkspaceService, IProjectRecoveryService
 {
     private static readonly string[] WorkspaceDirectories =
     [
@@ -20,6 +20,7 @@ public sealed class LocalProjectWorkspaceService : IProjectWorkspaceService
     private readonly IProjectArchiveService archiveService;
     private readonly string workspaceRoot;
     private readonly TimeProvider timeProvider;
+    private readonly SemaphoreSlim saveGate = new(1, 1);
 
     /// <summary>Initialisiert den Arbeitsordnerdienst.</summary>
     public LocalProjectWorkspaceService(
@@ -55,7 +56,13 @@ public sealed class LocalProjectWorkspaceService : IProjectWorkspaceService
                 targetArchivePath,
                 progress: null,
                 cancellationToken).ConfigureAwait(false);
-            return new ProjectWorkspace(project, workingDirectory, targetArchivePath, HasUnsavedChanges: false);
+            var workspace = new ProjectWorkspace(
+                project,
+                workingDirectory,
+                targetArchivePath,
+                HasUnsavedChanges: false);
+            await WriteRecoveryMarkerAsync(workspace, cancellationToken).ConfigureAwait(false);
+            return workspace;
         }
         catch
         {
@@ -79,6 +86,7 @@ public sealed class LocalProjectWorkspaceService : IProjectWorkspaceService
                 result.Error?.UserMessage ?? "Das Projektarchiv konnte nicht geöffnet werden.");
         }
 
+        await WriteRecoveryMarkerAsync(result.Value.Workspace, cancellationToken).ConfigureAwait(false);
         return result.Value.Workspace;
     }
 
@@ -88,18 +96,28 @@ public sealed class LocalProjectWorkspaceService : IProjectWorkspaceService
         string? targetArchivePath,
         CancellationToken cancellationToken)
     {
-        EnsureManagedWorkspace(workspace.WorkingDirectory);
-        var targetPath = ValidateArchivePath(targetArchivePath ?? workspace.ArchivePath ?? string.Empty);
-        await repository.SaveAsync(
-            workspace.Project,
-            Path.Combine(workspace.WorkingDirectory, "project.db"),
-            cancellationToken).ConfigureAwait(false);
-        await archiveService.ExportAsync(
-            workspace.WorkingDirectory,
-            targetPath,
-            progress: null,
-            cancellationToken).ConfigureAwait(false);
-        return workspace with { ArchivePath = targetPath, HasUnsavedChanges = false };
+        await saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            EnsureManagedWorkspace(workspace.WorkingDirectory);
+            var targetPath = ValidateArchivePath(targetArchivePath ?? workspace.ArchivePath ?? string.Empty);
+            await repository.SaveAsync(
+                workspace.Project,
+                Path.Combine(workspace.WorkingDirectory, "project.db"),
+                cancellationToken).ConfigureAwait(false);
+            await archiveService.ExportAsync(
+                workspace.WorkingDirectory,
+                targetPath,
+                progress: null,
+                cancellationToken).ConfigureAwait(false);
+            var updatedWorkspace = workspace with { ArchivePath = targetPath, HasUnsavedChanges = false };
+            await WriteRecoveryMarkerAsync(updatedWorkspace, cancellationToken).ConfigureAwait(false);
+            return updatedWorkspace;
+        }
+        finally
+        {
+            saveGate.Release();
+        }
     }
 
     /// <inheritdoc />
@@ -154,11 +172,13 @@ public sealed class LocalProjectWorkspaceService : IProjectWorkspaceService
                 targetPath,
                 progress: null,
                 cancellationToken).ConfigureAwait(false);
-            return new ProjectWorkspace(
+            var duplicatedWorkspace = new ProjectWorkspace(
                 duplicate,
                 duplicatedWorkingDirectory,
                 targetPath,
                 HasUnsavedChanges: false);
+            await WriteRecoveryMarkerAsync(duplicatedWorkspace, cancellationToken).ConfigureAwait(false);
+            return duplicatedWorkspace;
         }
         catch
         {

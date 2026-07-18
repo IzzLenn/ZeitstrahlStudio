@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1, 2 und Projektverwaltung 3A abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1, 2 und Projektverwaltung 3A/3B abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 3B – Autosave, zuletzt verwendete Projekte, DI und lokale Logs
+Meilenstein 3C – Dependency Injection und verbundene MVVM-Projektoberfläche
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -61,6 +61,18 @@ Meilenstein 3B – Autosave, zuletzt verwendete Projekte, DI und lokale Logs
 - manipulierte Archive hinterlassen weder Zielordner noch außerhalb geschriebene Dateien
 - Integrationstests für Transfer samt Anhang, Manifest, fehlendes Manifest, falsche Größe/Prüfsumme, ZIP-Traversal und den vollständigen Workspace-Ablauf ergänzt
 
+### Meilenstein 3B – Autosave, Recovery, Recent Projects und lokale Logs
+
+- maximal 20 zuletzt verwendete Projekte werden lokal, versioniert und atomar als JSON gespeichert
+- fehlende Archive werden gekennzeichnet und können gezielt aus der Liste entfernt werden
+- jeder aktive Workspace erhält einen nicht exportierten Recovery-Marker mit Projekt- und Prozessidentität
+- aktive Prozesse werden von der Recovery-Suche ausgeschlossen; verwaiste gültige SQLite-Arbeitskopien können wiederhergestellt oder verworfen werden
+- Workspace-Speicherungen sind gegen konkurrierende manuelle/automatische Aufrufe serialisiert
+- abbrechbarer Autosave-Koordinator speichert ausschließlich als geändert markierte Projekte und meldet erwartbare Fehler, ohne die Schleife zu beenden
+- größenbegrenzt rotierende technische JSON-Lines-Logs mit Lesen, Export und Löschen implementiert
+- Logeinträge begrenzen Nachrichten/Fehlerdetails und enthalten keine automatisch übernommenen Dokumentinhalte
+- Integrationstests für Recent Projects, Recovery, einen vollständigen Autosave-Zyklus und Logrotation/-export/-löschung ergänzt
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -73,13 +85,13 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 3A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 20 Unit-Tests und 12 Integrationstests bestanden.
+Aktueller Stand nach Meilenstein 3B: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 20 Unit-Tests und 16 Integrationstests bestanden.
 
 ## Phasenweiser Implementierungsplan
 
 1. **Solution und Architektur – abgeschlossen:** Schichten, Fachmodellbasis, Ports, Architektur- und Formatdokumentation.
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
-3. **Projektverwaltung – in Arbeit:** sichere Arbeitsordner, Neu/Öffnen/Speichern unter/Duplizieren/Löschen und vollständiger Archivtransfer sind umgesetzt; zuletzt verwendete Projekte, Autosave und Crash-Recovery folgen in Teil 3B.
+3. **Projektverwaltung – in Arbeit:** Backend für sichere Arbeitsordner, Neu/Öffnen/Speichern unter/Duplizieren/Löschen, Archivtransfer, zuletzt verwendet, Autosave und Crash-Recovery ist umgesetzt; produktive DI- und MVVM-Oberflächenanbindung folgt in Teil 3C.
 4. **Ereignisse und Fristen:** verbundene MVVM-Bearbeitung, Tags, Links, Undo/Redo, Drag-Sortierung, Audit.
 5. **Anhänge und lokale Dokumentenanalyse:** sichere Kopien, Mehrfach-Drop, PDF/Bild/DOCX/XLSX, Vorschau, lokale OCR, Warteschlange.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
@@ -94,7 +106,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Bekannte Probleme und Risiken
 
-- Produktive Dependency Injection und lokale strukturierte Protokollierung sind noch nicht implementiert.
+- Produktive Dependency Injection ist noch nicht implementiert; der lokale strukturierte Logdienst ist vorhanden, aber noch nicht an globale Fehlerbehandlung und UI gebunden.
 - Die WPF-Oberfläche ist weiterhin das Starttemplate; sie ist noch nicht mit den Application-Ports verbunden.
 - Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
@@ -103,4 +115,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Produktive Dependency Injection und rotierende lokale strukturierte Logs einführen. Danach zuletzt verwendete Projekte, serialisiertes zeitgesteuertes Autosave und einen Crash-Recovery-Marker implementieren und den Workspace-Dienst erstmals mit einem MVVM-Startbildschirm verbinden.
+Produktive Dependency Injection als Composition Root der WPF-Anwendung einführen. Danach einen echten MVVM-Startbildschirm mit Neu/Öffnen/Zuletzt verwendet/Wiederherstellen sowie eine Projektansicht für Speichern, Speichern unter, Duplizieren und Schließen an die geprüften Dienste binden.

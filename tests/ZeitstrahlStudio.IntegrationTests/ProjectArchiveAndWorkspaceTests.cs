@@ -185,6 +185,13 @@ public sealed class ProjectArchiveAndWorkspaceTests
 
         Assert.False(workspace.HasUnsavedChanges);
         Assert.Equal(System.IO.Path.GetFullPath(saveAsArchive), workspace.ArchivePath);
+        using (var savedArchive = ZipFile.OpenRead(saveAsArchive))
+        {
+            Assert.DoesNotContain(
+                savedArchive.Entries,
+                entry => entry.FullName.StartsWith("metadata/session.json", StringComparison.OrdinalIgnoreCase));
+        }
+
         var opened = await service.OpenAsync(saveAsArchive, CancellationToken.None);
         Assert.Single(opened.Project.Events);
 

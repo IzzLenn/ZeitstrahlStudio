@@ -1,4 +1,5 @@
 using ZeitstrahlStudio.Domain;
+using ZeitstrahlStudio.Shared;
 
 namespace ZeitstrahlStudio.Application;
 
@@ -82,3 +83,43 @@ public sealed record ExportPreview(
     double PageWidthMillimeters,
     double PageHeightMillimeters,
     IReadOnlyList<string> Warnings);
+
+/// <summary>Ein zuletzt verwendetes lokales Projektarchiv.</summary>
+public sealed record RecentProject(
+    string ProjectName,
+    string ArchivePath,
+    DateTimeOffset LastOpenedAtUtc,
+    bool FileExists);
+
+/// <summary>Eine nach einem unsauberen Programmende wiederherstellbare Arbeitskopie.</summary>
+public sealed record RecoveryCandidate(
+    Guid ProjectId,
+    string ProjectName,
+    string WorkingDirectory,
+    string? ArchivePath,
+    DateTimeOffset LastUpdatedAtUtc);
+
+/// <summary>Statusmeldung eines automatischen Speichervorgangs.</summary>
+public sealed record AutosaveStatus(
+    DateTimeOffset TimestampUtc,
+    bool Succeeded,
+    string Message,
+    ApplicationError? Error = null);
+
+/// <summary>Schweregrad eines ausschließlich lokalen technischen Protokolleintrags.</summary>
+public enum LocalLogLevel
+{
+    Debug,
+    Information,
+    Warning,
+    Error,
+}
+
+/// <summary>Strukturierter lokaler Protokolleintrag ohne Dokumentinhalt.</summary>
+public sealed record LocalLogEntry(
+    DateTimeOffset TimestampUtc,
+    LocalLogLevel Level,
+    string Category,
+    string EventName,
+    string Message,
+    string? TechnicalDetails = null);

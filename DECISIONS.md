@@ -81,3 +81,23 @@ Der Export checkpointet SQLite, erzeugt ein neues Archiv im Zielverzeichnis, val
 **Status:** angenommen am 19.07.2026
 
 Eine Projektkopie erhält eine neue Projekt-GUID und einen aus dem Zielnamen abgeleiteten Projektnamen. Ereignis- und Anhangs-IDs bleiben innerhalb des separaten Archivs erhalten, damit alle internen Beziehungen, Analysetexte und Layoutpositionen unverändert bleiben. Das SQLite-Schema verwendet deshalb für Projekt-Fremdschlüssel `ON UPDATE CASCADE`.
+
+## ADR-012: Lokaler Anwendungszustand als atomare JSON-Dateien
+
+**Status:** angenommen am 19.07.2026
+
+Die maximal 20 zuletzt verwendeten Archivpfade und Recovery-Sitzungsmarker sind anwendungsbezogener Zustand und gehören nicht in eine Projektdatenbank. Sie werden als kleine versionierte UTF-8-JSON-Dateien unter dem lokalen Anwendungsdatenordner beziehungsweise im nicht exportierten `metadata/session.json` des Workspace gespeichert. Jeder Schreibvorgang erzeugt zuerst eine neue Datei und ersetzt den vorherigen Stand atomar.
+
+Recovery-Marker enthalten Projekt-ID, Archivpfad, Aktualisierungszeit und Prozessidentität. Ein Workspace eines nachweislich noch laufenden Prozesses wird nicht zur Wiederherstellung angeboten. Fehlende Marker verhindern die Wiederherstellung einer ansonsten gültigen verwaisten Datenbank nicht.
+
+## ADR-013: Autosave serialisiert über denselben Workspace-Dienst
+
+**Status:** angenommen am 19.07.2026
+
+Autosave verwendet denselben vollständigen Repository-/Archivpfad wie manuelles Speichern. Ein `SemaphoreSlim` im Workspace-Dienst verhindert konkurrierende Speicherungen. Der Koordinator speichert nur als geändert markierte Workspaces, respektiert `CancellationToken` und meldet erwartbare Fehler, ohne seine periodische Schleife zu beenden. So entsteht kein zweiter, semantisch abweichender Speicherweg.
+
+## ADR-014: Technische Logs als rotierende JSON Lines
+
+**Status:** angenommen am 19.07.2026
+
+Technische Anwendungslogs werden ausschließlich lokal als ein JSON-Objekt pro Zeile geschrieben. Standardmäßig sind fünf Dateien mit je höchstens 5 MiB vorgesehen. Nachrichten und technische Details werden begrenzt, damit keine versehentlich übergebenen vollständigen Dokumentinhalte das Log unkontrolliert vergrößern. Lesen, manueller Export und Löschen sind über eine Anwendungsschnittstelle verfügbar.

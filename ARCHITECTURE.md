@@ -85,6 +85,8 @@ Helles und dunkles Theme sind Resource Dictionaries. Zeitstrahl-Layouts werden a
 - Temporäre Dateien liegen in eindeutigen Anwendungsverzeichnissen und werden in `finally`-Pfaden entfernt.
 - Technische Logs enthalten keine vollständigen Dokumenttexte und rotieren nach konfigurierbarer Größe.
 
+Technische Logs sind als lokale JSON-Lines-Dateien mit Größenrotation, begrenzten Textfeldern, manueller Anzeige, Export und Löschung implementiert. Der lokale Anwendungszustand für zuletzt verwendete Projekte ist getrennt davon versioniert. Workspace-Sitzungsmarker werden bewusst nicht in `.zeitprojekt`-Archive aufgenommen.
+
 ## Wesentliche technische Risiken
 
 | Risiko | Gegenmaßnahme |

@@ -241,6 +241,12 @@ public sealed partial class ProjectArchiveService
 
         var archivePath = Path.GetRelativePath(workspaceRoot, fullPath).Replace('\\', '/');
         archivePath = ArchivePathValidator.ValidateAndNormalize(archivePath);
+        if (archivePath.Equals("metadata/session.json", StringComparison.OrdinalIgnoreCase) ||
+            archivePath.StartsWith("metadata/session.json.", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
         var length = new FileInfo(fullPath).Length;
         if (length > MaximumSingleFileBytes)
         {

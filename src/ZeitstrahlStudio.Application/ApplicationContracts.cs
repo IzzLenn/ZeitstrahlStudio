@@ -112,3 +112,40 @@ public interface IAuditLogService
     Task WriteAsync(AuditEntry entry, CancellationToken cancellationToken);
     Task<IReadOnlyList<AuditEntry>> ReadAsync(Guid projectId, CancellationToken cancellationToken);
 }
+
+/// <summary>Persistiert die Liste zuletzt geöffneter Projektarchive lokal.</summary>
+public interface IRecentProjectsService
+{
+    Task<IReadOnlyList<RecentProject>> GetAsync(CancellationToken cancellationToken);
+    Task RecordOpenedAsync(ProjectWorkspace workspace, CancellationToken cancellationToken);
+    Task RemoveAsync(string archivePath, CancellationToken cancellationToken);
+    Task RemoveMissingAsync(CancellationToken cancellationToken);
+}
+
+/// <summary>Findet und verwaltet nach einem Absturz verbliebene Arbeitskopien.</summary>
+public interface IProjectRecoveryService
+{
+    Task<IReadOnlyList<RecoveryCandidate>> FindAsync(CancellationToken cancellationToken);
+    Task<ProjectWorkspace> RecoverAsync(RecoveryCandidate candidate, CancellationToken cancellationToken);
+    Task DiscardAsync(RecoveryCandidate candidate, CancellationToken cancellationToken);
+}
+
+/// <summary>Serialisiert zeitgesteuerte Speichervorgänge und meldet Fehler, ohne die Schleife zu beenden.</summary>
+public interface IProjectAutosaveService
+{
+    Task RunAsync(
+        Func<ProjectWorkspace?> currentWorkspace,
+        Action<ProjectWorkspace> workspaceUpdated,
+        TimeSpan interval,
+        IProgress<AutosaveStatus>? progress,
+        CancellationToken cancellationToken);
+}
+
+/// <summary>Schreibt, liest, exportiert und löscht rotierende lokale technische Logs.</summary>
+public interface ILocalLogService
+{
+    Task WriteAsync(LocalLogEntry entry, CancellationToken cancellationToken);
+    Task<IReadOnlyList<LocalLogEntry>> ReadRecentAsync(int maximumEntries, CancellationToken cancellationToken);
+    Task ExportAsync(string targetPath, CancellationToken cancellationToken);
+    Task ClearAsync(CancellationToken cancellationToken);
+}
