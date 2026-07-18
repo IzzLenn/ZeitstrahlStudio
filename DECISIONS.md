@@ -57,3 +57,11 @@ Erwartbare Datei-, Format- und Analysefehler werden an Anwendungsgrenzen als `Op
 **Status:** angenommen am 19.07.2026
 
 Die WPF-Anwendung wird für `win-x64` gebaut, verlangt keine Administratorrechte, aktiviert Long-Path-Unterstützung und Per-Monitor-V2-DPI-Awareness. Dies entspricht der Zielplattform und reduziert spätere native Varianten für SQLite, PDF und OCR.
+
+## ADR-009: Microsoft.Data.Sqlite mit expliziten SQL-Migrationen
+
+**Status:** angenommen am 19.07.2026
+
+Für SQLite wird `Microsoft.Data.Sqlite` 8.0.29 (MIT) mit dem gebündelten lokalen e_sqlite3 verwendet. Das Paket ist klein, ADO.NET-nah und unterstützt die benötigten Transaktionen, FTS5 und asynchronen Aufrufe. SQLitePCLRaw 2.1.6 wird transitiv unter Apache-2.0 eingebunden.
+
+Das Schema wird durch eigene, fortlaufend versionierte SQL-Migrationen verwaltet. Ein vollständiges ORM wurde verworfen: Das normalisierte Schema, FTS5, atomare Massensynchronisierung und die bewusste Erhaltung von Analysetabellen sind mit explizitem SQL transparenter und vermeiden eine zusätzliche produktive Abhängigkeit. Jede Migration und jede Aggregatspeicherung läuft in einer Transaktion; neuere unbekannte Schema-Versionen werden schreibgeschützt abgelehnt.

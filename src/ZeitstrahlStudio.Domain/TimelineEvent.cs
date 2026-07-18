@@ -41,6 +41,71 @@ public sealed class TimelineEvent
     public static TimelineEvent Create(Guid id, string title, EventDate date, DateTimeOffset createdAtUtc) =>
         new(id, title, date, createdAtUtc);
 
+    /// <summary>Stellt ein zuvor validiert gespeichertes Ereignis vollständig wieder her.</summary>
+    public static TimelineEvent Restore(
+        Guid id,
+        EventDate date,
+        string title,
+        string? infoText,
+        string? description,
+        Deadline? deadline,
+        EventPriority priority,
+        string colorHex,
+        string? source,
+        string? notes,
+        EventStatus status,
+        decimal? manualSortPosition,
+        DateTimeOffset createdAtUtc,
+        DateTimeOffset modifiedAtUtc,
+        IEnumerable<string> restoredTags,
+        IEnumerable<Attachment> restoredAttachments,
+        IEnumerable<WebLink> restoredWebLinks)
+    {
+        var timelineEvent = new TimelineEvent(id, title, date, createdAtUtc)
+        {
+            InfoText = NormalizeOptional(infoText),
+            Description = NormalizeOptional(description),
+            Deadline = deadline,
+            Priority = priority,
+            ColorHex = NormalizeColor(colorHex),
+            Source = NormalizeOptional(source),
+            Notes = NormalizeOptional(notes),
+            Status = status,
+            ManualSortPosition = manualSortPosition,
+        };
+
+        timelineEvent.Touch(modifiedAtUtc);
+
+        foreach (var tag in restoredTags)
+        {
+            timelineEvent.tags.Add(NormalizeRequired(tag, "Ein Schlagwort darf nicht leer sein.", nameof(restoredTags)));
+        }
+
+        foreach (var attachment in restoredAttachments)
+        {
+            ArgumentNullException.ThrowIfNull(attachment);
+            if (timelineEvent.attachments.Any(existing => existing.Id == attachment.Id))
+            {
+                throw new DomainValidationException("Ein gespeicherter Anhang ist mehrfach vorhanden.");
+            }
+
+            timelineEvent.attachments.Add(attachment);
+        }
+
+        foreach (var webLink in restoredWebLinks)
+        {
+            ArgumentNullException.ThrowIfNull(webLink);
+            if (timelineEvent.webLinks.Any(existing => existing.Id == webLink.Id || existing.Address == webLink.Address))
+            {
+                throw new DomainValidationException("Ein gespeicherter Webseitenlink ist mehrfach vorhanden.");
+            }
+
+            timelineEvent.webLinks.Add(webLink);
+        }
+
+        return timelineEvent;
+    }
+
     /// <summary>Ändert die frei formulierbaren Inhalte.</summary>
     public void UpdateContent(
         string title,

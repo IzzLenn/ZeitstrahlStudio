@@ -4,6 +4,7 @@ namespace ZeitstrahlStudio.Domain;
 public sealed class TimelineProject
 {
     private readonly List<TimelineEvent> events = [];
+    private readonly List<LayoutPosition> layoutPositions = [];
 
     private TimelineProject(Guid id, string name, DateTimeOffset createdAtUtc)
     {
@@ -30,10 +31,70 @@ public sealed class TimelineProject
     public DateTimeOffset ModifiedAtUtc { get; private set; }
     public ProjectSettings Settings { get; private set; } = new();
     public IReadOnlyList<TimelineEvent> Events => events.AsReadOnly();
+    public IReadOnlyList<LayoutPosition> LayoutPositions => layoutPositions.AsReadOnly();
 
     /// <summary>Erzeugt ein leeres Projekt.</summary>
     public static TimelineProject Create(Guid id, string name, DateTimeOffset createdAtUtc) =>
         new(id, name, createdAtUtc);
+
+    /// <summary>Stellt ein zuvor validiert gespeichertes Projekt vollständig wieder her.</summary>
+    public static TimelineProject Restore(
+        Guid id,
+        string name,
+        string? subtitle,
+        string? infoText,
+        string? description,
+        DateOnly? overallStart,
+        DateOnly? overallEnd,
+        DateTimeOffset createdAtUtc,
+        DateTimeOffset modifiedAtUtc,
+        ProjectSettings settings,
+        IEnumerable<TimelineEvent> restoredEvents,
+        IEnumerable<LayoutPosition> restoredLayoutPositions)
+    {
+        if (overallStart.HasValue && overallEnd.HasValue && overallEnd < overallStart)
+        {
+            throw new DomainValidationException("Der gespeicherte Projektzeitraum ist ungültig.", nameof(overallEnd));
+        }
+
+        ArgumentNullException.ThrowIfNull(settings);
+        settings.Validate();
+
+        var project = new TimelineProject(id, name, createdAtUtc)
+        {
+            Subtitle = NormalizeOptional(subtitle),
+            InfoText = NormalizeOptional(infoText),
+            Description = NormalizeOptional(description),
+            OverallStart = overallStart,
+            OverallEnd = overallEnd,
+            Settings = settings,
+        };
+        project.Touch(modifiedAtUtc);
+
+        foreach (var timelineEvent in restoredEvents)
+        {
+            ArgumentNullException.ThrowIfNull(timelineEvent);
+            if (project.events.Any(existing => existing.Id == timelineEvent.Id))
+            {
+                throw new DomainValidationException("Ein gespeichertes Ereignis ist mehrfach vorhanden.");
+            }
+
+            project.events.Add(timelineEvent);
+        }
+
+        foreach (var layoutPosition in restoredLayoutPositions)
+        {
+            ArgumentNullException.ThrowIfNull(layoutPosition);
+            if (project.events.All(timelineEvent => timelineEvent.Id != layoutPosition.EventId))
+            {
+                throw new DomainValidationException("Eine Layoutposition verweist auf ein unbekanntes Ereignis.");
+            }
+
+            project.SetLayoutPositionCore(layoutPosition);
+        }
+
+        return project;
+    }
 
     /// <summary>Ändert die Projektinformationen.</summary>
     public void UpdateInformation(
@@ -90,8 +151,34 @@ public sealed class TimelineProject
             ?? throw new DomainValidationException("Das zu löschende Ereignis wurde nicht gefunden.", nameof(eventId));
 
         events.Remove(timelineEvent);
+        layoutPositions.RemoveAll(position => position.EventId == eventId);
         Touch(modifiedAtUtc);
         return timelineEvent;
+    }
+
+    /// <summary>Setzt einen visuellen Versatz für Ereignis und Ausrichtung.</summary>
+    public void SetLayoutPosition(LayoutPosition position, DateTimeOffset modifiedAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(position);
+        if (events.All(timelineEvent => timelineEvent.Id != position.EventId))
+        {
+            throw new DomainValidationException("Die Layoutposition verweist auf ein unbekanntes Ereignis.", nameof(position));
+        }
+
+        SetLayoutPositionCore(position);
+        Touch(modifiedAtUtc);
+    }
+
+    /// <summary>Entfernt alle manuellen Layoutpositionen und aktiviert wieder die automatische Anordnung.</summary>
+    public void ResetLayoutPositions(DateTimeOffset modifiedAtUtc)
+    {
+        if (layoutPositions.Count == 0)
+        {
+            return;
+        }
+
+        layoutPositions.Clear();
+        Touch(modifiedAtUtc);
     }
 
     /// <summary>Gibt Ereignisse in stabiler chronologischer Reihenfolge zurück.</summary>
@@ -130,5 +217,12 @@ public sealed class TimelineProject
         }
 
         ModifiedAtUtc = modifiedAtUtc;
+    }
+
+    private void SetLayoutPositionCore(LayoutPosition position)
+    {
+        layoutPositions.RemoveAll(existing =>
+            existing.EventId == position.EventId && existing.Orientation == position.Orientation);
+        layoutPositions.Add(position);
     }
 }

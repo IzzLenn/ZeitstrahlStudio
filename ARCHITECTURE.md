@@ -33,9 +33,9 @@ Abhängigkeiten zeigen nach innen: `Domain` besitzt keine Projektabhängigkeit; 
 
 Technische Zeitstempel werden als UTC-`DateTimeOffset` gespeichert. Die Umrechnung in deutsche Ortszeit erfolgt ausschließlich an Anzeigegrenzen. IDs sind GUIDs. Eine manuelle Reihenfolge greift nur bei identischen fachlichen Datumswerten und verändert kein Datum.
 
-## Geplantes normalisiertes SQLite-Schema
+## Implementiertes normalisiertes SQLite-Schema
 
-Migrationen werden fortlaufend nummeriert und in `SchemaMigrations` transaktionssicher protokolliert. Fremdschlüssel sind für jede Verbindung aktiviert.
+Migrationen werden fortlaufend nummeriert und in `SchemaMigrations` transaktionssicher protokolliert. Migration 1 legt das folgende Schema an. Fremdschlüssel sind für jede Repository-Verbindung aktiviert; SQLite arbeitet im WAL-Modus.
 
 | Tabelle | Wesentliche Inhalte |
 | --- | --- |
@@ -55,7 +55,7 @@ Migrationen werden fortlaufend nummeriert und in `SchemaMigrations` transaktions
 | `Backups` | Zeitpunkt, relativer Pfad, Größe, Prüfsumme, Sicherungsart |
 | `SchemaMigrations` | Versionsnummer, Bezeichnung, UTC-Anwendungszeitpunkt |
 
-Indizes werden mindestens für chronologische Event-Sortierung, Fristen, Tags, Anhangstypen und Fremdschlüssel angelegt. Die Volltextsuche verwendet SQLite FTS5, falls die eingesetzte SQLite-Distribution dies bereitstellt; andernfalls bleibt ein inkrementell gepflegter lokaler Suchindex als kompatibler Fallback möglich.
+Indizes bestehen für Event-/Projektzuordnung, Fristen, Anhangstypen, Tags, Audit und Sicherungen. Die mit `Microsoft.Data.Sqlite` ausgelieferte lokale e_sqlite3-Distribution stellt FTS5 bereit; `SearchIndex` wird nach Aggregatspeicherungen einschließlich vorhandener extrahierter Texte neu aufgebaut. Ein Test prüft diese Funktion mit einer realen Datenbank.
 
 ## Arbeitsordner und Speicherung
 

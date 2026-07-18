@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilenstein 1 abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1 und 2 abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 2 – Datenmodell-Persistenz und SQLite vorbereiten
+Meilenstein 3 – Projektverwaltung und lokale Arbeitsordner
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -34,6 +34,20 @@ Meilenstein 2 – Datenmodell-Persistenz und SQLite vorbereiten
 - Architektur, geplantes Datenbankschema, Projektformat, Risiken und aktuelle Drittanbieterlizenzen dokumentiert
 - 20 Unit-Tests und 1 Architektur-Integrationstest implementiert
 
+### Meilenstein 2 – Datenmodell und SQLite
+
+- `Microsoft.Data.Sqlite` 8.0.29 als notwendige MIT-lizenzierte Produktionsabhängigkeit eingeführt und transitive SQLitePCLRaw-Lizenzen dokumentiert
+- SQLite-Verbindungen mit Fremdschlüsseln, WAL, begrenzter Wartezeit und geeignetem Synchronitätsmodus konfiguriert
+- transaktionale Schema-Migration 1 implementiert
+- alle in `SPEC.md` geforderten Tabellen, Indizes und ein lokaler FTS5-Suchindex angelegt
+- neueres unbekanntes Datenbankschema wird mit verständlicher Meldung abgelehnt
+- transaktionales Repository zum Erstellen, Speichern und erneuten Öffnen vollständiger Projektaggregate implementiert
+- alle fünf Datumsgenauigkeiten werden komponentengenau persistiert und wiederhergestellt
+- Fristen, Tags, Anhänge, Webseitenlinks, Einstellungen und manuelle Layoutpositionen werden mit Fremdschlüsseln gespeichert
+- Folge-Speicherungen erhalten vorhandene Anhangsmetadaten und extrahierte Texte und bauen den Suchindex daraus neu auf
+- entfernte Ereignisse und abhängige Datensätze werden konsistent bereinigt
+- Integritätstests für Schema, Idempotenz, Roundtrip, FTS, Kaskaden, Rollback und Versionsabwehr ergänzt
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -46,13 +60,13 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Ergebnis: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 20 Unit-Tests und 1 Integrationstest bestanden.
+Aktueller Stand nach Meilenstein 2: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 20 Unit-Tests und 7 Integrationstests bestanden.
 
 ## Phasenweiser Implementierungsplan
 
 1. **Solution und Architektur – abgeschlossen:** Schichten, Fachmodellbasis, Ports, Architektur- und Formatdokumentation.
-2. **Datenmodell und SQLite – als Nächstes:** vollständiges normalisiertes Schema, Migrationen, Repository, Transaktionen, FTS, Integrationstests.
-3. **Projektverwaltung:** Arbeitsordner, Neu/Öffnen/Speichern unter/Duplizieren/Löschen, zuletzt verwendet, atomarer Autosave.
+2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
+3. **Projektverwaltung – als Nächstes:** Arbeitsordner, Neu/Öffnen/Speichern unter/Duplizieren/Löschen, zuletzt verwendet, atomarer Autosave.
 4. **Ereignisse und Fristen:** verbundene MVVM-Bearbeitung, Tags, Links, Undo/Redo, Drag-Sortierung, Audit.
 5. **Anhänge und lokale Dokumentenanalyse:** sichere Kopien, Mehrfach-Drop, PDF/Bild/DOCX/XLSX, Vorschau, lokale OCR, Warteschlange.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
@@ -67,7 +81,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Bekannte Probleme und Risiken
 
-- SQLite, Datenbankmigrationen und produktive Dependency Injection sind noch nicht implementiert.
+- Produktive Dependency Injection und lokale strukturierte Protokollierung sind noch nicht implementiert.
 - Die WPF-Oberfläche ist weiterhin das Starttemplate; sie ist noch nicht mit den Application-Ports verbunden.
 - Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Große Archive benötigen harte Extraktionslimits und Speicherplatzprüfung; bisher besteht nur Domain-Pfadvalidierung, noch kein ZIP-Importer.
@@ -76,4 +90,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Microsoft.Data.Sqlite als notwendige MIT-lizenzierte Produktionsabhängigkeit einführen, Schema-Migration 1 mit allen in `SPEC.md` geforderten Tabellen implementieren und Repository-Integrationstests für Erstellen, Speichern, erneutes Öffnen, Fremdschlüssel und Datumsgenauigkeit ergänzen.
+Sicheren lokalen Workspace-Dienst implementieren: neues Projekt in eindeutigem Arbeitsordner anlegen, vorhandene Arbeitskopie öffnen, atomar speichern/„Speichern unter“, duplizieren und schließen. Darauf aufbauend die ersten `.zeitprojekt`-Archive mit Manifest und SHA-256 erzeugen und per Integrationstest erneut öffnen.
