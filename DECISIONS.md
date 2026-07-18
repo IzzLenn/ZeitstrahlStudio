@@ -101,3 +101,11 @@ Autosave verwendet denselben vollständigen Repository-/Archivpfad wie manuelles
 **Status:** angenommen am 19.07.2026
 
 Technische Anwendungslogs werden ausschließlich lokal als ein JSON-Objekt pro Zeile geschrieben. Standardmäßig sind fünf Dateien mit je höchstens 5 MiB vorgesehen. Nachrichten und technische Details werden begrenzt, damit keine versehentlich übergebenen vollständigen Dokumentinhalte das Log unkontrolliert vergrößern. Lesen, manueller Export und Löschen sind über eine Anwendungsschnittstelle verfügbar.
+
+## ADR-015: Microsoft DI als WPF-Composition-Root
+
+**Status:** angenommen am 19.07.2026
+
+Die WPF-Anwendung erstellt beim Start einen einzigen validierten Microsoft.Extensions.DependencyInjection-Container. Sie registriert konkrete lokale Adapter gegen die Ports der Application-Schicht und hält ViewModels als einzige Orchestrierungsschicht zwischen UI und Anwendungsdiensten. Code-behind bleibt auf Fenster- und Dialoglebenszyklus beschränkt.
+
+StartupUri wird nicht verwendet, weil das Hauptfenster erst nach erfolgreichem Aufbau des Containers erzeugt werden darf. Asynchrone Initialisierung, Kommandozeilenöffnung, Autosave und globales lokales Fehlerlogging werden vom Anwendungslebenszyklus koordiniert. Ein Service-Locator in ViewModels sowie statische globale Diensteinzelobjekte wurden wegen versteckter Abhängigkeiten und schlechter Testbarkeit verworfen.

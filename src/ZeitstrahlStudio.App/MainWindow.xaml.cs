@@ -1,23 +1,47 @@
-﻿using System.Text;
+using System.ComponentModel;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 
 namespace ZeitstrahlStudio.App;
 
-/// <summary>
-/// Interaction logic for MainWindow.xaml
-/// </summary>
+/// <summary>Hauptfenster; Code-behind behandelt ausschließlich den Fensterlebenszyklus.</summary>
 public partial class MainWindow : Window
 {
-    public MainWindow()
+    private readonly MainWindowViewModel viewModel;
+    private bool closeApproved;
+    private bool closeInProgress;
+
+    public MainWindow(MainWindowViewModel viewModel)
     {
+        this.viewModel = viewModel;
         InitializeComponent();
+        DataContext = viewModel;
+    }
+
+    private async void Window_Closing(object? sender, CancelEventArgs e)
+    {
+        if (closeApproved)
+        {
+            return;
+        }
+
+        e.Cancel = true;
+        if (closeInProgress)
+        {
+            return;
+        }
+
+        closeInProgress = true;
+        try
+        {
+            if (await viewModel.PrepareToCloseAsync().ConfigureAwait(true))
+            {
+                closeApproved = true;
+                Close();
+            }
+        }
+        finally
+        {
+            closeInProgress = false;
+        }
     }
 }

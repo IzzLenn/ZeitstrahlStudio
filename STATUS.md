@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1, 2 und Projektverwaltung 3A/3B abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1, 2 und Projektverwaltung 3A–3C abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 3C – Dependency Injection und verbundene MVVM-Projektoberfläche
+Meilenstein 4 – Ereignisse, Fristen, Undo/Redo und Audit
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -73,6 +73,18 @@ Meilenstein 3C – Dependency Injection und verbundene MVVM-Projektoberfläche
 - Logeinträge begrenzen Nachrichten/Fehlerdetails und enthalten keine automatisch übernommenen Dokumentinhalte
 - Integrationstests für Recent Projects, Recovery, einen vollständigen Autosave-Zyklus und Logrotation/-export/-löschung ergänzt
 
+### Meilenstein 3C – Dependency Injection und verbundene MVVM-Projektoberfläche
+
+- Microsoft.Extensions.DependencyInjection 8.0.1 als produktiven Composition Root eingeführt und lizenzrechtlich dokumentiert
+- Repository, Archiv, Workspace, Recovery, Recent Projects, Autosave, lokale Logs, Dialoge, Haupt-ViewModel und Hauptfenster zentral mit Lebenszyklusprüfung registriert
+- WPF-Startablauf ohne StartupUri implementiert; .zeitprojekt-Kommandozeilenargumente werden nach erfolgreicher Initialisierung geöffnet
+- deutschsprachigen MVVM-Startbildschirm mit Neu, Öffnen, zuletzt verwendeten Projekten und Recovery-Aktionen umgesetzt
+- verbundene Projektansicht für Speichern, Speichern unter, Duplizieren, Schließen und chronologische Ereignisübersicht umgesetzt
+- asynchrone Commands verhindern Doppelaufrufe und aktualisieren ihre Verfügbarkeit über den gebundenen Busy-/Projektzustand
+- geordneter Fensterschluss fragt bei ungespeicherten Änderungen nach Speichern, Verwerfen oder Abbrechen
+- globale WPF-Dispatcherfehler werden abgefangen, lokal strukturiert protokolliert und mit verständlicher deutscher Meldung angezeigt
+- periodisches Autosave wird mit dem Anwendungslebenszyklus gestartet und beim Beenden abbrechbar heruntergefahren
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -85,14 +97,14 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 3B: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 20 Unit-Tests und 16 Integrationstests bestanden.
+Aktueller Stand nach Meilenstein 3C: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 20 Unit-Tests und 16 Integrationstests bestanden.
 
 ## Phasenweiser Implementierungsplan
 
 1. **Solution und Architektur – abgeschlossen:** Schichten, Fachmodellbasis, Ports, Architektur- und Formatdokumentation.
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
-3. **Projektverwaltung – in Arbeit:** Backend für sichere Arbeitsordner, Neu/Öffnen/Speichern unter/Duplizieren/Löschen, Archivtransfer, zuletzt verwendet, Autosave und Crash-Recovery ist umgesetzt; produktive DI- und MVVM-Oberflächenanbindung folgt in Teil 3C.
-4. **Ereignisse und Fristen:** verbundene MVVM-Bearbeitung, Tags, Links, Undo/Redo, Drag-Sortierung, Audit.
+3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
+4. **Ereignisse und Fristen – als Nächstes:** verbundene MVVM-Bearbeitung, Tags, Links, Undo/Redo, Drag-Sortierung, Audit.
 5. **Anhänge und lokale Dokumentenanalyse:** sichere Kopien, Mehrfach-Drop, PDF/Bild/DOCX/XLSX, Vorschau, lokale OCR, Warteschlange.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
@@ -106,8 +118,8 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Bekannte Probleme und Risiken
 
-- Produktive Dependency Injection ist noch nicht implementiert; der lokale strukturierte Logdienst ist vorhanden, aber noch nicht an globale Fehlerbehandlung und UI gebunden.
-- Die WPF-Oberfläche ist weiterhin das Starttemplate; sie ist noch nicht mit den Application-Ports verbunden.
+- Die Ereignisübersicht ist lesend angebunden; Erstellen, Bearbeiten, Löschen, Undo/Redo und Drag-Sortierung folgen in Meilenstein 4.
+- UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
 - Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
 - Inno Setup ist nicht im `PATH`; der Installer kann aktuell noch nicht gebaut werden.
@@ -115,4 +127,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Produktive Dependency Injection als Composition Root der WPF-Anwendung einführen. Danach einen echten MVVM-Startbildschirm mit Neu/Öffnen/Zuletzt verwendet/Wiederherstellen sowie eine Projektansicht für Speichern, Speichern unter, Duplizieren und Schließen an die geprüften Dienste binden.
+Anwendungsfälle und MVVM-Dialog für das vollständige Erstellen und Bearbeiten eines Ereignisses implementieren. Dabei alle fünf Datumsgenauigkeiten, optionale Fristen, Tags und Webseitenlinks verlustfrei an das vorhandene Domainmodell und Repository binden.

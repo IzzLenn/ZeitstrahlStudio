@@ -4,7 +4,7 @@ Zeitstrahl Studio wird als vollständig lokale, deutschsprachige Windows-Desktop
 
 ## Aktueller Stand
 
-Das Repository befindet sich nach Meilenstein 3A im Aufbau. Solution, Schichtengrenzen, fachliches Grundmodell, SQLite-Persistenz, lokaler FTS5-Index sowie sichere, atomare `.zeitprojekt`-Archive und Arbeitsordner sind implementiert und automatisiert getestet. Die verbundene WPF-Oberfläche, Dokumentverarbeitung, Zeitstrahlansichten, PDF-/HTML-Exporte, Sicherungsrotation und Auslieferungsartefakte folgen in den in `STATUS.md` dokumentierten Meilensteinen. Dieser Stand ist noch kein Release.
+Das Repository befindet sich nach Meilenstein 3C im Aufbau. Solution, Schichtengrenzen, fachliches Grundmodell, SQLite-Persistenz, lokaler FTS5-Index, sichere atomare `.zeitprojekt`-Archive, Autosave/Recovery und eine verbundene WPF-Projektoberfläche sind implementiert und automatisiert getestet. Ereignisbearbeitung, Dokumentverarbeitung, Zeitstrahlansichten, PDF-/HTML-Exporte, Sicherungsrotation und Auslieferungsartefakte folgen in den in `STATUS.md` dokumentierten Meilensteinen. Dieser Stand ist noch kein Release.
 
 ## Lokaler Build
 

@@ -71,6 +71,8 @@ Zusammengehörige Datenbankänderungen laufen in einer Transaktion. Anhangsdatei
 
 ## Oberfläche und Nebenläufigkeit
 
+Der WPF-Start wird über einen validierten Microsoft.Extensions.DependencyInjection-Container aufgebaut. Das Haupt-ViewModel bindet Projektanlage, Archivöffnung, Recent Projects, Recovery, Speichern, Duplizieren, Schließen, Autosave und lokale Fehlerprotokollierung an die Oberfläche. Code-behind behandelt ausschließlich Fenster- und Dialoglebenszyklen. Asynchrone Commands verhindern Doppelaufrufe und machen laufende Vorgänge sichtbar.
+
 ViewModels stellen Commands und bindbare Zustände bereit. Der UI-Thread übernimmt nur kleine Zustandsänderungen. Listen werden virtualisiert; große Vorschaubilder und Dokumenttexte werden verzögert geladen. Dokumentanalyse und OCR verwenden eine begrenzte Warteschlange. Autosave serialisiert Speichervorgänge, damit niemals zwei Archivgenerationen konkurrieren.
 
 Helles und dunkles Theme sind Resource Dictionaries. Zeitstrahl-Layouts werden aus einem testbaren Layoutmodell erzeugt; horizontale und vertikale WPF-Ansichten konsumieren dasselbe Modell. Farben werden immer durch Text, Symbole oder Rahmen ergänzt.
