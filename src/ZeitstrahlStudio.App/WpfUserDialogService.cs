@@ -1,6 +1,8 @@
 using Microsoft.Win32;
 using System.IO;
 using System.Windows;
+using ZeitstrahlStudio.Application;
+using ZeitstrahlStudio.Domain;
 
 namespace ZeitstrahlStudio.App;
 
@@ -14,6 +16,15 @@ public sealed class WpfUserDialogService : IUserDialogService
             Owner = System.Windows.Application.Current.MainWindow,
         };
         return dialog.ShowDialog() == true ? dialog.ProjectName : null;
+    }
+
+    public EventEditRequest? RequestEvent(TimelineEvent? timelineEvent)
+    {
+        var dialog = new EventEditorDialog(timelineEvent)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        return dialog.ShowDialog() == true ? dialog.Result : null;
     }
 
     public string? RequestOpenProjectPath()
@@ -69,6 +80,14 @@ public sealed class WpfUserDialogService : IUserDialogService
         System.Windows.Application.Current.MainWindow,
         $"Soll die wiederherstellbare Arbeitskopie von „{projectName}“ endgültig verworfen werden?",
         "Arbeitskopie verwerfen",
+        MessageBoxButton.YesNo,
+        MessageBoxImage.Warning,
+        MessageBoxResult.No) == MessageBoxResult.Yes;
+
+    public bool ConfirmDeleteEvent(string eventTitle) => MessageBox.Show(
+        System.Windows.Application.Current.MainWindow,
+        $"Soll das Ereignis „{eventTitle}“ gelöscht werden?",
+        "Ereignis löschen",
         MessageBoxButton.YesNo,
         MessageBoxImage.Warning,
         MessageBoxResult.No) == MessageBoxResult.Yes;

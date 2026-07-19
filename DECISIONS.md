@@ -109,3 +109,11 @@ Technische Anwendungslogs werden ausschließlich lokal als ein JSON-Objekt pro Z
 Die WPF-Anwendung erstellt beim Start einen einzigen validierten Microsoft.Extensions.DependencyInjection-Container. Sie registriert konkrete lokale Adapter gegen die Ports der Application-Schicht und hält ViewModels als einzige Orchestrierungsschicht zwischen UI und Anwendungsdiensten. Code-behind bleibt auf Fenster- und Dialoglebenszyklus beschränkt.
 
 StartupUri wird nicht verwendet, weil das Hauptfenster erst nach erfolgreichem Aufbau des Containers erzeugt werden darf. Asynchrone Initialisierung, Kommandozeilenöffnung, Autosave und globales lokales Fehlerlogging werden vom Anwendungslebenszyklus koordiniert. Ein Service-Locator in ViewModels sowie statische globale Diensteinzelobjekte wurden wegen versteckter Abhängigkeiten und schlechter Testbarkeit verworfen.
+
+## ADR-016: Ereignisbearbeitung durch validierten atomaren Ersatz
+
+**Status:** angenommen am 19.07.2026
+
+Eine Ereignisbearbeitung verändert nicht schrittweise das bereits im Projekt befindliche Objekt. Die Application-Schicht konstruiert aus der vollständigen Eingabe zuerst ein neues, durch die Domain validiertes Ereignis und ersetzt erst danach den bisherigen Eintrag mit derselben ID. Anhänge, Erstellungszeitpunkt, manuelle Sortierposition und bestehende Link-IDs werden dabei erhalten.
+
+Damit bleibt das Aggregat bei einem ungültigen späteren Feld – beispielsweise einem fehlerhaften Link – vollständig unverändert. Schrittweise Setter-Aufrufe mit manueller Rückabwicklung wurden verworfen, weil jede neue Eigenschaft eine weitere unvollständige Fehlerkombination erzeugen könnte. Der atomare Ersatz bildet zugleich eine klare Basis für Undo/Redo-Snapshots.

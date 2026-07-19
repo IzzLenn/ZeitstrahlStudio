@@ -144,6 +144,22 @@ public sealed class TimelineProject
         Touch(modifiedAtUtc);
     }
 
+    /// <summary>Ersetzt ein vorhandenes Ereignis atomar durch eine vollständig validierte Fassung.</summary>
+    public void ReplaceEvent(TimelineEvent timelineEvent, DateTimeOffset modifiedAtUtc)
+    {
+        ArgumentNullException.ThrowIfNull(timelineEvent);
+        var index = events.FindIndex(existing => existing.Id == timelineEvent.Id);
+        if (index < 0)
+        {
+            throw new DomainValidationException(
+                "Das zu ersetzende Ereignis wurde nicht gefunden.",
+                nameof(timelineEvent));
+        }
+
+        events[index] = timelineEvent;
+        Touch(modifiedAtUtc);
+    }
+
     /// <summary>Entfernt ein Ereignis; die Anwendungsschicht protokolliert und kapselt Undo.</summary>
     public TimelineEvent RemoveEvent(Guid eventId, DateTimeOffset modifiedAtUtc)
     {

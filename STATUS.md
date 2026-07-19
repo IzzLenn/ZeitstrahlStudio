@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1, 2 und Projektverwaltung 3A–3C abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1, 2, Projektverwaltung 3A–3C und Ereignisbearbeitung 4A abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 4 – Ereignisse, Fristen, Undo/Redo und Audit
+Meilenstein 4B – Undo/Redo, Audit und manuelle Reihenfolge
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -85,6 +85,19 @@ Meilenstein 4 – Ereignisse, Fristen, Undo/Redo und Audit
 - globale WPF-Dispatcherfehler werden abgefangen, lokal strukturiert protokolliert und mit verständlicher deutscher Meldung angezeigt
 - periodisches Autosave wird mit dem Anwendungslebenszyklus gestartet und beim Beenden abbrechbar heruntergefahren
 
+### Meilenstein 4A – Ereignisse, Datumsgenauigkeiten, Fristen, Tags und Links
+
+- vollständiges deutschsprachiges MVVM-Formular für Ereignisse mit getrennten Reitern für Inhalt/Datum und Frist/Einordnung/Links umgesetzt
+- alle fünf Datumsgenauigkeiten werden ohne erfundene Komponenten erfasst und beim Bearbeiten wieder in ihre ursprünglichen Felder geladen
+- unabhängige Frist mit optionaler Uhrzeit, Bezeichnung, Status und Erinnerungsnotiz angebunden
+- Titel, Kurzinfo, Beschreibung, Quelle, Notizen, Priorität, Status und frei wählbare #RRGGBB-Farbe bearbeitbar
+- Schlagwörter werden normalisiert und dedupliziert; Webseitenlinks akzeptieren ausschließlich absolute HTTP-/HTTPS-Adressen und optionale Bezeichnungen
+- Erstellen, Bearbeiten und bestätigtes Löschen sind über die gebundene chronologische Ereignisliste verfügbar
+- Bearbeitungen erzeugen zuerst ein vollständig validiertes Ersatzereignis; bestehende IDs, Anhänge, manuelle Reihenfolge und unveränderte Link-IDs bleiben erhalten
+- fehlgeschlagene Validierung ersetzt das vorhandene Ereignis nicht und kann keinen halb geänderten Aggregatzustand hinterlassen
+- Projekt wird nach jeder erfolgreichen Änderung als ungespeichert markiert und in chronologischer Reihenfolge neu dargestellt
+- vier zusätzliche Unit-Tests decken vollständiges Erstellen, ID-/Anhangserhalt, atomare Fehlerabwehr und Löschen ab
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -97,14 +110,14 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 3C: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 20 Unit-Tests und 16 Integrationstests bestanden.
+Aktueller Stand nach Meilenstein 4A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 24 Unit-Tests und 16 Integrationstests bestanden.
 
 ## Phasenweiser Implementierungsplan
 
 1. **Solution und Architektur – abgeschlossen:** Schichten, Fachmodellbasis, Ports, Architektur- und Formatdokumentation.
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
-4. **Ereignisse und Fristen – als Nächstes:** verbundene MVVM-Bearbeitung, Tags, Links, Undo/Redo, Drag-Sortierung, Audit.
+4. **Ereignisse und Fristen – in Arbeit:** vollständige MVVM-Bearbeitung, alle Datumsgenauigkeiten, Fristen, Tags und Links sind in 4A umgesetzt; Undo/Redo, Drag-Sortierung und Audit folgen in 4B.
 5. **Anhänge und lokale Dokumentenanalyse:** sichere Kopien, Mehrfach-Drop, PDF/Bild/DOCX/XLSX, Vorschau, lokale OCR, Warteschlange.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
@@ -118,7 +131,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Bekannte Probleme und Risiken
 
-- Die Ereignisübersicht ist lesend angebunden; Erstellen, Bearbeiten, Löschen, Undo/Redo und Drag-Sortierung folgen in Meilenstein 4.
+- Erstellen, Bearbeiten und Löschen von Ereignissen sind angebunden; Undo/Redo, Audit und Drag-Sortierung fehlen noch.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
 - Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
@@ -127,4 +140,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Anwendungsfälle und MVVM-Dialog für das vollständige Erstellen und Bearbeiten eines Ereignisses implementieren. Dabei alle fünf Datumsgenauigkeiten, optionale Fristen, Tags und Webseitenlinks verlustfrei an das vorhandene Domainmodell und Repository binden.
+Begrenzte Undo-/Redo-Historie für Ereignisoperationen sowie den SQLite-basierten Auditdienst implementieren. Danach die manuelle Reihenfolge identischer Datumswerte über eine zugängliche Listenaktion anbinden.

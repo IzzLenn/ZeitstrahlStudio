@@ -13,6 +13,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private readonly IProjectRecoveryService recoveryService;
     private readonly IProjectAutosaveService autosaveService;
     private readonly ILocalLogService logService;
+    private readonly ProjectEventEditingService eventEditingService;
     private readonly IUserDialogService dialogs;
     private readonly CancellationTokenSource lifetimeCancellation = new();
     private ProjectWorkspace? currentWorkspace;
@@ -20,6 +21,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private SynchronizationContext? uiContext;
     private bool initialized;
     private bool isBusy;
+    private TimelineEvent? selectedEvent;
     private string statusMessage = "Bereit";
 
     public MainWindowViewModel(
@@ -28,6 +30,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         IProjectRecoveryService recoveryService,
         IProjectAutosaveService autosaveService,
         ILocalLogService logService,
+        ProjectEventEditingService eventEditingService,
         IUserDialogService dialogs)
     {
         this.workspaceService = workspaceService;
@@ -35,6 +38,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         this.recoveryService = recoveryService;
         this.autosaveService = autosaveService;
         this.logService = logService;
+        this.eventEditingService = eventEditingService;
         this.dialogs = dialogs;
 
         NewProjectCommand = new AsyncRelayCommand(() => ExecuteGuardedAsync(CreateProjectAsync), () => !IsBusy);
@@ -63,6 +67,15 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         RefreshCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(RefreshStartDataAsync),
             () => !IsBusy);
+        AddEventCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(AddEventAsync),
+            () => !IsBusy && HasProject);
+        EditEventCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(EditSelectedEventAsync),
+            () => !IsBusy && SelectedEvent is not null);
+        DeleteEventCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(DeleteSelectedEventAsync),
+            () => !IsBusy && SelectedEvent is not null);
     }
 
     public ObservableCollection<RecentProject> RecentProjects { get; } = [];
@@ -79,6 +92,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public AsyncRelayCommand DuplicateCommand { get; }
     public AsyncRelayCommand CloseProjectCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
+    public AsyncRelayCommand AddEventCommand { get; }
+    public AsyncRelayCommand EditEventCommand { get; }
+    public AsyncRelayCommand DeleteEventCommand { get; }
 
     public bool IsBusy
     {
@@ -100,6 +116,19 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public int EventCount => CurrentWorkspace?.Project.Events.Count ?? 0;
     public bool HasUnsavedChanges => CurrentWorkspace?.HasUnsavedChanges ?? false;
 
+    public TimelineEvent? SelectedEvent
+    {
+        get => selectedEvent;
+        set
+        {
+            if (SetProperty(ref selectedEvent, value))
+            {
+                EditEventCommand.RaiseCanExecuteChanged();
+                DeleteEventCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
+
     public string StatusMessage
     {
         get => statusMessage;
@@ -116,14 +145,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                 return;
             }
 
-            Events.Clear();
-            if (value is not null)
-            {
-                foreach (var timelineEvent in value.Project.GetChronologicalEvents())
-                {
-                    Events.Add(timelineEvent);
-                }
-            }
+            RefreshEventList(selectedEventId: null);
 
             OnPropertyChanged(nameof(HasProject));
             OnPropertyChanged(nameof(HasNoProject));
@@ -308,6 +330,71 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         StatusMessage = "Die Arbeitskopie wurde verworfen.";
     }
 
+    private Task AddEventAsync()
+    {
+        if (CurrentWorkspace is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var request = dialogs.RequestEvent(timelineEvent: null);
+        if (request is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var created = eventEditingService.Create(
+            CurrentWorkspace.Project,
+            request,
+            DateTimeOffset.UtcNow);
+        MarkCurrentProjectChanged(created.Id);
+        StatusMessage = "Ereignis wurde erstellt.";
+        return Task.CompletedTask;
+    }
+
+    private Task EditSelectedEventAsync()
+    {
+        if (CurrentWorkspace is null || SelectedEvent is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        var eventId = SelectedEvent.Id;
+        var request = dialogs.RequestEvent(SelectedEvent);
+        if (request is null)
+        {
+            return Task.CompletedTask;
+        }
+
+        eventEditingService.Update(
+            CurrentWorkspace.Project,
+            eventId,
+            request,
+            DateTimeOffset.UtcNow);
+        MarkCurrentProjectChanged(eventId);
+        StatusMessage = "Ereignis wurde aktualisiert.";
+        return Task.CompletedTask;
+    }
+
+    private Task DeleteSelectedEventAsync()
+    {
+        if (CurrentWorkspace is null ||
+            SelectedEvent is null ||
+            !dialogs.ConfirmDeleteEvent(SelectedEvent.Title))
+        {
+            return Task.CompletedTask;
+        }
+
+        var eventTitle = SelectedEvent.Title;
+        eventEditingService.Delete(
+            CurrentWorkspace.Project,
+            SelectedEvent.Id,
+            DateTimeOffset.UtcNow);
+        MarkCurrentProjectChanged(selectedEventId: null);
+        StatusMessage = $"Ereignis „{eventTitle}“ wurde gelöscht.";
+        return Task.CompletedTask;
+    }
+
     private async Task SaveCurrentAsync(string? targetPath)
     {
         if (CurrentWorkspace is null)
@@ -415,6 +502,36 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         }
     }
 
+    private void MarkCurrentProjectChanged(Guid? selectedEventId)
+    {
+        if (currentWorkspace is null)
+        {
+            return;
+        }
+
+        currentWorkspace = currentWorkspace with { HasUnsavedChanges = true };
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+        RefreshEventList(selectedEventId);
+        RaiseCommandStates();
+    }
+
+    private void RefreshEventList(Guid? selectedEventId)
+    {
+        Events.Clear();
+        if (currentWorkspace is not null)
+        {
+            foreach (var timelineEvent in currentWorkspace.Project.GetChronologicalEvents())
+            {
+                Events.Add(timelineEvent);
+            }
+        }
+
+        SelectedEvent = selectedEventId.HasValue
+            ? Events.FirstOrDefault(timelineEvent => timelineEvent.Id == selectedEventId.Value)
+            : null;
+        OnPropertyChanged(nameof(EventCount));
+    }
+
     private async Task ExecuteGuardedAsync(Func<Task> action)
     {
         if (IsBusy)
@@ -496,5 +613,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         DuplicateCommand.RaiseCanExecuteChanged();
         CloseProjectCommand.RaiseCanExecuteChanged();
         RefreshCommand.RaiseCanExecuteChanged();
+        AddEventCommand.RaiseCanExecuteChanged();
+        EditEventCommand.RaiseCanExecuteChanged();
+        DeleteEventCommand.RaiseCanExecuteChanged();
     }
 }

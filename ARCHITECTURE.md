@@ -73,6 +73,8 @@ Zusammengehörige Datenbankänderungen laufen in einer Transaktion. Anhangsdatei
 
 Der WPF-Start wird über einen validierten Microsoft.Extensions.DependencyInjection-Container aufgebaut. Das Haupt-ViewModel bindet Projektanlage, Archivöffnung, Recent Projects, Recovery, Speichern, Duplizieren, Schließen, Autosave und lokale Fehlerprotokollierung an die Oberfläche. Code-behind behandelt ausschließlich Fenster- und Dialoglebenszyklen. Asynchrone Commands verhindern Doppelaufrufe und machen laufende Vorgänge sichtbar.
 
+Das Ereignisformular erzeugt einen vollständigen Application-Request. Bei Änderungen wird daraus zunächst ein neues validiertes Domain-Ereignis aufgebaut und anschließend atomar im Projekt ersetzt. Dadurch bleiben IDs und Anhänge erhalten, während Validierungsfehler niemals einen teilweise veränderten Eintrag hinterlassen. Erstellen und Löschen verwenden dieselbe Application-Fassade; die WPF-Dialogklasse beschränkt sich auf Bestätigen und Anzeigen von Validierungsmeldungen.
+
 ViewModels stellen Commands und bindbare Zustände bereit. Der UI-Thread übernimmt nur kleine Zustandsänderungen. Listen werden virtualisiert; große Vorschaubilder und Dokumenttexte werden verzögert geladen. Dokumentanalyse und OCR verwenden eine begrenzte Warteschlange. Autosave serialisiert Speichervorgänge, damit niemals zwei Archivgenerationen konkurrieren.
 
 Helles und dunkles Theme sind Resource Dictionaries. Zeitstrahl-Layouts werden aus einem testbaren Layoutmodell erzeugt; horizontale und vertikale WPF-Ansichten konsumieren dasselbe Modell. Farben werden immer durch Text, Symbole oder Rahmen ergänzt.

@@ -209,25 +209,52 @@
                         <RowDefinition Height="*" />
                     </Grid.RowDefinitions>
                     <TextBlock FontSize="28" FontWeight="SemiBold" Text="{Binding ProjectName}" />
-                    <DockPanel Grid.Row="1" Margin="0,9,0,22">
+                    <DockPanel Grid.Row="1" Margin="0,9,0,22" LastChildFill="False">
                         <TextBlock DockPanel.Dock="Left"
+                                   Margin="0,0,18,0"
+                                   VerticalAlignment="Center"
                                    Foreground="#64748B"
                                    Text="Chronologische Ereignisübersicht" />
                         <TextBlock DockPanel.Dock="Right"
+                                   Margin="12,0,0,0"
+                                   VerticalAlignment="Center"
                                    Foreground="#475569"
                                    FontWeight="SemiBold"
                                    Text="{Binding EventCount, StringFormat={}{0} Ereignisse}" />
+                        <Button DockPanel.Dock="Right"
+                                Style="{StaticResource ToolbarButtonStyle}"
+                                Command="{Binding DeleteEventCommand}"
+                                Content="Löschen" />
+                        <Button DockPanel.Dock="Right"
+                                Style="{StaticResource ToolbarButtonStyle}"
+                                Command="{Binding EditEventCommand}"
+                                Content="Bearbeiten" />
+                        <Button DockPanel.Dock="Right"
+                                Style="{StaticResource PrimaryButtonStyle}"
+                                Command="{Binding AddEventCommand}"
+                                Content="Hinzufügen" />
                     </DockPanel>
                     <Border Grid.Row="2"
                             Background="#F8FAFC"
                             BorderBrush="#E2E8F0"
                             BorderThickness="1"
                             CornerRadius="6">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto">
-                            <ItemsControl Margin="20,16" ItemsSource="{Binding Events}">
-                                <ItemsControl.ItemTemplate>
+                        <ListBox Margin="12"
+                                 ItemsSource="{Binding Events}"
+                                 SelectedItem="{Binding SelectedEvent}"
+                                 Background="Transparent"
+                                 BorderThickness="0"
+                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem">
+                                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                    <Setter Property="Padding" Value="8" />
+                                </Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
                                     <DataTemplate>
-                                        <Grid Margin="0,0,0,14">
+                                        <Grid Margin="0,3">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="150" />
                                                 <ColumnDefinition Width="18" />
@@ -257,9 +284,8 @@
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </ScrollViewer>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
                     </Border>
                 </Grid>
             </Grid>

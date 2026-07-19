@@ -106,6 +106,27 @@ public sealed record AutosaveStatus(
     string Message,
     ApplicationError? Error = null);
 
+/// <summary>Bearbeitbarer Webseitenverweis eines Ereignisses.</summary>
+public sealed record WebLinkInput(
+    Guid? Id,
+    string Address,
+    string? Label);
+
+/// <summary>Vollständige validierbare Eingabe für ein Ereignis.</summary>
+public sealed record EventEditRequest(
+    EventDate Date,
+    string Title,
+    string? InfoText,
+    string? Description,
+    Deadline? Deadline,
+    EventPriority Priority,
+    string ColorHex,
+    string? Source,
+    string? Notes,
+    EventStatus Status,
+    IReadOnlyList<string> Tags,
+    IReadOnlyList<WebLinkInput> WebLinks);
+
 /// <summary>Schweregrad eines ausschließlich lokalen technischen Protokolleintrags.</summary>
 public enum LocalLogLevel
 {
