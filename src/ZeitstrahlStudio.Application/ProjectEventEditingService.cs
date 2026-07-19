@@ -84,6 +84,61 @@ public sealed class ProjectEventEditingService
         return removed;
     }
 
+    /// <summary>Fügt mehrere bereits sicher kopierte Anhänge als einen Undo-Schritt hinzu.</summary>
+    public TimelineEvent AddAttachments(
+        TimelineProject project,
+        Guid eventId,
+        IReadOnlyCollection<Attachment> attachments,
+        DateTimeOffset timestampUtc)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        ArgumentNullException.ThrowIfNull(attachments);
+        if (attachments.Count == 0)
+        {
+            throw new ArgumentException("Es wurde kein Anhang zum Hinzufügen übergeben.", nameof(attachments));
+        }
+
+        var existing = FindEvent(project, eventId);
+        var combined = existing.Attachments.Concat(attachments).ToArray();
+        if (combined.Select(attachment => attachment.Id).Distinct().Count() != combined.Length)
+        {
+            throw new DomainValidationException("Ein Anhang ist dem Ereignis bereits zugeordnet.", nameof(attachments));
+        }
+
+        var replacement = CloneWithAttachments(existing, combined, timestampUtc);
+        project.ReplaceEvent(replacement, timestampUtc);
+        Record(
+            project.Id,
+            new HistoryEntry(
+                $"{attachments.Count} Anhang/Anhänge zu „{existing.Title}“ hinzugefügt",
+                [new EventChange(eventId, existing, replacement)]));
+        return replacement;
+    }
+
+    /// <summary>Entfernt eine Anhangszuordnung; die Projektdatei bleibt für Undo erhalten.</summary>
+    public TimelineEvent RemoveAttachment(
+        TimelineProject project,
+        Guid eventId,
+        Guid attachmentId,
+        DateTimeOffset timestampUtc)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        var existing = FindEvent(project, eventId);
+        var removed = existing.Attachments.SingleOrDefault(attachment => attachment.Id == attachmentId)
+            ?? throw new DomainValidationException(
+                "Der zu entfernende Anhang wurde nicht gefunden.",
+                nameof(attachmentId));
+        var retained = existing.Attachments.Where(attachment => attachment.Id != attachmentId).ToArray();
+        var replacement = CloneWithAttachments(existing, retained, timestampUtc);
+        project.ReplaceEvent(replacement, timestampUtc);
+        Record(
+            project.Id,
+            new HistoryEntry(
+                $"Anhang „{removed.OriginalFileName}“ von „{existing.Title}“ entfernt",
+                [new EventChange(eventId, existing, replacement)]));
+        return replacement;
+    }
+
     /// <summary>Verschiebt ein Ereignis innerhalb einer Gruppe mit identischem Datum.</summary>
     public bool MoveWithinSameDate(
         TimelineProject project,
@@ -295,6 +350,29 @@ public sealed class ProjectEventEditingService
             modifiedAtUtc,
             source.Tags,
             source.Attachments,
+            source.WebLinks);
+
+    private static TimelineEvent CloneWithAttachments(
+        TimelineEvent source,
+        IEnumerable<Attachment> attachments,
+        DateTimeOffset modifiedAtUtc) =>
+        TimelineEvent.Restore(
+            source.Id,
+            source.Date,
+            source.Title,
+            source.InfoText,
+            source.Description,
+            source.Deadline,
+            source.Priority,
+            source.ColorHex,
+            source.Source,
+            source.Notes,
+            source.Status,
+            source.ManualSortPosition,
+            source.CreatedAtUtc,
+            modifiedAtUtc,
+            source.Tags,
+            attachments,
             source.WebLinks);
 
     private static TimelineEvent BuildEvent(

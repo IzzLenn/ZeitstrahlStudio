@@ -14,14 +14,17 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private readonly IProjectAutosaveService autosaveService;
     private readonly ILocalLogService logService;
     private readonly IAuditLogService auditLogService;
+    private readonly IAttachmentImportService attachmentImportService;
     private readonly ProjectEventEditingService eventEditingService;
     private readonly IUserDialogService dialogs;
     private readonly CancellationTokenSource lifetimeCancellation = new();
+    private CancellationTokenSource? attachmentImportCancellation;
     private ProjectWorkspace? currentWorkspace;
     private Task? autosaveTask;
     private SynchronizationContext? uiContext;
     private bool initialized;
     private bool isBusy;
+    private bool isAttachmentImporting;
     private TimelineEvent? selectedEvent;
     private string statusMessage = "Bereit";
 
@@ -32,6 +35,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         IProjectAutosaveService autosaveService,
         ILocalLogService logService,
         IAuditLogService auditLogService,
+        IAttachmentImportService attachmentImportService,
         ProjectEventEditingService eventEditingService,
         IUserDialogService dialogs)
     {
@@ -41,6 +45,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         this.autosaveService = autosaveService;
         this.logService = logService;
         this.auditLogService = auditLogService;
+        this.attachmentImportService = attachmentImportService;
         this.eventEditingService = eventEditingService;
         this.dialogs = dialogs;
 
@@ -98,6 +103,15 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         ShowAuditLogCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ShowAuditLogAsync),
             () => !IsBusy && HasProject);
+        AddAttachmentsCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(ChooseAndImportAttachmentsAsync),
+            () => !IsBusy && SelectedEvent is not null);
+        RemoveAttachmentCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(RemoveAttachmentAsync),
+            () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
+        CancelAttachmentImportCommand = new AsyncRelayCommand(
+            CancelAttachmentImportAsync,
+            () => IsAttachmentImporting);
     }
 
     public ObservableCollection<RecentProject> RecentProjects { get; } = [];
@@ -122,6 +136,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public AsyncRelayCommand MoveEventEarlierCommand { get; }
     public AsyncRelayCommand MoveEventLaterCommand { get; }
     public AsyncRelayCommand ShowAuditLogCommand { get; }
+    public AsyncRelayCommand AddAttachmentsCommand { get; }
+    public AsyncRelayCommand RemoveAttachmentCommand { get; }
+    public AsyncRelayCommand CancelAttachmentImportCommand { get; }
 
     public bool IsBusy
     {
@@ -142,6 +159,19 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public string ProjectArchivePath => CurrentWorkspace?.ArchivePath ?? string.Empty;
     public int EventCount => CurrentWorkspace?.Project.Events.Count ?? 0;
     public bool HasUnsavedChanges => CurrentWorkspace?.HasUnsavedChanges ?? false;
+    public bool CanAcceptDroppedFiles => !IsBusy && HasProject && SelectedEvent is not null;
+
+    public bool IsAttachmentImporting
+    {
+        get => isAttachmentImporting;
+        private set
+        {
+            if (SetProperty(ref isAttachmentImporting, value))
+            {
+                CancelAttachmentImportCommand.RaiseCanExecuteChanged();
+            }
+        }
+    }
 
     public TimelineEvent? SelectedEvent
     {
@@ -154,6 +184,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                 DeleteEventCommand.RaiseCanExecuteChanged();
                 MoveEventEarlierCommand.RaiseCanExecuteChanged();
                 MoveEventLaterCommand.RaiseCanExecuteChanged();
+                AddAttachmentsCommand.RaiseCanExecuteChanged();
+                RemoveAttachmentCommand.RaiseCanExecuteChanged();
+                OnPropertyChanged(nameof(CanAcceptDroppedFiles));
             }
         }
     }
@@ -222,6 +255,10 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public Task OpenPathAsync(string archivePath) =>
         ExecuteGuardedAsync(() => OpenProjectCoreAsync(archivePath));
 
+    /// <summary>Importiert explizit per Drag-and-drop übergebene lokale Dateien.</summary>
+    public Task ImportDroppedFilesAsync(IReadOnlyList<string> paths) =>
+        ExecuteGuardedAsync(() => ImportAttachmentPathsAsync(paths));
+
     /// <summary>Bereitet einen geordneten Fensterschluss vor.</summary>
     public async Task<bool> PrepareToCloseAsync()
     {
@@ -249,6 +286,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {
+        attachmentImportCancellation?.Cancel();
         lifetimeCancellation.Cancel();
         if (autosaveTask is not null)
         {
@@ -515,6 +553,135 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             lifetimeCancellation.Token).ConfigureAwait(true);
         dialogs.ShowAuditLog(entries);
         StatusMessage = $"{entries.Count} Audit-Einträge geladen.";
+    }
+
+    private async Task ChooseAndImportAttachmentsAsync()
+    {
+        var paths = dialogs.RequestAttachmentPaths();
+        if (paths.Count > 0)
+        {
+            await ImportAttachmentPathsAsync(paths).ConfigureAwait(true);
+        }
+    }
+
+    private async Task ImportAttachmentPathsAsync(IReadOnlyList<string> paths)
+    {
+        if (CurrentWorkspace is null || SelectedEvent is null || paths.Count == 0)
+        {
+            return;
+        }
+
+        var workspace = CurrentWorkspace;
+        var eventId = SelectedEvent.Id;
+        using var operationCancellation =
+            CancellationTokenSource.CreateLinkedTokenSource(lifetimeCancellation.Token);
+        attachmentImportCancellation = operationCancellation;
+        IsAttachmentImporting = true;
+        try
+        {
+            var progress = new Progress<FileOperationProgress>(report =>
+            {
+                StatusMessage =
+                    $"Importiere {report.CurrentItem}: {report.CompletedItems}/{report.TotalItems}, " +
+                    $"{report.SuccessfulItems} erfolgreich, {report.FailedItems} fehlgeschlagen";
+            });
+            var results = await attachmentImportService.ImportAsync(
+                eventId,
+                paths,
+                workspace.WorkingDirectory,
+                progress,
+                operationCancellation.Token).ConfigureAwait(true);
+            if (CurrentWorkspace?.Project.Id != workspace.Project.Id ||
+                CurrentWorkspace.Project.Events.All(timelineEvent => timelineEvent.Id != eventId))
+            {
+                throw new InvalidOperationException(
+                    "Das Zielereignis ist nach dem Dateikopieren nicht mehr geöffnet.");
+            }
+
+            var successfulAttachments = results
+                .Where(result => result.IsSuccess && result.Value is not null)
+                .Select(result => result.Value!)
+                .ToArray();
+            if (successfulAttachments.Length > 0)
+            {
+                var timestampUtc = DateTimeOffset.UtcNow;
+                eventEditingService.AddAttachments(
+                    CurrentWorkspace.Project,
+                    eventId,
+                    successfulAttachments,
+                    timestampUtc);
+                MarkCurrentProjectChanged(eventId);
+                await WriteAuditAsync(
+                    "AttachmentAdd",
+                    eventId,
+                    $"{successfulAttachments.Length} Anhang/Anhänge hinzugefügt",
+                    timestampUtc).ConfigureAwait(true);
+            }
+
+            var failures = results.Where(result => !result.IsSuccess).ToArray();
+            StatusMessage =
+                $"{successfulAttachments.Length} Anhang/Anhänge importiert, {failures.Length} fehlgeschlagen.";
+            if (failures.Length > 0)
+            {
+                var details = string.Join(
+                    Environment.NewLine,
+                    failures.Take(5).Select(result =>
+                        $"{result.Error?.UserMessage} {result.Error?.TechnicalDetails}".Trim()));
+                dialogs.ShowError(
+                    $"{failures.Length} Datei(en) konnten nicht importiert werden. " +
+                    "Erfolgreiche Projektkopien bleiben erhalten.",
+                    details);
+            }
+        }
+        catch (OperationCanceledException) when (operationCancellation.IsCancellationRequested)
+        {
+            StatusMessage = "Der Anhangsimport wurde abgebrochen.";
+        }
+        finally
+        {
+            if (ReferenceEquals(attachmentImportCancellation, operationCancellation))
+            {
+                attachmentImportCancellation = null;
+            }
+
+            IsAttachmentImporting = false;
+        }
+    }
+
+    private async Task RemoveAttachmentAsync()
+    {
+        if (CurrentWorkspace is null || SelectedEvent is null)
+        {
+            return;
+        }
+
+        var eventId = SelectedEvent.Id;
+        var attachment = dialogs.RequestAttachmentToRemove(SelectedEvent);
+        if (attachment is null)
+        {
+            return;
+        }
+
+        var timestampUtc = DateTimeOffset.UtcNow;
+        eventEditingService.RemoveAttachment(
+            CurrentWorkspace.Project,
+            eventId,
+            attachment.Id,
+            timestampUtc);
+        MarkCurrentProjectChanged(eventId);
+        await WriteAuditAsync(
+            "AttachmentRemove",
+            eventId,
+            $"Anhang „{attachment.OriginalFileName}“ entfernt",
+            timestampUtc).ConfigureAwait(true);
+        StatusMessage = $"Anhang „{attachment.OriginalFileName}“ wurde entfernt.";
+    }
+
+    private Task CancelAttachmentImportAsync()
+    {
+        attachmentImportCancellation?.Cancel();
+        StatusMessage = "Anhangsimport wird abgebrochen …";
+        return Task.CompletedTask;
     }
 
     private async Task SaveCurrentAsync(string? targetPath)
@@ -790,5 +957,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         MoveEventEarlierCommand.RaiseCanExecuteChanged();
         MoveEventLaterCommand.RaiseCanExecuteChanged();
         ShowAuditLogCommand.RaiseCanExecuteChanged();
+        AddAttachmentsCommand.RaiseCanExecuteChanged();
+        RemoveAttachmentCommand.RaiseCanExecuteChanged();
+        CancelAttachmentImportCommand.RaiseCanExecuteChanged();
+        OnPropertyChanged(nameof(CanAcceptDroppedFiles));
     }
 }

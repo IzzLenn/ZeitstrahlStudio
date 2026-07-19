@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1 bis 4 abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1 bis 4 und Anhangsimport 5A abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 5 – Anhänge und lokale Dokumentenanalyse
+Meilenstein 5B – lokale Dokumentenanalyse und Vorschauen
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -112,6 +112,22 @@ Meilenstein 5 – Anhänge und lokale Dokumentenanalyse
 - vier zusätzliche Unit-Tests prüfen Undo/Redo für Anlage, Änderung und Löschung sowie gruppenbegrenzte Sortierung
 - zwei zusätzliche Integrationstests prüfen Audit-Roundtrip, Sortierung und Erhaltung bei nachfolgenden Repository-Speicherungen
 
+### Meilenstein 5A – Sicherer Mehrfachimport und Anhangsverwaltung
+
+- externe Dateien werden asynchron und streamend vollständig in den Projektarbeitsordner kopiert
+- jeder Anhang erhält eine GUID-basierte kollisionsfreie interne Datei unterhalb seines Ereignisses; gleiche Originaldateinamen überschreiben sich nicht
+- SHA-256 wird während des Kopierens ohne vollständiges Laden in den Arbeitsspeicher berechnet
+- Länge und Änderungszeit der Quelldatei werden nach dem Kopieren erneut geprüft; während des Imports veränderte Dateien werden verworfen
+- Zielpfade werden kanonisch auf den Workspace begrenzt; projektinterne Reparse-Point-Anhangsordner werden abgelehnt
+- PDF, PNG/JPEG/TIFF/BMP, DOCX und XLSX erhalten stabile Medientypen; andere Dateien bleiben als Binäranhang transportierbar
+- Mehrfachauswahl und Drag-and-drop auf das Hauptfenster verarbeiten jede Datei einzeln und erhalten erfolgreiche Kopien bei Teilfehlern
+- Dateiname, Fortschritt, Erfolgs-/Fehlerzähler und explizites Abbrechen werden in der Statusleiste angeboten
+- ein Fehler einer einzelnen Datei beschädigt weder Projekt noch andere Importe; unvollständige Zieldateien werden bestmöglich entfernt
+- hinzugefügte und entfernte Anhangszuordnungen sind als ein Schritt rückgängig/wiederholbar und werden im Audit protokolliert
+- physische Projektkopien entfernter Anhänge bleiben für Undo erhalten
+- vier Integrationstests prüfen kollisionsfreie Gleichnamigkeit, Teilfehler, Abbruchbereinigung und Unabhängigkeit von der Quelldatei
+- ein Unit-Test prüft Undo für Hinzufügen und Entfernen einer Anhangszuordnung
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -124,7 +140,7 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 4B: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 28 Unit-Tests und 18 Integrationstests bestanden.
+Aktueller Stand nach Meilenstein 5A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 22 Integrationstests bestanden.
 
 ## Phasenweiser Implementierungsplan
 
@@ -132,7 +148,7 @@ Aktueller Stand nach Meilenstein 4B: Debug und Release jeweils 0 Warnungen/0 Feh
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
-5. **Anhänge und lokale Dokumentenanalyse:** sichere Kopien, Mehrfach-Drop, PDF/Bild/DOCX/XLSX, Vorschau, lokale OCR, Warteschlange.
+5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sichere Kopien, Mehrfachauswahl/-Drop, Fortschritt, Abbruch sowie Undo-fähige Zuordnung sind in 5A umgesetzt; Analyse, Vorschau, OCR und begrenzte Warteschlange folgen.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
 8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
@@ -146,7 +162,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 ## Bekannte Probleme und Risiken
 
 - Die manuelle Ereignisreihenfolge ist über tastaturzugängliche Früher-/Später-Aktionen verfügbar; direktes Drag-and-drop ist noch nicht implementiert.
-- Beim Löschen eines Ereignisses verbleiben dessen physische Anhangsdateien bis zum geplanten projektinternen Papierkorb aus Meilenstein 5 im Arbeitsarchiv.
+- Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
 - Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
@@ -155,4 +171,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Sicheren Mehrfachimport von Anhängen mit kollisionsfreien internen Pfaden, Hashprüfung, Fortschritt und Abbruch implementieren. Danach PDF-, Bild-, DOCX- und XLSX-Text-/Metadatenanalyse über eine begrenzte lokale Warteschlange anbinden.
+Lokale Text- und Metadatenextraktion für PDF, DOCX und XLSX sowie Bildmetadaten implementieren und über eine begrenzte abbrechbare Warteschlange an importierte Anhänge binden. Danach Bild-/PDF-Vorschau und lokale OCR ergänzen.

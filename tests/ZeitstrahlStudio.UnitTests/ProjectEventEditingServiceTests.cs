@@ -174,6 +174,44 @@ public sealed class ProjectEventEditingServiceTests
         Assert.Equal([first.Id, second.Id, later.Id], project.GetChronologicalEvents().Select(item => item.Id));
     }
 
+    [Fact]
+    public void AddAndRemoveAttachment_AreUndoable()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
+        var timelineEvent = service.Create(
+            project,
+            CreateRequest(deadline: null),
+            CreatedAt.AddMinutes(1));
+        var attachment = new Attachment(
+            Guid.NewGuid(),
+            "beleg.pdf",
+            "application/pdf",
+            5,
+            new string('b', 64),
+            null,
+            CreatedAt,
+            $"attachments/{Guid.NewGuid():N}/beleg.pdf");
+
+        service.AddAttachments(
+            project,
+            timelineEvent.Id,
+            [attachment],
+            CreatedAt.AddMinutes(2));
+        Assert.Equal(attachment.Id, Assert.Single(project.Events.Single().Attachments).Id);
+
+        service.RemoveAttachment(
+            project,
+            timelineEvent.Id,
+            attachment.Id,
+            CreatedAt.AddMinutes(3));
+        Assert.Empty(project.Events.Single().Attachments);
+
+        service.Undo(project, CreatedAt.AddMinutes(4));
+        Assert.Equal(attachment.Id, Assert.Single(project.Events.Single().Attachments).Id);
+        service.Undo(project, CreatedAt.AddMinutes(5));
+        Assert.Empty(project.Events.Single().Attachments);
+    }
+
     private static EventEditRequest CreateRequest(Deadline? deadline) => new(
         EventDate.Range(new DateOnly(2020, 1, 2), new DateOnly(2020, 3, 4)),
         "Wichtig",

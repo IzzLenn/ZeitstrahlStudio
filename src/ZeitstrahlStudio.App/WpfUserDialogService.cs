@@ -27,6 +27,29 @@ public sealed class WpfUserDialogService : IUserDialogService
         return dialog.ShowDialog() == true ? dialog.Result : null;
     }
 
+    public IReadOnlyList<string> RequestAttachmentPaths()
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Anhänge zum Ereignis hinzufügen",
+            Filter = "Unterstützte Dokumente|*.pdf;*.png;*.jpg;*.jpeg;*.tif;*.tiff;*.bmp;*.docx;*.xlsx|Alle Dateien|*.*",
+            CheckFileExists = true,
+            Multiselect = true,
+        };
+        return dialog.ShowDialog(System.Windows.Application.Current.MainWindow) == true
+            ? dialog.FileNames
+            : [];
+    }
+
+    public Attachment? RequestAttachmentToRemove(TimelineEvent timelineEvent)
+    {
+        var dialog = new AttachmentSelectionDialog(timelineEvent.Attachments)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        return dialog.ShowDialog() == true ? dialog.Result : null;
+    }
+
     public string? RequestOpenProjectPath()
     {
         var dialog = new OpenFileDialog

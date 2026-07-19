@@ -16,6 +16,8 @@ public interface IUserDialogService
 {
     string? RequestProjectName();
     EventEditRequest? RequestEvent(TimelineEvent? timelineEvent);
+    IReadOnlyList<string> RequestAttachmentPaths();
+    Attachment? RequestAttachmentToRemove(TimelineEvent timelineEvent);
     string? RequestOpenProjectPath();
     string? RequestSaveProjectPath(string suggestedProjectName);
     SaveChangesDecision AskSaveChanges(string projectName);

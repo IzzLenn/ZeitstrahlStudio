@@ -8,6 +8,9 @@
         MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Closing="Window_Closing"
+        AllowDrop="True"
+        PreviewDragOver="Window_PreviewDragOver"
+        Drop="Window_Drop"
         FontFamily="Segoe UI"
         Background="#F1F5F9">
     <Window.InputBindings>
@@ -76,6 +79,8 @@
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding UndoCommand}" Content="Rückgängig" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RedoCommand}" Content="Wiederholen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ShowAuditLogCommand}" Content="Protokoll" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AddAttachmentsCommand}" Content="Dateien +" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RemoveAttachmentCommand}" Content="Datei entfernen" />
                 </DockPanel>
             </ScrollViewer>
         </Border>
@@ -308,6 +313,10 @@
                                                            Foreground="#64748B"
                                                            Text="{Binding InfoText}"
                                                            TextWrapping="Wrap" />
+                                                <TextBlock Margin="0,4,0,0"
+                                                           Foreground="#475569"
+                                                           FontSize="11"
+                                                           Text="{Binding Attachments.Count, StringFormat={}{0} Anhänge}" />
                                             </StackPanel>
                                         </Grid>
                                     </DataTemplate>
@@ -324,6 +333,12 @@
                 BorderBrush="#CBD5E1"
                 BorderThickness="0,1,0,0">
             <DockPanel>
+                <Button DockPanel.Dock="Right"
+                        Margin="12,0,0,0"
+                        Padding="10,3"
+                        Command="{Binding CancelAttachmentImportCommand}"
+                        Visibility="{Binding IsAttachmentImporting, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        Content="Import abbrechen" />
                 <ProgressBar DockPanel.Dock="Right"
                              Width="110"
                              Height="4"

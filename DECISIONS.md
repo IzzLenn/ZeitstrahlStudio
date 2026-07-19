@@ -125,3 +125,11 @@ Damit bleibt das Aggregat bei einem ungültigen späteren Feld – beispielsweis
 Undo/Redo hält pro geöffnetem Projekt höchstens 100 validierte Vorher-/Nachher-Snapshot-Operationen im Arbeitsspeicher. Ein Schritt kann mehrere Ereignisse enthalten, sodass die manuelle Reihenfolge einer Gruppe mit identischem Datum geschlossen rückgängig gemacht wird. Snapshots teilen ausschließlich unveränderliche Anhänge und Wertobjekte; das Ereignis selbst wird bei jeder Bearbeitung ersetzt.
 
 Die Sitzungshistorie wird nicht dauerhaft im Projektarchiv gespeichert und beim Schließen freigegeben. Das fachliche Änderungsprotokoll ist davon getrennt: erfolgreiche Operationen werden dauerhaft in der bereits migrierten AuditLog-Tabelle der lokalen Projekt-SQLite-Datenbank gespeichert. Ein nicht schreibbarer Audit-Eintrag darf eine bereits erfolgreiche fachliche Änderung nicht zurückrollen; der Fehler wird stattdessen im technischen Lokalprotokoll erfasst.
+
+## ADR-018: Streaming-Anhangsimport mit GUID-Zielpfaden
+
+**Status:** angenommen am 19.07.2026
+
+Jeder importierte Anhang wird unter attachments/{Ereignis-ID}/{Anhangs-ID}.{Endung} gespeichert. Der ursprüngliche Name bleibt reine Metainformation. Dadurch können beliebig viele gleichnamige Dateien ohne Überschreiben nebeneinander bestehen. Zielpfade werden mit derselben kanonischen Root-Prüfung wie Archivpfade auf den Workspace begrenzt.
+
+Kopie und SHA-256-Berechnung erfolgen in einem asynchronen Streaming-Durchlauf mit gepooltem Puffer. Nach Abschluss werden Quelllänge und Änderungszeit erneut geprüft. Ein Batch liefert für jede Datei ein eigenes OperationResult; erwartbare Einzeldateifehler brechen andere Importe nicht ab, ein CancellationToken dagegen beendet den gesamten laufenden Vorgang und entfernt die aktuelle Teildatei.

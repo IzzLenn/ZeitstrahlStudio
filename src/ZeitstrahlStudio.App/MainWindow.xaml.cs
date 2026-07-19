@@ -44,4 +44,25 @@ public partial class MainWindow : Window
             closeInProgress = false;
         }
     }
+
+    private void Window_PreviewDragOver(object sender, DragEventArgs e)
+    {
+        e.Effects = e.Data.GetDataPresent(DataFormats.FileDrop) && viewModel.CanAcceptDroppedFiles
+            ? DragDropEffects.Copy
+            : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    private async void Window_Drop(object sender, DragEventArgs e)
+    {
+        e.Handled = true;
+        if (!viewModel.CanAcceptDroppedFiles ||
+            e.Data.GetData(DataFormats.FileDrop) is not string[] paths ||
+            paths.Length == 0)
+        {
+            return;
+        }
+
+        await viewModel.ImportDroppedFilesAsync(paths).ConfigureAwait(true);
+    }
 }
