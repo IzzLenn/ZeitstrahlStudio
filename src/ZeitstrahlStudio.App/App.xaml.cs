@@ -79,6 +79,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<ILocalLogService>(_ => new JsonLinesLocalLogService());
         services.AddSingleton<IAuditLogService, SqliteAuditLogService>();
         services.AddSingleton<IAttachmentImportService, LocalAttachmentImportService>();
+        services.AddSingleton<IAttachmentFileService, LocalAttachmentFileService>();
         services.AddSingleton<IAttachmentAnalysisStore, SqliteAttachmentAnalysisStore>();
         services.AddSingleton<IDocumentAnalyzer, DocxDocumentAnalyzer>();
         services.AddSingleton<IDocumentAnalyzer, XlsxDocumentAnalyzer>();

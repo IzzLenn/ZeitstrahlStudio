@@ -71,6 +71,36 @@ public sealed class WpfUserDialogService : IUserDialogService
         return dialog.ShowDialog() == true ? dialog.Result : null;
     }
 
+    public Attachment? RequestAttachmentToOpen(TimelineEvent timelineEvent)
+    {
+        var dialog = new AttachmentSelectionDialog(
+            timelineEvent.Attachments,
+            "Projektkopie öffnen",
+            "Anhang im Standardprogramm öffnen",
+            "Die zuvor geprüfte lokale Projektkopie wird an Windows übergeben.",
+            "Öffnen",
+            isDestructive: false)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        return dialog.ShowDialog() == true ? dialog.Result : null;
+    }
+
+    public Attachment? RequestImageForPreview(IReadOnlyCollection<Attachment> attachments)
+    {
+        var dialog = new AttachmentSelectionDialog(
+            attachments,
+            "Bildvorschau",
+            "Bild lokal anzeigen",
+            "Wählen Sie eine geprüfte Bild-Projektkopie aus.",
+            "Anzeigen",
+            isDestructive: false)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        return dialog.ShowDialog() == true ? dialog.Result : null;
+    }
+
     public string? RequestOpenProjectPath()
     {
         var dialog = new OpenFileDialog
@@ -148,6 +178,15 @@ public sealed class WpfUserDialogService : IUserDialogService
     public void ShowAttachmentAnalysis(Attachment attachment, DocumentAnalysisResult? result)
     {
         var dialog = new AttachmentAnalysisDialog(attachment, result)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        dialog.ShowDialog();
+    }
+
+    public void ShowImagePreview(Attachment attachment, string validatedLocalPath)
+    {
+        var dialog = new AttachmentImagePreviewDialog(attachment, validatedLocalPath)
         {
             Owner = System.Windows.Application.Current.MainWindow,
         };

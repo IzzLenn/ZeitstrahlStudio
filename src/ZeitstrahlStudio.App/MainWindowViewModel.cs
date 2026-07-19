@@ -15,6 +15,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private readonly ILocalLogService logService;
     private readonly IAuditLogService auditLogService;
     private readonly IAttachmentImportService attachmentImportService;
+    private readonly IAttachmentFileService attachmentFileService;
     private readonly IAttachmentAnalysisQueue attachmentAnalysisQueue;
     private readonly IAttachmentAnalysisStore attachmentAnalysisStore;
     private readonly ProjectEventEditingService eventEditingService;
@@ -38,6 +39,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         ILocalLogService logService,
         IAuditLogService auditLogService,
         IAttachmentImportService attachmentImportService,
+        IAttachmentFileService attachmentFileService,
         IAttachmentAnalysisQueue attachmentAnalysisQueue,
         IAttachmentAnalysisStore attachmentAnalysisStore,
         ProjectEventEditingService eventEditingService,
@@ -50,6 +52,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         this.logService = logService;
         this.auditLogService = auditLogService;
         this.attachmentImportService = attachmentImportService;
+        this.attachmentFileService = attachmentFileService;
         this.attachmentAnalysisQueue = attachmentAnalysisQueue;
         this.attachmentAnalysisStore = attachmentAnalysisStore;
         this.eventEditingService = eventEditingService;
@@ -118,6 +121,12 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         ShowAttachmentAnalysisCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ShowAttachmentAnalysisAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
+        PreviewImageCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(PreviewImageAsync),
+            () => !IsBusy && SelectedEvent?.Attachments.Any(IsImageAttachment) == true);
+        OpenAttachmentCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(OpenAttachmentAsync),
+            () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
         RemoveAttachmentCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(RemoveAttachmentAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
@@ -151,6 +160,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public AsyncRelayCommand AddAttachmentsCommand { get; }
     public AsyncRelayCommand AnalyzeAttachmentsCommand { get; }
     public AsyncRelayCommand ShowAttachmentAnalysisCommand { get; }
+    public AsyncRelayCommand PreviewImageCommand { get; }
+    public AsyncRelayCommand OpenAttachmentCommand { get; }
     public AsyncRelayCommand RemoveAttachmentCommand { get; }
     public AsyncRelayCommand CancelAttachmentImportCommand { get; }
 
@@ -201,6 +212,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                 AddAttachmentsCommand.RaiseCanExecuteChanged();
                 AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();
                 ShowAttachmentAnalysisCommand.RaiseCanExecuteChanged();
+                PreviewImageCommand.RaiseCanExecuteChanged();
+                OpenAttachmentCommand.RaiseCanExecuteChanged();
                 RemoveAttachmentCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(CanAcceptDroppedFiles));
             }
@@ -802,6 +815,50 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             : $"Analyse von „{attachment.OriginalFileName}“ wurde geladen.";
     }
 
+    private async Task PreviewImageAsync()
+    {
+        if (CurrentWorkspace is null || SelectedEvent is null)
+        {
+            return;
+        }
+
+        var images = SelectedEvent.Attachments.Where(IsImageAttachment).ToArray();
+        var attachment = dialogs.RequestImageForPreview(images);
+        if (attachment is null)
+        {
+            return;
+        }
+
+        StatusMessage = $"Projektkopie von „{attachment.OriginalFileName}“ wird geprüft …";
+        var path = await attachmentFileService.GetValidatedLocalPathAsync(
+            CurrentWorkspace,
+            attachment,
+            lifetimeCancellation.Token).ConfigureAwait(true);
+        dialogs.ShowImagePreview(attachment, path);
+        StatusMessage = $"Bildvorschau von „{attachment.OriginalFileName}“ wurde geschlossen.";
+    }
+
+    private async Task OpenAttachmentAsync()
+    {
+        if (CurrentWorkspace is null || SelectedEvent is null)
+        {
+            return;
+        }
+
+        var attachment = dialogs.RequestAttachmentToOpen(SelectedEvent);
+        if (attachment is null)
+        {
+            return;
+        }
+
+        StatusMessage = $"Projektkopie von „{attachment.OriginalFileName}“ wird geprüft …";
+        await attachmentFileService.OpenWithDefaultApplicationAsync(
+            CurrentWorkspace,
+            attachment,
+            lifetimeCancellation.Token).ConfigureAwait(true);
+        StatusMessage = $"„{attachment.OriginalFileName}“ wurde an das Windows-Standardprogramm übergeben.";
+    }
+
     private async Task RemoveAttachmentAsync()
     {
         if (CurrentWorkspace is null || SelectedEvent is null)
@@ -860,6 +917,13 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             "application/pdf" or
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document" or
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+
+    private static bool IsImageAttachment(Attachment attachment) =>
+        attachment.MediaType is
+            "image/png" or
+            "image/jpeg" or
+            "image/tiff" or
+            "image/bmp";
 
     private async Task SaveCurrentAsync(string? targetPath)
     {
@@ -1137,6 +1201,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         AddAttachmentsCommand.RaiseCanExecuteChanged();
         AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();
         ShowAttachmentAnalysisCommand.RaiseCanExecuteChanged();
+        PreviewImageCommand.RaiseCanExecuteChanged();
+        OpenAttachmentCommand.RaiseCanExecuteChanged();
         RemoveAttachmentCommand.RaiseCanExecuteChanged();
         CancelAttachmentImportCommand.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CanAcceptDroppedFiles));

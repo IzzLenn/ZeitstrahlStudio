@@ -55,6 +55,19 @@ public interface IAttachmentImportService
         CancellationToken cancellationToken);
 }
 
+/// <summary>Validiert Projektkopien und öffnet sie auf ausdrücklichen Benutzerwunsch lokal.</summary>
+public interface IAttachmentFileService
+{
+    Task<string> GetValidatedLocalPathAsync(
+        ProjectWorkspace workspace,
+        Attachment attachment,
+        CancellationToken cancellationToken);
+    Task OpenWithDefaultApplicationAsync(
+        ProjectWorkspace workspace,
+        Attachment attachment,
+        CancellationToken cancellationToken);
+}
+
 /// <summary>Analysiert Dokumente lokal und erzeugt nur übernehmbare Vorschläge.</summary>
 public interface IDocumentAnalyzer
 {

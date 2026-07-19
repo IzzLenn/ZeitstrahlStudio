@@ -165,3 +165,11 @@ Die Obergrenze von zwei parallelen Dokumenten verhindert unkontrollierte Speiche
 Für das lokale Lesen von PDF-Text und Dokumentmetadaten wird PdfPig 0.1.15 unter Apache-2.0 verwendet. Das Paket stellt ein direktes .NET-8-Ziel ohne transitive Paketabhängigkeiten bereit, benötigt keine Office-Installation und startet keinen externen Prozess. Die synchrone Bibliotheksarbeit wird auf einem Worker-Thread ausgeführt; die Anwendung prüft Abbruch vor dem Öffnen und vor jeder Seite.
 
 Die Anwendung begrenzt die eigene Verarbeitung auf 100.000 Seiten, zehn Millionen extrahierte Zeichen und eine Parser-Stacktiefe von 64. Fehlende Fonts dürfen übersprungen werden, damit ein einzelner defekter Font nicht den übrigen eingebetteten Text verliert. PdfPig wird nicht für Rendering oder OCR zweckentfremdet: Bildbasierte Seiten liefern bis zur späteren lokalen OCR einen leeren eingebetteten Text, während PDF-Vorschau und OCR getrennte, vor Einführung erneut lizenz- und paketierungsgeprüfte Komponenten bleiben.
+
+## ADR-023: Integritätsprüfung vor Vorschau und ShellExecute
+
+**Status:** angenommen am 19.07.2026
+
+Vorschau und externes Öffnen verwenden ausschließlich die in das Projekt kopierte Datei. Ein zentraler Infrastructure-Dienst löst den normalisierten relativen Pfad unterhalb des Workspace auf, lehnt Reparse Points ab und prüft Länge, Änderungsstabilität sowie SHA-256, bevor er den Pfad an die WPF-Vorschau oder auf ausdrücklichen Benutzerwunsch an Windows ShellExecute übergibt.
+
+Bildvorschauen verwenden die in WPF vorhandenen lokalen Windows-Codecs und benötigen keine weitere Produktionsabhängigkeit. Die integrierte Darstellung dekodiert höchstens 2.400 Pixel Breite und lehnt Dateien über 512 MiB mit einer verständlichen Ausweichmöglichkeit auf das Standardprogramm ab. Eine automatische Ausführung beim Import wurde verworfen: Externe Programme werden nur nach einer sichtbaren Benutzeraktion gestartet.

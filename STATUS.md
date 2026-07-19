@@ -6,7 +6,7 @@ Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 5C2 – lokale Bildvorschau und Öffnen von Projektkopien
+Meilenstein 5C3 – integrierte lokale PDF-Vorschau
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -172,6 +172,17 @@ Meilenstein 5C2 – lokale Bildvorschau und Öffnen von Projektkopien
 - der PDF-Analyzer ist in die vorhandene begrenzte Warteschlange, automatische Importanalyse, manuelle Neuanalyse und Ergebnisanzeige integriert
 - drei Integrationstests prüfen Text/Metadaten/Datumsfundstelle/Seitenzahl, beschädigte PDFs und einen bereits ausgelösten Abbruch
 
+### Meilenstein 5C2 – lokale Bildvorschau und Öffnen von Projektkopien
+
+- zentraler Application-Port und lokaler Infrastructure-Dienst validieren Anhänge vor Vorschau oder externem Öffnen erneut
+- interne Pfade werden kanonisch auf den Projektarbeitsordner begrenzt; Reparse Points in Arbeitsordner, Unterordnern oder Datei werden abgelehnt
+- Dateilänge, Änderungsstabilität während der Prüfung und SHA-256 werden asynchron gegen die gespeicherten Anhangsmetadaten geprüft
+- PNG, JPEG, TIFF und BMP können über eine eigene lokale WPF-Vorschau angezeigt werden
+- die Bilddekodierung lädt ohne dauerhafte Dateisperre, begrenzt die Vorschau auf 2.400 Pixel Breite und verweist Bilder über 512 MiB auf das Standardprogramm
+- jeder Anhang kann nach expliziter Auswahl und erfolgreicher Integritätsprüfung über Windows im zugeordneten Standardprogramm geöffnet werden
+- Prozesshandles des über ShellExecute gestarteten Standardprogramms werden unmittelbar freigegeben; die Projektkopie selbst bleibt unverändert
+- drei Integrationstests prüfen unveränderte Projektkopie, gleich lange Prüfsummenmanipulation und Abbruch
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -184,7 +195,7 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 5C1: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 33 Integrationstests bestanden. Zusätzlich meldet `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` keine Formatabweichung.
+Aktueller Stand nach Meilenstein 5C2: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 36 Integrationstests bestanden. Zusätzlich meldet `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` keine Formatabweichung.
 
 ## Phasenweiser Implementierungsplan
 
@@ -192,7 +203,7 @@ Aktueller Stand nach Meilenstein 5C1: Debug und Release jeweils 0 Warnungen/0 Fe
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
-5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sicherer Import und Undo-fähige Zuordnung sind in 5A umgesetzt; DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange und Ergebnisanzeige sind in 5B1 bis 5C1 implementiert; Bild-/PDF-Vorschau, Standardprogramm und OCR folgen.
+5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sicherer Import und Undo-fähige Zuordnung sind in 5A umgesetzt; DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bildvorschau, Integritätsprüfung und Standardprogramm sind in 5B1 bis 5C2 implementiert; PDF-Vorschau und OCR folgen.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
 8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
@@ -207,7 +218,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 - Die manuelle Ereignisreihenfolge ist über tastaturzugängliche Früher-/Später-Aktionen verfügbar; direktes Drag-and-drop ist noch nicht implementiert.
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
-- Die Ergebnisanzeige für Office-Dokumente bietet noch keine Schaltfläche zum Öffnen im Windows-Standardprogramm.
+- PDF-Dateien besitzen noch keine integrierte Seitenvorschau; derzeit stehen Textanalyse und das Öffnen der geprüften Projektkopie im Windows-Standardprogramm bereit.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
 - PDF-Rendering und OCR benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
@@ -216,4 +227,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Sichere lokale Vorschau für Bild-Projektkopien sowie das explizite Öffnen unterstützter Anhänge im Windows-Standardprogramm implementieren und an die Anhangsauswahl anbinden.
+Lizenz- und paketierungsgeeignete lokale PDF-Renderingkomponente auswählen und eine integrierte Vorschau mit Seitenwechsel, Seitennummer, Zoom, Fensterbreite, ganzer Seite und Scrollen umsetzen.

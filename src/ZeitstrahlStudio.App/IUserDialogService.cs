@@ -19,6 +19,8 @@ public interface IUserDialogService
     IReadOnlyList<string> RequestAttachmentPaths();
     Attachment? RequestAttachmentToRemove(TimelineEvent timelineEvent);
     Attachment? RequestAttachmentForAnalysis(TimelineEvent timelineEvent);
+    Attachment? RequestAttachmentToOpen(TimelineEvent timelineEvent);
+    Attachment? RequestImageForPreview(IReadOnlyCollection<Attachment> attachments);
     string? RequestOpenProjectPath();
     string? RequestSaveProjectPath(string suggestedProjectName);
     SaveChangesDecision AskSaveChanges(string projectName);
@@ -26,5 +28,6 @@ public interface IUserDialogService
     bool ConfirmDeleteEvent(string eventTitle);
     void ShowAuditLog(IReadOnlyList<AuditEntry> entries);
     void ShowAttachmentAnalysis(Attachment attachment, DocumentAnalysisResult? result);
+    void ShowImagePreview(Attachment attachment, string validatedLocalPath);
     void ShowError(string message, string? technicalDetails = null);
 }
