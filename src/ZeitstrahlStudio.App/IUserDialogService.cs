@@ -35,5 +35,8 @@ public interface IUserDialogService
         string validatedLocalPath,
         Func<CancellationToken, Task> openExternallyAsync,
         CancellationToken cancellationToken);
+    Task<string?> ShowPdfExportAsync(
+        ProjectWorkspace workspace,
+        CancellationToken cancellationToken);
     void ShowError(string message, string? technicalDetails = null);
 }

@@ -4,6 +4,7 @@ using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using ZeitstrahlStudio.Application;
 using ZeitstrahlStudio.DocumentProcessing;
+using ZeitstrahlStudio.Export;
 using ZeitstrahlStudio.Infrastructure;
 
 namespace ZeitstrahlStudio.App;
@@ -83,6 +84,8 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IAttachmentFileService, LocalAttachmentFileService>();
         services.AddSingleton<IAttachmentAnalysisStore, SqliteAttachmentAnalysisStore>();
         services.AddSingleton<IPdfPreviewService, PdfiumPdfPreviewService>();
+        services.AddSingleton<PdfExportPlanner>();
+        services.AddSingleton<IPdfExportService, SkiaPdfExportService>();
         services.AddSingleton<ILocalOcrService, WindowsLocalOcrService>();
         services.AddSingleton<IDocumentAnalyzer, DocxDocumentAnalyzer>();
         services.AddSingleton<IDocumentAnalyzer, XlsxDocumentAnalyzer>();

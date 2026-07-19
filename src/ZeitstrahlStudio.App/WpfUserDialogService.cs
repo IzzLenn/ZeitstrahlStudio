@@ -10,13 +10,16 @@ namespace ZeitstrahlStudio.App;
 public sealed class WpfUserDialogService : IUserDialogService
 {
     private readonly IPdfPreviewService pdfPreviewService;
+    private readonly IPdfExportService pdfExportService;
     private readonly ILocalLogService logService;
 
     public WpfUserDialogService(
         IPdfPreviewService pdfPreviewService,
+        IPdfExportService pdfExportService,
         ILocalLogService logService)
     {
         this.pdfPreviewService = pdfPreviewService;
+        this.pdfExportService = pdfExportService;
         this.logService = logService;
     }
 
@@ -244,6 +247,43 @@ public sealed class WpfUserDialogService : IUserDialogService
         {
             viewModel.Dispose();
         }
+    }
+
+    public async Task<string?> ShowPdfExportAsync(
+        ProjectWorkspace workspace,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(workspace);
+        using var viewModel = new PdfExportDialogViewModel(
+            pdfExportService,
+            pdfPreviewService,
+            logService,
+            workspace,
+            () => RequestPdfExportTargetPath(workspace.Project.Name));
+        await viewModel.InitializeAsync(cancellationToken).ConfigureAwait(true);
+        var dialog = new PdfExportDialog(viewModel)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        return dialog.ShowDialog() == true ? viewModel.ExportedTargetPath : null;
+    }
+
+    private static string? RequestPdfExportTargetPath(string projectName)
+    {
+        var safeName = string.Concat(projectName.Select(character =>
+            Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
+        var dialog = new SaveFileDialog
+        {
+            Title = "Zeitstrahl als PDF speichern",
+            Filter = "PDF-Datei (*.pdf)|*.pdf",
+            DefaultExt = ".pdf",
+            AddExtension = true,
+            OverwritePrompt = true,
+            FileName = string.IsNullOrWhiteSpace(safeName) ? "Zeitstrahl" : safeName,
+        };
+        return dialog.ShowDialog(System.Windows.Application.Current.MainWindow) == true
+            ? dialog.FileName
+            : null;
     }
 
     public void ShowError(string message, string? technicalDetails = null)

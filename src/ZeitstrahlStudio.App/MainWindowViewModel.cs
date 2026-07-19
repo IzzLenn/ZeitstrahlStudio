@@ -154,6 +154,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         PreviewPdfCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(PreviewPdfAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Any(IsPdfAttachment) == true);
+        PdfExportCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(ExportPdfAsync),
+            () => !IsBusy && HasProject);
         OpenAttachmentCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(OpenAttachmentAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
@@ -199,6 +202,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     public AsyncRelayCommand ShowAttachmentAnalysisCommand { get; }
     public AsyncRelayCommand PreviewImageCommand { get; }
     public AsyncRelayCommand PreviewPdfCommand { get; }
+    public AsyncRelayCommand PdfExportCommand { get; }
     public AsyncRelayCommand OpenAttachmentCommand { get; }
     public AsyncRelayCommand RemoveAttachmentCommand { get; }
     public AsyncRelayCommand CancelAttachmentImportCommand { get; }
@@ -1111,6 +1115,31 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         StatusMessage = $"PDF-Vorschau von „{attachment.OriginalFileName}“ wurde geschlossen.";
     }
 
+    private async Task ExportPdfAsync()
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var targetPath = await dialogs.ShowPdfExportAsync(
+            CurrentWorkspace,
+            lifetimeCancellation.Token).ConfigureAwait(true);
+        if (string.IsNullOrWhiteSpace(targetPath))
+        {
+            StatusMessage = "PDF-Export wurde geschlossen.";
+            return;
+        }
+
+        var timestampUtc = DateTimeOffset.UtcNow;
+        await WriteAuditAsync(
+            "PdfExport",
+            CurrentWorkspace.Project.Id,
+            $"Zeitstrahl als PDF „{Path.GetFileName(targetPath)}“ exportiert",
+            timestampUtc).ConfigureAwait(true);
+        StatusMessage = $"PDF „{Path.GetFileName(targetPath)}“ wurde erfolgreich exportiert.";
+    }
+
     private async Task OpenAttachmentAsync()
     {
         if (CurrentWorkspace is null || SelectedEvent is null)
@@ -1548,6 +1577,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         ShowAttachmentAnalysisCommand.RaiseCanExecuteChanged();
         PreviewImageCommand.RaiseCanExecuteChanged();
         PreviewPdfCommand.RaiseCanExecuteChanged();
+        PdfExportCommand.RaiseCanExecuteChanged();
         OpenAttachmentCommand.RaiseCanExecuteChanged();
         RemoveAttachmentCommand.RaiseCanExecuteChanged();
         CancelAttachmentImportCommand.RaiseCanExecuteChanged();

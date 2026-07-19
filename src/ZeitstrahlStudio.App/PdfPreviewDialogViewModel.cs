@@ -202,6 +202,10 @@ public sealed class PdfPreviewDialogViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Lädt nach atomarer Aktualisierung derselben PDF-Datei wieder deren erste Seite.</summary>
+    public Task<bool> ReloadAsync(CancellationToken cancellationToken) =>
+        LoadPageAsync(1, requestedRenderScale, cancellationToken);
+
     public void UpdateViewport(double width, double height)
     {
         if (!double.IsFinite(width) || !double.IsFinite(height))

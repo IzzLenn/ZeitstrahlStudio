@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1 bis 5 abgeschlossen, Zeitstrahldarstellung in Arbeit, noch kein Release
+Status: In Entwicklung – Kernfunktionen bis zum PDF-Export umgesetzt, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 7A – lokale Volltextsuche und kombinierbare Filter
+Meilenstein 8B – Standalone-HTML-Export als nächster Arbeitsschritt
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -258,6 +258,19 @@ Meilenstein 7A – lokale Volltextsuche und kombinierbare Filter
 - `Strg+F` und die sichtbare Werkzeugleistenaktion fokussieren das Suchfeld; Statusleiste und Suchkopf zeigen die Anzahl aktiver Filter und Treffer
 - ein zusätzlicher Unit-Test prüft das gefilterte Layout; vier neue Integrationstests prüfen Dokumentpräfix/Hervorhebung, sämtliche kombinierte Filter, ungespeicherten Text samt Alttextabwehr und die Schema-Aktualisierung 1→2
 
+### Meilenstein 8A – druckoptimierter PDF-Export
+
+- ein UI-unabhängiger Exportplaner filtert den gewählten Zeitraum, erhält überlappende Ereigniszeiträume optional und nimmt unabhängige Fristen innerhalb des Bereichs auf
+- A4, A3, Letter und validierte benutzerdefinierte Maße von 50 bis 5.080 mm werden in Hoch- und Querformat unterstützt; A4 ist die Voreinstellung
+- der mehrseitige Modus verschiebt gewöhnliche Karten vollständig auf die Folgeseite und teilt nur Inhalte, die höher als eine ganze Inhaltsseite sind, mit sichtbarer Fortsetzungskennzeichnung
+- die große Einzelseite berechnet und zeigt ihre tatsächliche Höhe vor dem Speichern; ab 1.000 mm warnt die Anwendung vor möglichen Einschränkungen üblicher Betrachter und Drucker
+- Ereigniskarten enthalten Datum beziehungsweise Zeitraum, Uhrzeit, Titel, Kurz- und Langtext, Frist samt Status, Priorität, Status, Farbe, Schlagwörter, Quelle, optionale Notizen und alle Dokumentnamen
+- primäre PDF-Seiten und Bilder werden ausschließlich nach erneuter zentraler Pfad-, Reparse-Point-, Längen-, Stabilitäts- und SHA-256-Prüfung als kleine Vorschau geladen; fehlerhafte Miniaturen verlieren nicht den textuellen Dokumentverweis
+- SkiaSharp 3.119.2 erzeugt Texte, Achsen, Linien, Rahmen und Kennzeichnungen vektorbasiert; Projektfarbe ist durch Prioritäts-/Status-/Fristtext auch in Schwarz-Weiß nicht das einzige Unterscheidungsmerkmal
+- die Exportvorschau rendert die tatsächlich erzeugte temporäre PDF über den vorhandenen PDFium-Pfad und bietet Seitennavigation, Zoom, Fensterbreite, ganze Seite, Papierformat, Ausrichtung, Bereich, Schriftgröße, Warnungen und explizites Aktualisieren
+- der endgültige Export wird zunächst vollständig im Zielordner erzeugt und danach atomar übernommen; Ziele innerhalb des aktiven Projektarbeitsordners und Zieldateien ohne `.pdf` werden abgelehnt
+- sieben neue Unit-Tests prüfen Seitenaufteilung, verlustfreie Fortsetzungen, Zeitraum-/Fristfilter, große Einzelseite, Ausrichtung und Validierung; vier neue Integrationstests prüfen PDF-Text, PDFium-Darstellung, atomare Ersetzung, Abbruch, Miniaturen und den realen WPF-Dialog
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -272,7 +285,7 @@ dotnet test ZeitstrahlStudio.sln -c Release --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 7A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 47 Unit-Tests und 52 Integrationstests bestanden. `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` meldet keine Formatabweichung. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.655.006 Bytes; sie enthält die WinRT-Projektion, aber keine Tesseract-, Sprachmodell- oder fremden Runtime-Assets. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft und blieb über das Prüfintervall stabil.
+Aktueller Stand nach Meilenstein 8A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 54 Unit-Tests und 56 Integrationstests bestanden. Die exportierten PDFs wurden zusätzlich durch PdfPig auf Seitenzahl und vektorbasiert auslesbaren Text sowie durch PDFium auf reale Darstellbarkeit geprüft. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.745.831 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Debug- und veröffentlichter EXE-Smoke-Test erreichten die Eingabebereitschaft und blieben über das Prüfintervall stabil.
 
 ## Phasenweiser Implementierungsplan
 
@@ -283,7 +296,7 @@ Aktueller Stand nach Meilenstein 7A: Debug und Release jeweils 0 Warnungen/0 Feh
 5. **Anhänge und lokale Dokumentenanalyse – abgeschlossen:** sicherer Import und Undo-fähige Zuordnung, DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bild- und PDF-Vorschau, Integritätsprüfung, Standardprogramm und lokale OCR für Bilder sowie bildbasierte PDF-Seiten sind in 5A bis 5D umgesetzt.
 6. **Zeitstrahldarstellung – in Arbeit:** gemeinsames Layoutmodell, automatische Skala, Lückenkompression, Kollisionsbahnen und Fristprojektion sind in 6A umgesetzt; die virtualisierte horizontale/vertikale WPF-Ansicht samt Zoom, Mausverschiebung, Scrollleisten und Navigation ist in 6B aktiv. Manuelle, persistente und Undo-fähige Kartenpositionen sowie ausgewählte Zeiträume sind in 6C umgesetzt. Kleine Dokumentvorschaubilder und projektbezogene Darstellungsoptionen bleiben offen.
 7. **Suche und Filter – abgeschlossen:** getrennte lokale Dokument-FTS, Suche in aktuellen Aggregatfeldern, kombinierbare Filter, Eingabedebounce/Abbruch, Relevanz-/Datumssortierung, hervorgehobene Fundstellen, direkte Navigation und gefilterte Zeitstrahldarstellung sind in 7A umgesetzt.
-8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
+8. **PDF-Export – abgeschlossen:** tatsächliche PDF-Vorschau, A4/A3/Letter/benutzerdefiniert, Hoch-/Querformat, mehrseitig, große Einzelseite, Zeitraum, Fortsetzungen, Miniaturen und drucktaugliche Kennzeichnungen sind in 8A umgesetzt.
 9. **Standalone-HTML-Export:** eine offlinefähige responsive Datei mit eingebetteten Daten, Suche, Filtern, Zoom und Druck-CSS.
 10. **Projektarchiv, Sicherung und Wiederherstellung:** Manifest, SHA-256, sichere ZIP-Verarbeitung, Transfer, rotierende Sicherungen, Crash-Recovery.
 11. **Tests und Beispielprojekt:** vollständige Unit-/Integrationstestmatrix, Fehlerfälle, freie PDF/Bild/DOCX/XLSX-Testdokumente und mindestens zehn Beispielereignisse.
@@ -304,4 +317,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 8A umsetzen: den gemeinsamen Zeitstrahl als druckoptimierte PDF-Vorschau und Datei mit A4/A3/benutzerdefinierten Formaten, Hoch-/Querformat, mehrseitigem Modus, großer Einzelseite und ausgewähltem Zeitraum integrieren.
+Meilenstein 8B umsetzen: eine einzelne vollständig offlinefähige, responsive Standalone-HTML-Datei mit eingebetteten Daten und Vorschaubildern, horizontaler/vertikaler Darstellung, Zoom, Verschieben, Suche, Filtern, aufklappbaren Details und Druck-CSS integrieren.

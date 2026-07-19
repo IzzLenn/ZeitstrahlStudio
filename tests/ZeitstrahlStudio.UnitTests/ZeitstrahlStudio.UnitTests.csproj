@@ -23,6 +23,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\ZeitstrahlStudio.Application\ZeitstrahlStudio.Application.csproj" />
     <ProjectReference Include="..\..\src\ZeitstrahlStudio.Domain\ZeitstrahlStudio.Domain.csproj" />
+    <ProjectReference Include="..\..\src\ZeitstrahlStudio.Export\ZeitstrahlStudio.Export.csproj" />
     <ProjectReference Include="..\..\src\ZeitstrahlStudio.Shared\ZeitstrahlStudio.Shared.csproj" />
   </ItemGroup>
 

@@ -126,12 +126,12 @@ public interface IProjectSearchService
 public interface IPdfExportService
 {
     Task<ExportPreview> CreatePreviewAsync(
-        TimelineProject project,
+        ProjectWorkspace workspace,
         PdfExportOptions options,
         CancellationToken cancellationToken);
 
     Task ExportAsync(
-        TimelineProject project,
+        ProjectWorkspace workspace,
         PdfExportOptions options,
         string targetPath,
         CancellationToken cancellationToken);
