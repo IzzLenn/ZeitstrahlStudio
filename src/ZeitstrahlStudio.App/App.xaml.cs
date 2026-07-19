@@ -86,6 +86,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IPdfPreviewService, PdfiumPdfPreviewService>();
         services.AddSingleton<PdfExportPlanner>();
         services.AddSingleton<IPdfExportService, SkiaPdfExportService>();
+        services.AddSingleton<IHtmlExportService, StandaloneHtmlExportService>();
         services.AddSingleton<ILocalOcrService, WindowsLocalOcrService>();
         services.AddSingleton<IDocumentAnalyzer, DocxDocumentAnalyzer>();
         services.AddSingleton<IDocumentAnalyzer, XlsxDocumentAnalyzer>();

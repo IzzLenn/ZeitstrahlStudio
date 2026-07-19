@@ -4,7 +4,7 @@ Zeitstrahl Studio wird als vollständig lokale, deutschsprachige Windows-Desktop
 
 ## Aktueller Stand
 
-Das Repository befindet sich nach Meilenstein 5D im Aufbau. Solution, Schichtengrenzen, fachliches Grundmodell, SQLite-Persistenz, lokaler FTS5-Index, sichere atomare `.zeitprojekt`-Archive, Autosave/Recovery, die verbundene WPF-Projekt-/Ereignisoberfläche, sicherer Anhangsimport, lokale DOCX-/XLSX-/PDF-Extraktion, Bild- und PDF-Vorschauen sowie lokale OCR für Bilder und bildbasierte PDF-Seiten sind implementiert und automatisiert getestet. Zeitstrahlansichten, erweiterte Suche/Filter, PDF-/HTML-Exporte, Sicherungsrotation und vollständige Auslieferungsartefakte folgen in den in `STATUS.md` dokumentierten Meilensteinen. Dieser Stand ist noch kein Release.
+Das Repository befindet sich nach Meilenstein 8B im Aufbau. Solution, Schichtengrenzen, fachliches Grundmodell, SQLite-Persistenz, lokale Volltextsuche und kombinierbare Filter, sichere atomare `.zeitprojekt`-Archive, Autosave/Recovery, die verbundene WPF-Projekt-/Ereignisoberfläche, Dokumentimport und -analyse, lokale OCR, die virtualisierte horizontale/vertikale Zeitstrahlansicht sowie PDF- und eigenständiger Offline-HTML-Export sind implementiert und automatisiert getestet. Sicherungsrotation, Beispielprojekt, vollständige Abnahme, portable ZIP-Datei, Installer und Endbenutzerdokumentation folgen in den in `STATUS.md` dokumentierten Meilensteinen. Dieser Stand ist noch kein Release.
 
 ## Lokaler Build
 
@@ -19,6 +19,8 @@ Voraussetzungen:
 dotnet restore
 dotnet build ZeitstrahlStudio.sln -c Debug
 dotnet test ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet build ZeitstrahlStudio.sln -c Release --no-restore
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore
 ```
 
 OCR verwendet ausschließlich die lokale Windows-Texterkennung. Dokumente, Bilder und erkannte Texte werden weder hochgeladen noch an externe Prozesse übergeben. OCR-Ergebnisse werden im Projekt ausdrücklich als potenziell fehlerhaft gekennzeichnet.

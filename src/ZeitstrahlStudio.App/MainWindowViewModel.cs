@@ -15,6 +15,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     private readonly ILocalLogService logService;
     private readonly IAuditLogService auditLogService;
     private readonly IProjectSearchService searchService;
+    private readonly IHtmlExportService htmlExportService;
     private readonly IAttachmentImportService attachmentImportService;
     private readonly IAttachmentFileService attachmentFileService;
     private readonly IAttachmentAnalysisQueue attachmentAnalysisQueue;
@@ -46,6 +47,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         ILocalLogService logService,
         IAuditLogService auditLogService,
         IProjectSearchService searchService,
+        IHtmlExportService htmlExportService,
         IAttachmentImportService attachmentImportService,
         IAttachmentFileService attachmentFileService,
         IAttachmentAnalysisQueue attachmentAnalysisQueue,
@@ -60,6 +62,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         this.logService = logService;
         this.auditLogService = auditLogService;
         this.searchService = searchService;
+        this.htmlExportService = htmlExportService;
         this.attachmentImportService = attachmentImportService;
         this.attachmentFileService = attachmentFileService;
         this.attachmentAnalysisQueue = attachmentAnalysisQueue;
@@ -157,6 +160,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         PdfExportCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ExportPdfAsync),
             () => !IsBusy && HasProject);
+        HtmlExportCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(ExportHtmlAsync),
+            () => !IsBusy && HasProject);
         OpenAttachmentCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(OpenAttachmentAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
@@ -203,6 +209,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     public AsyncRelayCommand PreviewImageCommand { get; }
     public AsyncRelayCommand PreviewPdfCommand { get; }
     public AsyncRelayCommand PdfExportCommand { get; }
+    public AsyncRelayCommand HtmlExportCommand { get; }
     public AsyncRelayCommand OpenAttachmentCommand { get; }
     public AsyncRelayCommand RemoveAttachmentCommand { get; }
     public AsyncRelayCommand CancelAttachmentImportCommand { get; }
@@ -1140,6 +1147,35 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         StatusMessage = $"PDF „{Path.GetFileName(targetPath)}“ wurde erfolgreich exportiert.";
     }
 
+    private async Task ExportHtmlAsync()
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var request = dialogs.RequestHtmlExport(CurrentWorkspace.Project);
+        if (request is null)
+        {
+            StatusMessage = "HTML-Export wurde abgebrochen.";
+            return;
+        }
+
+        StatusMessage = "Offlinefähige HTML-Momentaufnahme wird erzeugt …";
+        await htmlExportService.ExportAsync(
+            CurrentWorkspace,
+            request.Options,
+            request.TargetPath,
+            lifetimeCancellation.Token).ConfigureAwait(true);
+        var timestampUtc = DateTimeOffset.UtcNow;
+        await WriteAuditAsync(
+            "HtmlExport",
+            CurrentWorkspace.Project.Id,
+            $"Zeitstrahl als HTML „{Path.GetFileName(request.TargetPath)}“ exportiert",
+            timestampUtc).ConfigureAwait(true);
+        StatusMessage = $"HTML „{Path.GetFileName(request.TargetPath)}“ wurde erfolgreich exportiert.";
+    }
+
     private async Task OpenAttachmentAsync()
     {
         if (CurrentWorkspace is null || SelectedEvent is null)
@@ -1578,6 +1614,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         PreviewImageCommand.RaiseCanExecuteChanged();
         PreviewPdfCommand.RaiseCanExecuteChanged();
         PdfExportCommand.RaiseCanExecuteChanged();
+        HtmlExportCommand.RaiseCanExecuteChanged();
         OpenAttachmentCommand.RaiseCanExecuteChanged();
         RemoveAttachmentCommand.RaiseCanExecuteChanged();
         CancelAttachmentImportCommand.RaiseCanExecuteChanged();

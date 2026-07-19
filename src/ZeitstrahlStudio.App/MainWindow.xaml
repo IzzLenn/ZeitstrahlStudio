@@ -90,6 +90,7 @@
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding PreviewImageCommand}" Content="Bildvorschau" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding PreviewPdfCommand}" Content="PDF-Vorschau" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding PdfExportCommand}" Content="PDF-Export" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding HtmlExportCommand}" Content="HTML-Export" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding OpenAttachmentCommand}" Content="Öffnen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RemoveAttachmentCommand}" Content="Datei entfernen" />
                 </DockPanel>

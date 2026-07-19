@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Kernfunktionen bis zum PDF-Export umgesetzt, noch kein Release
+Status: In Entwicklung – Kernfunktionen bis zum Standalone-HTML-Export umgesetzt, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 8B – Standalone-HTML-Export als nächster Arbeitsschritt
+Übergabestand nach Meilenstein 8B – kein neuer Meilenstein begonnen
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -271,6 +271,19 @@ Meilenstein 8B – Standalone-HTML-Export als nächster Arbeitsschritt
 - der endgültige Export wird zunächst vollständig im Zielordner erzeugt und danach atomar übernommen; Ziele innerhalb des aktiven Projektarbeitsordners und Zieldateien ohne `.pdf` werden abgelehnt
 - sieben neue Unit-Tests prüfen Seitenaufteilung, verlustfreie Fortsetzungen, Zeitraum-/Fristfilter, große Einzelseite, Ausrichtung und Validierung; vier neue Integrationstests prüfen PDF-Text, PDFium-Darstellung, atomare Ersetzung, Abbruch, Miniaturen und den realen WPF-Dialog
 
+### Meilenstein 8B – eigenständiger Standalone-HTML-Export
+
+- die WPF-Werkzeugleiste bietet einen abbrechbaren HTML-Export mit Zielauswahl, horizontaler oder vertikaler Startansicht sowie getrennten Optionen für Vorschaubilder und private Notizen
+- der Export erzeugt genau eine UTF-8-HTML-Datei mit eingebettetem CSS, JavaScript, JSON und optionalen JPEG-Miniaturen; es werden weder CDN-, Schrift-, Skript- noch Stylesheet-Ressourcen nachgeladen
+- eine restriktive Content Security Policy sperrt Netzwerk-, Objekt-, Formular- und Basis-URI-Zugriffe; alle benutzerkontrollierten Daten werden mit dem sicheren `System.Text.Json`-Encoder eingebettet und im Browser ausschließlich über DOM-Textknoten ausgegeben
+- Projektinformationen einschließlich Gesamtzeitraum und Ereignisse mit ihrer tatsächlichen Datumspräzision, Frist, Status, Priorität, Farbe, Schlagwörtern, Quellen, Weblinks und Dokumentverweisen werden als unveränderliche Momentaufnahme exportiert
+- extrahierte lokale Dokumenttexte fließen in den Suchindex der Datei ein, ohne im Detailbereich offengelegt zu werden; Notizen werden nur nach ausdrücklicher Auswahl übernommen
+- primäre Bild- und PDF-Vorschaubilder werden ausschließlich über die zentral validierte Projektkopie geladen; Bildquellen sind vor dem Decoding auf 8.000 Pixel je Kante und 24 Millionen Pixel begrenzt, Miniaturen auf höchstens 360 × 240 Pixel reduziert und als komprimiertes JPEG eingebettet; ein Vorschaufehler lässt die textuellen Dokumentverweise bestehen
+- die responsive Datei unterstützt horizontale und vertikale Darstellung, Zoom von 50 bis 250 Prozent, Maus-/Stiftverschiebung, Volltextsuche, Zeitraum-, Farb-, Schlagwort- und Fristfilter, Zurücksetzen, aufklappbare Details und druckfreundliches CSS
+- größere unbelegte Zeitabstände werden sichtbar als Unterbrechung markiert; externe HTTP-/HTTPS-Links tragen eine sichtbare Warnung und werden erst nach Bestätigung in einem neuen Fenster geöffnet
+- der Export schreibt zunächst eine eindeutige temporäre Datei im Zielordner und übernimmt sie erst nach vollständigem Erfolg atomar; Ziele im aktiven Projektarbeitsordner sowie andere Dateiendungen als `.html`/`.htm` werden abgelehnt
+- ein Unit-Test prüft JSON-Roundtrip und die Abwehr eines `</script>`-Injektionsversuchs; drei Integrationstests prüfen Offline-Vertrag, Optionen, Datumsgrenzen/-präzision, Dokumentvolltext, Miniatur, atomare Ersetzung, Workspace-Schutz und Abbruch
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -282,10 +295,11 @@ dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
 dotnet test ZeitstrahlStudio.sln -c Debug --no-restore
 dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore
+dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 8A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 54 Unit-Tests und 56 Integrationstests bestanden. Die exportierten PDFs wurden zusätzlich durch PdfPig auf Seitenzahl und vektorbasiert auslesbaren Text sowie durch PDFium auf reale Darstellbarkeit geprüft. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.745.831 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Debug- und veröffentlichter EXE-Smoke-Test erreichten die Eingabebereitschaft und blieben über das Prüfintervall stabil.
+Aktueller Stand nach Meilenstein 8B: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 55 Unit-Tests und 59 Integrationstests bestanden. Die gezielten Standalone-HTML-Tests bestanden zusätzlich mit 1 Unit- und 3 Integrationstests. Ein durch den produktiven Exportdienst erzeugtes QA-Artefakt enthält genau ein syntaktisch gültiges Programmskript, eine restriktive Offline-CSP und keine externen Skript-/Stylesheetverweise. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.902.795 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft und blieb über das Prüfintervall stabil.
 
 ## Phasenweiser Implementierungsplan
 
@@ -297,12 +311,21 @@ Aktueller Stand nach Meilenstein 8A: Debug und Release jeweils 0 Warnungen/0 Feh
 6. **Zeitstrahldarstellung – in Arbeit:** gemeinsames Layoutmodell, automatische Skala, Lückenkompression, Kollisionsbahnen und Fristprojektion sind in 6A umgesetzt; die virtualisierte horizontale/vertikale WPF-Ansicht samt Zoom, Mausverschiebung, Scrollleisten und Navigation ist in 6B aktiv. Manuelle, persistente und Undo-fähige Kartenpositionen sowie ausgewählte Zeiträume sind in 6C umgesetzt. Kleine Dokumentvorschaubilder und projektbezogene Darstellungsoptionen bleiben offen.
 7. **Suche und Filter – abgeschlossen:** getrennte lokale Dokument-FTS, Suche in aktuellen Aggregatfeldern, kombinierbare Filter, Eingabedebounce/Abbruch, Relevanz-/Datumssortierung, hervorgehobene Fundstellen, direkte Navigation und gefilterte Zeitstrahldarstellung sind in 7A umgesetzt.
 8. **PDF-Export – abgeschlossen:** tatsächliche PDF-Vorschau, A4/A3/Letter/benutzerdefiniert, Hoch-/Querformat, mehrseitig, große Einzelseite, Zeitraum, Fortsetzungen, Miniaturen und drucktaugliche Kennzeichnungen sind in 8A umgesetzt.
-9. **Standalone-HTML-Export:** eine offlinefähige responsive Datei mit eingebetteten Daten, Suche, Filtern, Zoom und Druck-CSS.
-10. **Projektarchiv, Sicherung und Wiederherstellung:** Manifest, SHA-256, sichere ZIP-Verarbeitung, Transfer, rotierende Sicherungen, Crash-Recovery.
+9. **Standalone-HTML-Export – abgeschlossen:** eine einzelne responsive Offlinedatei mit eingebetteten Daten und Miniaturen, horizontaler/vertikaler Darstellung, Zoom, Verschieben, Suche, kombinierten Filtern, Detailkarten, externen Linkwarnungen und Druck-CSS ist in 8B umgesetzt.
+10. **Projektarchiv, Sicherung und Wiederherstellung – teilweise abgeschlossen:** Manifest, SHA-256, sichere ZIP-Verarbeitung, Projekttransfer und Crash-Recovery sind umgesetzt; manuelle und rotierende Sicherungen samt Wiederherstellung und UI fehlen noch.
 11. **Tests und Beispielprojekt:** vollständige Unit-/Integrationstestmatrix, Fehlerfälle, freie PDF/Bild/DOCX/XLSX-Testdokumente und mindestens zehn Beispielereignisse.
 12. **Installer, portable Veröffentlichung und Dokumentation:** Buildskripte, selbstenthaltendes Publish, ZIP, Inno-Setup-Dateizuordnung, Handbuch, Datenschutz, Release-Audit.
 
 Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgeführt, Status/Entscheidungen aktualisiert und ein kleiner Git-Commit erstellt.
+
+## Noch offene Anforderungen
+
+- manuellen und zeitgesteuerten `IBackupService`, anpassbare Tages-/Wochenrotation, Sicherungsliste, Wiederherstellung und zugehöriges Audit vollständig implementieren
+- kleine Dokumentvorschaubilder direkt in der interaktiven WPF-Zeitstrahlansicht und noch fehlende projektbezogene Darstellungs-/Exporteinstellungen ergänzen
+- das in `SPEC.md` geforderte Drag-and-drop-Umsortieren von Ereignissen sowie das Ablegen von Dateien gezielt auf Ereignis und Anhangsbereich vervollständigen
+- vollständige UI-/Abnahmeprüfung einschließlich 100/125/150/200 Prozent Skalierung, Tastaturbedienung sowie HTML-Offlinetest und Druckvorschau in üblichen Windows-Browsern durchführen
+- freies Beispielprojekt mit mindestens zehn Ereignissen und den geforderten Testdokumenten erstellen und die noch fehlenden End-to-End- und großen Lastszenarien abdecken
+- reproduzierbare Buildskripte, portable ZIP-Datei, Installer mit `.zeitprojekt`-Zuordnung, Benutzerhandbuch, Datenschutz-/Lizenzbündelung und Release-Anleitung fertigstellen
 
 ## Bekannte Probleme und Risiken
 
@@ -310,6 +333,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
 - Deutsche OCR setzt die entsprechende lokale Windows-Sprachressource voraus; fehlt sie, bleibt die übrige Anwendung funktionsfähig und die Analyse zeigt eine Installationsanleitung.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
+- Die in dieser Umgebung verfügbare Browsersteuerung meldet kein startbares Browser-Backend. Daher sind der automatisierte Offline-/Druckvorschau-Abnahmelauf des Standalone-HTML-Exports in einem üblichen Windows-Browser noch offen; Exportvertrag, Sicherheitsencoding und JavaScript-Syntax sind automatisiert geprüft.
 - Ein bereits laufender nativer PDFium-Einzelseitenaufruf kann nicht hart abgebrochen werden; die Anwendung prüft Cancellation davor und unmittelbar danach und begrenzt die Ausgabe strikt.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
 - Inno Setup ist nicht im `PATH`; der Installer kann aktuell noch nicht gebaut werden.
@@ -317,4 +341,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 8B umsetzen: eine einzelne vollständig offlinefähige, responsive Standalone-HTML-Datei mit eingebetteten Daten und Vorschaubildern, horizontaler/vertikaler Darstellung, Zoom, Verschieben, Suche, Filtern, aufklappbaren Details und Druck-CSS integrieren.
+Meilenstein 10A beginnen: den vorhandenen `IBackupService` als vollständig lokalen Dienst für manuelle und automatische atomare Projektsicherungen implementieren, die konfigurierbare Tages-/Wochenrotation erst nach erfolgreicher neuer Sicherung anwenden und Auflisten sowie validierte Wiederherstellung durch Integrationstests absichern.

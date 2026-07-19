@@ -141,9 +141,8 @@ public interface IPdfExportService
 public interface IHtmlExportService
 {
     Task ExportAsync(
-        TimelineProject project,
+        ProjectWorkspace workspace,
         HtmlExportOptions options,
-        string workingDirectory,
         string targetPath,
         CancellationToken cancellationToken);
 }

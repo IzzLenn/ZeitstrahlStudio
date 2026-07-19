@@ -286,6 +286,34 @@ public sealed class WpfUserDialogService : IUserDialogService
             : null;
     }
 
+    public HtmlExportRequest? RequestHtmlExport(TimelineProject project)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        var optionsDialog = new HtmlExportOptionsDialog(project.Settings.PreferredOrientation)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        if (optionsDialog.ShowDialog() != true || optionsDialog.Options is null)
+        {
+            return null;
+        }
+
+        var safeName = string.Concat(project.Name.Select(character =>
+            Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
+        var targetDialog = new SaveFileDialog
+        {
+            Title = "Zeitstrahl als eigenständige HTML-Datei speichern",
+            Filter = "HTML-Datei (*.html)|*.html",
+            DefaultExt = ".html",
+            AddExtension = true,
+            OverwritePrompt = true,
+            FileName = string.IsNullOrWhiteSpace(safeName) ? "Zeitstrahl" : safeName,
+        };
+        return targetDialog.ShowDialog(System.Windows.Application.Current.MainWindow) == true
+            ? new HtmlExportRequest(optionsDialog.Options, targetDialog.FileName)
+            : null;
+    }
+
     public void ShowError(string message, string? technicalDetails = null)
     {
         var text = string.IsNullOrWhiteSpace(technicalDetails)

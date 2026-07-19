@@ -13,8 +13,8 @@ Stand: 19. Juli 2026. Produktionsabhängigkeiten werden nur eingeführt, wenn si
 | PDFtoImage | 5.2.1 | vollständig lokale PDF-Seitenvorschau über PDFium | MIT |
 | bblanchon.PDFium.Win32 | 147.0.7690 | native PDFium-Bibliothek für die Windows-x64-Vorschau | Apache-2.0 |
 | bblanchon.PDFium.Linux / bblanchon.PDFium.macOS | 147.0.7690 | transitive, bei `win-x64` nicht veröffentlichte PDFium-Runtimepakete | Apache-2.0 |
-| SkiaSharp | 3.119.2 | begrenzte Bitmap-/PNG-Verarbeitung und vektorbasierte Erzeugung des lokalen PDF-Exports | MIT |
-| SkiaSharp.NativeAssets.Win32 | 3.119.2 | native x64-Skia-Bibliothek für Vorschau und PDF-Export unter Windows | MIT |
+| SkiaSharp | 3.119.2 | begrenzte Bitmap-/PNG-Verarbeitung, HTML-Miniaturkomprimierung und vektorbasierte Erzeugung des lokalen PDF-Exports | MIT |
+| SkiaSharp.NativeAssets.Win32 | 3.119.2 | native x64-Skia-Bibliothek für Vorschau, HTML-Miniaturen und PDF-Export unter Windows | MIT |
 | SkiaSharp.NativeAssets.Linux.NoDependencies / SkiaSharp.NativeAssets.macOS | 3.119.2 | transitive, bei `win-x64` nicht veröffentlichte Skia-Runtimepakete | MIT |
 | Microsoft.Windows.SDK.NET / WinRT.Runtime | 10.0.19041.56 / 2.2.0.48161 | .NET-Projektion der lokalen Windows-OCR- und Bilddekodierungs-APIs | Microsoft Windows SDK License |
 | SQLitePCLRaw.bundle_e_sqlite3 | 2.1.6 | Bündelung der lokalen nativen SQLite-Bibliothek | Apache-2.0 |
