@@ -98,15 +98,67 @@ public sealed class TimelineViewTests
         thread.Join(TimeSpan.FromSeconds(5));
     }
 
-    private static byte[] Render(TimelineView view, int width, int height)
+    [Theory]
+    [InlineData(1.00)]
+    [InlineData(1.25)]
+    [InlineData(1.50)]
+    [InlineData(2.00)]
+    public async Task Render_DrawsAtSupportedDpiScales(double scale)
+    {
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                var project = CreateProject();
+                var view = new TimelineView
+                {
+                    Project = project,
+                    SelectedEvent = project.Events[25],
+                    Orientation = TimelineOrientation.Horizontal,
+                    CompressLargeGaps = true,
+                };
+
+                var pixels = Render(view, 900, 560, scale);
+
+                Assert.Contains(pixels, value => value < 80);
+                Assert.True(view.ActualWidth > 0);
+                Assert.True(view.ActualHeight > 0);
+                completion.SetResult();
+            }
+            catch (Exception exception)
+            {
+                completion.SetException(exception);
+            }
+            finally
+            {
+                Dispatcher.CurrentDispatcher.InvokeShutdown();
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+
+        await completion.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        thread.Join(TimeSpan.FromSeconds(5));
+    }
+
+    private static byte[] Render(TimelineView view, int width, int height, double scale = 1)
     {
         view.Measure(new Size(width, height));
         view.Arrange(new Rect(0, 0, width, height));
         view.UpdateLayout();
-        var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+        var pixelWidth = checked((int)Math.Round(width * scale));
+        var pixelHeight = checked((int)Math.Round(height * scale));
+        var dpi = 96 * scale;
+        var bitmap = new RenderTargetBitmap(
+            pixelWidth,
+            pixelHeight,
+            dpi,
+            dpi,
+            PixelFormats.Pbgra32);
         bitmap.Render(view);
-        var stride = width * 4;
-        var pixels = new byte[stride * height];
+        var stride = pixelWidth * 4;
+        var pixels = new byte[stride * pixelHeight];
         bitmap.CopyPixels(pixels, stride, 0);
         return pixels;
     }

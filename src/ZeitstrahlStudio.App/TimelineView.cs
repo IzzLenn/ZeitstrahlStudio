@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.IO;
 using System.Windows;
+using System.Windows.Automation.Peers;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
@@ -77,6 +78,9 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
     }
+
+    protected override AutomationPeer OnCreateAutomationPeer() =>
+        new FrameworkElementAutomationPeer(this);
 
     public static readonly DependencyProperty ProjectProperty = DependencyProperty.Register(
         nameof(Project),

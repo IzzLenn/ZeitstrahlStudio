@@ -157,6 +157,115 @@ public sealed class ProjectArchiveAndWorkspaceTests
     }
 
     [Fact]
+    public async Task Import_RejectsInsufficientDiskSpaceBeforeCreatingTarget()
+    {
+        await using var root = new TemporaryRoot();
+        var repository = new SqliteProjectRepository();
+        var archiveService = new ProjectArchiveService(repository);
+        var source = await CreatePopulatedWorkspaceAsync(root.Path, repository);
+        var archivePath = System.IO.Path.Combine(root.Path, "zu-gross.zeitprojekt");
+        await archiveService.ExportAsync(
+            source.WorkingDirectory,
+            archivePath,
+            progress: null,
+            CancellationToken.None);
+        var constrainedService = new ProjectArchiveService(
+            repository,
+            timeProvider: null,
+            _ => 0);
+        var target = System.IO.Path.Combine(root.Path, "ohne-speicherplatz");
+
+        var result = await constrainedService.ImportAsync(
+            archivePath,
+            target,
+            progress: null,
+            CancellationToken.None);
+
+        Assert.False(result.IsSuccess);
+        Assert.Contains("Speicherplatz", result.Error!.TechnicalDetails!, StringComparison.OrdinalIgnoreCase);
+        Assert.False(Directory.Exists(target));
+        Assert.Empty(Directory.EnumerateDirectories(root.Path, "ohne-speicherplatz.importing-*"));
+    }
+
+    [Fact]
+    public async Task Import_CancellationAfterFirstFileRemovesStagingDirectory()
+    {
+        await using var root = new TemporaryRoot();
+        var repository = new SqliteProjectRepository();
+        var service = new ProjectArchiveService(repository);
+        var source = await CreatePopulatedWorkspaceAsync(root.Path, repository);
+        var archivePath = System.IO.Path.Combine(root.Path, "abbruch.zeitprojekt");
+        await service.ExportAsync(
+            source.WorkingDirectory,
+            archivePath,
+            progress: null,
+            CancellationToken.None);
+        using var cancellation = new CancellationTokenSource();
+        var progress = new CallbackProgress<FileOperationProgress>(value =>
+        {
+            if (value.CompletedItems == 1)
+            {
+                cancellation.Cancel();
+            }
+        });
+        var target = System.IO.Path.Combine(root.Path, "abbruch-ziel");
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => service.ImportAsync(
+            archivePath,
+            target,
+            progress,
+            cancellation.Token));
+
+        Assert.False(Directory.Exists(target));
+        Assert.Empty(Directory.EnumerateDirectories(root.Path, "abbruch-ziel.importing-*"));
+    }
+
+    [Fact]
+    public async Task Export_LockedExistingArchiveRemainsUnchangedAndLeavesNoTemporaryFile()
+    {
+        await using var root = new TemporaryRoot();
+        var repository = new SqliteProjectRepository();
+        var service = new ProjectArchiveService(repository);
+        var source = await CreatePopulatedWorkspaceAsync(root.Path, repository);
+        var archivePath = System.IO.Path.Combine(root.Path, "gesperrt.zeitprojekt");
+        await service.ExportAsync(
+            source.WorkingDirectory,
+            archivePath,
+            progress: null,
+            CancellationToken.None);
+        var originalBytes = await File.ReadAllBytesAsync(archivePath);
+        source.Project.AddEvent(
+            TimelineEvent.Create(
+                Guid.NewGuid(),
+                "Noch nicht übernommenes Ereignis",
+                EventDate.Year(2027),
+                BaseTime),
+            BaseTime.AddMinutes(3));
+        await repository.SaveAsync(
+            source.Project,
+            System.IO.Path.Combine(source.WorkingDirectory, "project.db"),
+            CancellationToken.None);
+
+        Exception? exception;
+        await using (var fileLock = new FileStream(
+            archivePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.None))
+        {
+            exception = await Record.ExceptionAsync(() => service.ExportAsync(
+                source.WorkingDirectory,
+                archivePath,
+                progress: null,
+                CancellationToken.None));
+        }
+
+        Assert.True(exception is IOException or UnauthorizedAccessException, exception?.ToString());
+        Assert.Equal(originalBytes, await File.ReadAllBytesAsync(archivePath));
+        Assert.Empty(Directory.EnumerateFiles(root.Path, ".gesperrt.zeitprojekt.*.tmp"));
+    }
+
+    [Fact]
     public async Task WorkspaceCheckpoint_PersistsRecoveryCopyWithoutExportingArchive()
     {
         await using var root = new TemporaryRoot();
@@ -304,6 +413,11 @@ public sealed class ProjectArchiveAndWorkspaceTests
     {
         public List<T> Values { get; } = [];
         public void Report(T value) => Values.Add(value);
+    }
+
+    private sealed class CallbackProgress<T>(Action<T> callback) : IProgress<T>
+    {
+        public void Report(T value) => callback(value);
     }
 
     private sealed class FixedTimeProvider(DateTimeOffset timestamp) : TimeProvider

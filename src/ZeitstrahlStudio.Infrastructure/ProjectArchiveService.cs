@@ -25,12 +25,23 @@ public sealed partial class ProjectArchiveService : IProjectArchiveService
 
     private readonly IProjectRepository repository;
     private readonly TimeProvider timeProvider;
+    private readonly Func<string, long> availableFreeSpaceProvider;
 
     /// <summary>Initialisiert die lokale Archivverwaltung.</summary>
     public ProjectArchiveService(IProjectRepository repository, TimeProvider? timeProvider = null)
+        : this(repository, timeProvider, GetAvailableFreeSpace)
+    {
+    }
+
+    internal ProjectArchiveService(
+        IProjectRepository repository,
+        TimeProvider? timeProvider,
+        Func<string, long> availableFreeSpaceProvider)
     {
         this.repository = repository ?? throw new ArgumentNullException(nameof(repository));
         this.timeProvider = timeProvider ?? TimeProvider.System;
+        this.availableFreeSpaceProvider = availableFreeSpaceProvider ??
+            throw new ArgumentNullException(nameof(availableFreeSpaceProvider));
     }
 
     /// <inheritdoc />
@@ -215,7 +226,7 @@ public sealed partial class ProjectArchiveService : IProjectArchiveService
         }
     }
 
-    private static void EnsureDiskSpace(string targetPath, long requiredBytes)
+    private void EnsureDiskSpace(string targetPath, long requiredBytes)
     {
         var root = Path.GetPathRoot(Path.GetFullPath(targetPath));
         if (string.IsNullOrWhiteSpace(root))
@@ -223,13 +234,15 @@ public sealed partial class ProjectArchiveService : IProjectArchiveService
             throw new IOException("Der freie Speicherplatz des Ziellaufwerks konnte nicht bestimmt werden.");
         }
 
-        var drive = new DriveInfo(root);
-        if (drive.AvailableFreeSpace < checked(requiredBytes + DiskSpaceReserveBytes))
+        if (availableFreeSpaceProvider(root) < checked(requiredBytes + DiskSpaceReserveBytes))
         {
             throw new IOException(
                 "Auf dem Ziellaufwerk ist nicht genügend freier Speicherplatz für das Projektarchiv vorhanden.");
         }
     }
+
+    private static long GetAvailableFreeSpace(string root) =>
+        new DriveInfo(root).AvailableFreeSpace;
 
     private static ApplicationError ToApplicationError(string operation, Exception exception) => new(
         "ProjectArchive.Invalid",

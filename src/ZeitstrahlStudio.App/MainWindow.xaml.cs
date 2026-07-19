@@ -1,7 +1,10 @@
 using System.ComponentModel;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Media3D;
 using ZeitstrahlStudio.Domain;
 
 namespace ZeitstrahlStudio.App;
@@ -9,6 +12,21 @@ namespace ZeitstrahlStudio.App;
 /// <summary>Hauptfenster; Code-behind behandelt ausschließlich Fenster- und Darstellungsinteraktionen.</summary>
 public partial class MainWindow : Window
 {
+    public static RoutedUICommand FocusSearchCommand { get; } = new(
+        "Suche fokussieren",
+        nameof(FocusSearchCommand),
+        typeof(MainWindow));
+
+    public static RoutedUICommand CreateContextCommand { get; } = new(
+        "Projekt oder Ereignis erstellen",
+        nameof(CreateContextCommand),
+        typeof(MainWindow));
+
+    public static RoutedUICommand DeleteSelectionCommand { get; } = new(
+        "Ausgewähltes Ereignis löschen",
+        nameof(DeleteSelectionCommand),
+        typeof(MainWindow));
+
     private const string EventDragDataFormat = "ZeitstrahlStudio.EventId";
     private readonly MainWindowViewModel viewModel;
     private bool closeApproved;
@@ -22,6 +40,18 @@ public partial class MainWindow : Window
         this.viewModel = viewModel;
         InitializeComponent();
         DataContext = viewModel;
+        CommandBindings.Add(new CommandBinding(
+            FocusSearchCommand,
+            ExecuteFocusSearch,
+            CanFocusSearch));
+        CommandBindings.Add(new CommandBinding(
+            CreateContextCommand,
+            ExecuteCreateContext,
+            CanCreateContext));
+        CommandBindings.Add(new CommandBinding(
+            DeleteSelectionCommand,
+            ExecuteDeleteSelection,
+            CanDeleteSelection));
     }
 
     private async void Window_Closing(object? sender, CancelEventArgs e)
@@ -266,12 +296,48 @@ public partial class MainWindow : Window
 
     private void SearchFocus_Click(object sender, RoutedEventArgs e) => FocusSearch();
 
-    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    private void CanFocusSearch(object sender, CanExecuteRoutedEventArgs e)
     {
-        if (e.Key == Key.F && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        e.CanExecute = viewModel.HasProject;
+        e.Handled = true;
+    }
+
+    private void ExecuteFocusSearch(object sender, ExecutedRoutedEventArgs e) => FocusSearch();
+
+    private void CanCreateContext(object sender, CanExecuteRoutedEventArgs e)
+    {
+        var command = viewModel.HasProject
+            ? viewModel.AddEventCommand
+            : viewModel.NewProjectCommand;
+        e.CanExecute = command.CanExecute(null);
+        e.Handled = true;
+    }
+
+    private void ExecuteCreateContext(object sender, ExecutedRoutedEventArgs e)
+    {
+        var command = viewModel.HasProject
+            ? viewModel.AddEventCommand
+            : viewModel.NewProjectCommand;
+        if (command.CanExecute(null))
         {
-            FocusSearch();
-            e.Handled = true;
+            command.Execute(null);
+        }
+    }
+
+    private void CanDeleteSelection(object sender, CanExecuteRoutedEventArgs e)
+    {
+        var focused = Keyboard.FocusedElement;
+        e.CanExecute = !IsTextEditingElement(focused) &&
+            (IsDescendantOf(focused, EventList) || IsDescendantOf(focused, TimelineControl)) &&
+            viewModel.DeleteEventCommand.CanExecute(null);
+        e.Handled = true;
+    }
+
+    private void ExecuteDeleteSelection(object sender, ExecutedRoutedEventArgs e)
+    {
+        if (viewModel.DeleteEventCommand.CanExecute(null))
+        {
+            viewModel.DeleteEventCommand.Execute(null);
         }
     }
 
@@ -281,6 +347,44 @@ public partial class MainWindow : Window
         SearchQueryTextBox.Focus();
         SearchQueryTextBox.SelectAll();
     }
+
+    private static bool IsTextEditingElement(IInputElement? inputElement)
+    {
+        var current = inputElement as DependencyObject;
+        while (current is not null)
+        {
+            if (current is TextBoxBase or PasswordBox ||
+                current is ComboBox { IsEditable: true })
+            {
+                return true;
+            }
+
+            current = GetParent(current);
+        }
+
+        return false;
+    }
+
+    private static bool IsDescendantOf(IInputElement? inputElement, DependencyObject ancestor)
+    {
+        var current = inputElement as DependencyObject;
+        while (current is not null)
+        {
+            if (ReferenceEquals(current, ancestor))
+            {
+                return true;
+            }
+
+            current = GetParent(current);
+        }
+
+        return false;
+    }
+
+    private static DependencyObject? GetParent(DependencyObject current) =>
+        current is Visual or Visual3D
+            ? VisualTreeHelper.GetParent(current)
+            : LogicalTreeHelper.GetParent(current);
 
     private static bool TryGetDroppedPaths(IDataObject data, out IReadOnlyList<string> paths)
     {

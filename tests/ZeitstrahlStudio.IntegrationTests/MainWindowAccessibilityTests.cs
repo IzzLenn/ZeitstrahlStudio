@@ -1,0 +1,322 @@
+using System.Reflection;
+using System.Windows;
+using System.Windows.Automation;
+using System.Windows.Automation.Peers;
+using System.Windows.Controls;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Threading;
+using ZeitstrahlStudio.App;
+using ZeitstrahlStudio.Application;
+using ZeitstrahlStudio.Domain;
+
+namespace ZeitstrahlStudio.IntegrationTests;
+
+public sealed class MainWindowAccessibilityTests
+{
+    private static readonly DateTimeOffset Timestamp =
+        new(2026, 7, 19, 12, 0, 0, TimeSpan.Zero);
+
+    [Fact]
+    public async Task MainWindow_ProvidesRequiredKeyboardGesturesAndAutomationNames()
+    {
+        await RunOnStaThread(() =>
+        {
+            var viewModel = CreateViewModelWithProject();
+            try
+            {
+                var window = new MainWindow(viewModel);
+                Layout(window, 1_280, 760);
+                var bindings = window.InputBindings.OfType<KeyBinding>().ToArray();
+
+                AssertGesture(bindings, Key.S, ModifierKeys.Control);
+                AssertGesture(bindings, Key.F, ModifierKeys.Control);
+                AssertGesture(bindings, Key.N, ModifierKeys.Control);
+                AssertGesture(bindings, Key.Z, ModifierKeys.Control);
+                AssertGesture(bindings, Key.Y, ModifierKeys.Control);
+                AssertGesture(bindings, Key.Delete, ModifierKeys.None);
+                AssertGesture(bindings, Key.Escape, ModifierKeys.None);
+
+                Assert.Equal(
+                    "Zeitstrahl Studio Hauptfenster",
+                    AutomationProperties.GetName(window));
+                var search = Assert.IsType<TextBox>(window.FindName("SearchQueryTextBox"));
+                Assert.Equal("Volltextsuche", AutomationProperties.GetName(search));
+                var eventList = Assert.IsType<ListBox>(window.FindName("EventList"));
+                Assert.Equal(
+                    "Chronologische Ereignisliste",
+                    AutomationProperties.GetName(eventList));
+                var timeline = Assert.IsType<TimelineView>(window.FindName("TimelineControl"));
+                Assert.True(timeline.Focusable);
+                Assert.Equal("Interaktiver Zeitstrahl", AutomationProperties.GetName(timeline));
+                var peer = UIElementAutomationPeer.CreatePeerForElement(timeline);
+                Assert.NotNull(peer);
+                Assert.Equal("Interaktiver Zeitstrahl", peer.GetName());
+                Assert.NotNull(FindAutomationNamedDescendant(
+                    window,
+                    "Anhangsbereich des ausgewählten Ereignisses"));
+                Assert.NotNull(FindAutomationNamedDescendant(
+                    window,
+                    "Anhänge des ausgewählten Ereignisses"));
+
+                Assert.Contains(
+                    "Strg+S",
+                    GetButtonToolTip(window, "Speichern"),
+                    StringComparison.Ordinal);
+                Assert.Contains(
+                    "Strg+N",
+                    GetButtonToolTip(window, "Hinzufügen"),
+                    StringComparison.Ordinal);
+                Assert.Contains(
+                    "Entf",
+                    GetButtonToolTip(window, "Löschen"),
+                    StringComparison.Ordinal);
+            }
+            finally
+            {
+                DisposeViewModel(viewModel);
+            }
+        });
+    }
+
+    [Theory]
+    [InlineData(1.00)]
+    [InlineData(1.25)]
+    [InlineData(1.50)]
+    [InlineData(2.00)]
+    public async Task MainWindow_LaysOutProjectAtSupportedUiScales(double scale)
+    {
+        await RunOnStaThread(() =>
+        {
+            var viewModel = CreateViewModelWithProject();
+            try
+            {
+                var window = new MainWindow(viewModel);
+                const int logicalWidth = 960;
+                const int logicalHeight = 600;
+                var content = Assert.IsAssignableFrom<FrameworkElement>(window.Content);
+                content.LayoutTransform = new ScaleTransform(scale, scale);
+                var availableSize = new Size(logicalWidth * scale, logicalHeight * scale);
+                content.Measure(availableSize);
+                content.Arrange(new Rect(availableSize));
+                content.UpdateLayout();
+
+                Assert.True(double.IsFinite(content.DesiredSize.Width));
+                Assert.True(double.IsFinite(content.DesiredSize.Height));
+                Assert.InRange(content.DesiredSize.Width, 1, (logicalWidth * scale) + 0.1);
+                Assert.InRange(content.DesiredSize.Height, 1, (logicalHeight * scale) + 0.1);
+                var timeline = Assert.IsType<TimelineView>(window.FindName("TimelineControl"));
+                Assert.True(timeline.ActualWidth > 0);
+                Assert.True(timeline.ActualHeight > 0);
+                Assert.True(double.IsFinite(timeline.ActualWidth));
+                Assert.True(double.IsFinite(timeline.ActualHeight));
+            }
+            finally
+            {
+                DisposeViewModel(viewModel);
+            }
+        });
+    }
+
+    private static MainWindowViewModel CreateViewModelWithProject()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Zugänglichkeitstest", Timestamp);
+        for (var index = 0; index < 4; index++)
+        {
+            project.AddEvent(
+                TimelineEvent.Create(
+                    Guid.NewGuid(),
+                    $"Ereignis {index + 1}",
+                    EventDate.Exact(new DateOnly(2020 + index, 7, 19)),
+                    Timestamp),
+                Timestamp);
+        }
+
+        var workspace = new ProjectWorkspace(
+            project,
+            Path.GetTempPath(),
+            Path.Combine(Path.GetTempPath(), "Zugänglichkeitstest.zeitprojekt"),
+            HasUnsavedChanges: false);
+        var workspaces = CreateProxy<IProjectWorkspaceService>(new Dictionary<string, Func<object?[], object?>>
+        {
+            [nameof(IProjectWorkspaceService.OpenAsync)] = _ => Task.FromResult(workspace),
+        });
+        var recent = CreateProxy<IRecentProjectsService>(new Dictionary<string, Func<object?[], object?>>
+        {
+            [nameof(IRecentProjectsService.GetAsync)] = _ =>
+                Task.FromResult<IReadOnlyList<RecentProject>>([]),
+        });
+        var recovery = CreateProxy<IProjectRecoveryService>(new Dictionary<string, Func<object?[], object?>>
+        {
+            [nameof(IProjectRecoveryService.FindAsync)] = _ =>
+                Task.FromResult<IReadOnlyList<RecoveryCandidate>>([]),
+        });
+        var viewModel = new MainWindowViewModel(
+            workspaces,
+            recent,
+            recovery,
+            CreateProxy<IProjectAutosaveService>(),
+            CreateProxy<IBackupService>(),
+            CreateProxy<ITimelineThumbnailService>(),
+            CreateProxy<IApplicationThemeService>(),
+            CreateProxy<ILocalLogService>(),
+            CreateProxy<IAuditLogService>(),
+            CreateProxy<IProjectSearchService>(),
+            CreateProxy<IHtmlExportService>(),
+            CreateProxy<IAttachmentImportService>(),
+            CreateProxy<IAttachmentFileService>(),
+            CreateProxy<IAttachmentAnalysisQueue>(),
+            CreateProxy<IAttachmentAnalysisStore>(),
+            new ProjectEventEditingService(),
+            CreateProxy<IUserDialogService>());
+        viewModel.OpenPathAsync(workspace.ArchivePath!).GetAwaiter().GetResult();
+        Assert.True(viewModel.HasProject);
+        return viewModel;
+    }
+
+    private static void DisposeViewModel(MainWindowViewModel viewModel) =>
+        viewModel.DisposeAsync().AsTask().GetAwaiter().GetResult();
+
+    private static void Layout(MainWindow window, double width, double height)
+    {
+        window.Measure(new Size(width, height));
+        window.Arrange(new Rect(0, 0, width, height));
+        window.UpdateLayout();
+    }
+
+    private static void AssertGesture(
+        IEnumerable<KeyBinding> bindings,
+        Key key,
+        ModifierKeys modifiers) => Assert.Contains(
+        bindings,
+        binding => binding.Key == key && binding.Modifiers == modifiers);
+
+    private static DependencyObject? FindAutomationNamedDescendant(
+        DependencyObject root,
+        string name)
+    {
+        if (AutomationProperties.GetName(root) == name)
+        {
+            return root;
+        }
+
+        foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
+        {
+            var match = FindAutomationNamedDescendant(child, name);
+            if (match is not null)
+            {
+                return match;
+            }
+        }
+
+        return null;
+    }
+
+    private static string GetButtonToolTip(DependencyObject root, string content)
+    {
+        var button = FindLogicalDescendants<Button>(root)
+            .First(item => string.Equals(item.Content as string, content, StringComparison.Ordinal));
+        return Assert.IsType<string>(button.ToolTip);
+    }
+
+    private static IEnumerable<T> FindLogicalDescendants<T>(DependencyObject root)
+        where T : DependencyObject
+    {
+        foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
+        {
+            if (child is T match)
+            {
+                yield return match;
+            }
+
+            foreach (var descendant in FindLogicalDescendants<T>(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    private static Task RunOnStaThread(Action action)
+    {
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                action();
+                completion.SetResult();
+            }
+            catch (Exception exception)
+            {
+                completion.SetException(exception);
+            }
+            finally
+            {
+                Dispatcher.CurrentDispatcher.InvokeShutdown();
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+        return AwaitCompletionAsync(completion.Task, thread);
+    }
+
+    private static async Task AwaitCompletionAsync(Task completion, Thread thread)
+    {
+        await completion.WaitAsync(TimeSpan.FromSeconds(30));
+        thread.Join(TimeSpan.FromSeconds(5));
+    }
+
+    private static T CreateProxy<T>(
+        IReadOnlyDictionary<string, Func<object?[], object?>>? handlers = null)
+        where T : class
+    {
+        var proxy = DispatchProxy.Create<T, TestDispatchProxy<T>>();
+        ((TestDispatchProxy<T>)(object)proxy).Handlers = handlers ??
+            new Dictionary<string, Func<object?[], object?>>();
+        return proxy;
+    }
+
+    public class TestDispatchProxy<T> : DispatchProxy
+        where T : class
+    {
+        public IReadOnlyDictionary<string, Func<object?[], object?>> Handlers { get; set; } =
+            new Dictionary<string, Func<object?[], object?>>();
+
+        protected override object? Invoke(MethodInfo? targetMethod, object?[]? args)
+        {
+            if (targetMethod is null)
+            {
+                throw new InvalidOperationException("Die aufgerufene Schnittstellenmethode fehlt.");
+            }
+
+            if (Handlers.TryGetValue(targetMethod.Name, out var handler))
+            {
+                return handler(args ?? []);
+            }
+
+            var returnType = targetMethod.ReturnType;
+            if (returnType == typeof(void))
+            {
+                return null;
+            }
+
+            if (returnType == typeof(Task))
+            {
+                return Task.CompletedTask;
+            }
+
+            if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+            {
+                var resultType = returnType.GenericTypeArguments[0];
+                var value = resultType.IsValueType ? Activator.CreateInstance(resultType) : null;
+                return typeof(Task)
+                    .GetMethods()
+                    .Single(method => method.Name == nameof(Task.FromResult) && method.IsGenericMethod)
+                    .MakeGenericMethod(resultType)
+                    .Invoke(null, [value]);
+            }
+
+            return returnType.IsValueType ? Activator.CreateInstance(returnType) : null;
+        }
+    }
+}

@@ -7,17 +7,22 @@
         Height="760"
         MinWidth="960"
         MinHeight="600"
+        AutomationProperties.Name="Zeitstrahl Studio Hauptfenster"
         WindowStartupLocation="CenterScreen"
         Closing="Window_Closing"
-        PreviewKeyDown="Window_PreviewKeyDown"
         AllowDrop="True"
         DragOver="Window_DragOver"
         Drop="Window_Drop"
         FontFamily="Segoe UI"
         Background="{DynamicResource WindowBackgroundBrush}">
     <Window.InputBindings>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding SaveCommand}" />
+        <KeyBinding Key="F" Modifiers="Control" Command="{x:Static local:MainWindow.FocusSearchCommand}" />
+        <KeyBinding Key="N" Modifiers="Control" Command="{x:Static local:MainWindow.CreateContextCommand}" />
         <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}" />
         <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}" />
+        <KeyBinding Key="Delete" Command="{x:Static local:MainWindow.DeleteSelectionCommand}" />
+        <KeyBinding Key="Escape" Command="{Binding CancelAttachmentImportCommand}" />
     </Window.InputBindings>
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -70,17 +75,25 @@
                     <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}" FontSize="20" FontWeight="Bold" Text="Zeitstrahl Studio" />
                     <TextBlock Foreground="{DynamicResource HeaderMutedBrush}" FontSize="11" Text="Lokale Projektchroniken" />
                 </StackPanel>
-                <Button DockPanel.Dock="Left" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding NewProjectCommand}" Content="Neu" />
+                <Button DockPanel.Dock="Left"
+                        Style="{StaticResource PrimaryButtonStyle}"
+                        Command="{Binding NewProjectCommand}"
+                        ToolTip="Neues Projekt (Strg+N ohne geöffnetes Projekt)"
+                        Content="Neu" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding OpenProjectCommand}" Content="Öffnen" />
                 <Border DockPanel.Dock="Left" Width="1" Margin="4,2,12,2" Background="{DynamicResource ToolbarSeparatorBrush}" />
-                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SaveCommand}" Content="Speichern" />
+                <Button DockPanel.Dock="Left"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Command="{Binding SaveCommand}"
+                        ToolTip="Projekt speichern (Strg+S)"
+                        Content="Speichern" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SaveAsCommand}" Content="Speichern unter" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding DuplicateCommand}" Content="Duplizieren" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding CloseProjectCommand}" Content="Schließen" />
                 <Border DockPanel.Dock="Left" Width="1" Margin="4,2,12,2" Background="{DynamicResource ToolbarSeparatorBrush}" />
-                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding UndoCommand}" Content="Rückgängig" />
-                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RedoCommand}" Content="Wiederholen" />
-                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Click="SearchFocus_Click" Content="Suchen" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding UndoCommand}" ToolTip="Letzte Änderung rückgängig machen (Strg+Z)" Content="Rückgängig" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RedoCommand}" ToolTip="Rückgängig gemachte Änderung wiederholen (Strg+Y)" Content="Wiederholen" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Click="SearchFocus_Click" ToolTip="Suche fokussieren (Strg+F)" Content="Suchen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ShowAuditLogCommand}" Content="Protokoll" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ManageBackupsCommand}" Content="Sicherungen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SettingsCommand}" Content="Einstellungen" />
@@ -148,6 +161,7 @@
                             <StackPanel Margin="0,10,0,0">
                                 <TextBox x:Name="SearchQueryTextBox"
                                          Padding="8,6"
+                                         AutomationProperties.Name="Volltextsuche"
                                          ToolTip="Projektdaten, Ereignisse, Dateinamen, Links und extrahierte Dokumenttexte durchsuchen"
                                          Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" />
                                 <Grid Margin="0,8,0,0">
@@ -157,13 +171,16 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <DatePicker Grid.Column="0"
+                                                AutomationProperties.Name="Suchzeitraum von"
                                                 ToolTip="Zeitraum ab"
                                                 SelectedDate="{Binding SearchFrom, UpdateSourceTrigger=PropertyChanged}" />
                                     <DatePicker Grid.Column="2"
+                                                AutomationProperties.Name="Suchzeitraum bis"
                                                 ToolTip="Zeitraum bis"
                                                 SelectedDate="{Binding SearchUntil, UpdateSourceTrigger=PropertyChanged}" />
                                 </Grid>
                                 <ComboBox Margin="0,7,0,0"
+                                          AutomationProperties.Name="Datumsart filtern"
                                           ItemsSource="{Binding SearchPrecisionOptions}"
                                           DisplayMemberPath="Label"
                                           SelectedValuePath="Value"
@@ -175,11 +192,13 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <ComboBox Grid.Column="0"
+                                              AutomationProperties.Name="Nach vorhandener Frist filtern"
                                               ItemsSource="{Binding SearchDeadlinePresenceOptions}"
                                               DisplayMemberPath="Label"
                                               SelectedValuePath="Value"
                                               SelectedValue="{Binding SearchHasDeadline}" />
                                     <ComboBox Grid.Column="2"
+                                              AutomationProperties.Name="Nach Friststatus filtern"
                                               ItemsSource="{Binding SearchDeadlineStatusOptions}"
                                               DisplayMemberPath="Label"
                                               SelectedValuePath="Value"
@@ -192,11 +211,13 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <ComboBox Grid.Column="0"
+                                              AutomationProperties.Name="Nach Priorität filtern"
                                               ItemsSource="{Binding SearchPriorityOptions}"
                                               DisplayMemberPath="Label"
                                               SelectedValuePath="Value"
                                               SelectedValue="{Binding SearchPriority}" />
                                     <ComboBox Grid.Column="2"
+                                              AutomationProperties.Name="Nach Farbe filtern"
                                               ItemsSource="{Binding SearchColorOptions}"
                                               DisplayMemberPath="Label"
                                               SelectedValuePath="Value"
@@ -209,11 +230,13 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <ComboBox Grid.Column="0"
+                                              AutomationProperties.Name="Nach Schlagwort filtern"
                                               ItemsSource="{Binding SearchTagOptions}"
                                               DisplayMemberPath="Label"
                                               SelectedValuePath="Value"
                                               SelectedValue="{Binding SearchTag}" />
                                     <ComboBox Grid.Column="2"
+                                              AutomationProperties.Name="Nach Dateityp filtern"
                                               ItemsSource="{Binding SearchMediaTypeOptions}"
                                               DisplayMemberPath="Label"
                                               SelectedValuePath="Value"
@@ -226,11 +249,13 @@
                                         <ColumnDefinition Width="*" />
                                     </Grid.ColumnDefinitions>
                                     <ComboBox Grid.Column="0"
+                                              AutomationProperties.Name="Nach vorhandenen Anhängen filtern"
                                               ItemsSource="{Binding SearchAttachmentPresenceOptions}"
                                               DisplayMemberPath="Label"
                                               SelectedValuePath="Value"
                                               SelectedValue="{Binding SearchHasAttachment}" />
                                     <ComboBox Grid.Column="2"
+                                              AutomationProperties.Name="Nach vorhandenen PDF-Dateien filtern"
                                               ItemsSource="{Binding SearchPdfPresenceOptions}"
                                               DisplayMemberPath="Label"
                                               SelectedValuePath="Value"
@@ -243,6 +268,7 @@
                                             Content="Alle zurücksetzen" />
                                     <ComboBox Width="105"
                                               DockPanel.Dock="Left"
+                                              AutomationProperties.Name="Suchergebnisse sortieren"
                                               ItemsSource="{Binding SearchSortOptions}"
                                               DisplayMemberPath="Label"
                                               SelectedValuePath="Value"
@@ -254,6 +280,7 @@
                                                Text="{Binding SearchSummaryText}" />
                                 </DockPanel>
                                 <ListBox Height="330"
+                                         AutomationProperties.Name="Suchergebnisse"
                                          ItemsSource="{Binding SearchResults}"
                                          Background="{DynamicResource RaisedSurfaceBrush}"
                                          BorderBrush="{DynamicResource BorderBrush}"
@@ -436,6 +463,7 @@
                         <Button DockPanel.Dock="Right"
                                 Style="{StaticResource CompactButtonStyle}"
                                 Command="{Binding DeleteEventCommand}"
+                                ToolTip="Ausgewähltes Ereignis löschen (Entf in Ereignisliste oder Zeitstrahl)"
                                 Content="Löschen" />
                         <Button DockPanel.Dock="Right"
                                 Style="{StaticResource CompactButtonStyle}"
@@ -454,6 +482,7 @@
                         <Button DockPanel.Dock="Right"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding AddEventCommand}"
+                                ToolTip="Neues Ereignis anlegen (Strg+N bei geöffnetem Projekt)"
                                 Content="Hinzufügen" />
                     </DockPanel>
                     <TabControl Grid.Row="2"
@@ -542,11 +571,13 @@
                                                    FontWeight="SemiBold"
                                                    Text="Zeitraum anzeigen:" />
                                         <DatePicker Width="125"
+                                                    AutomationProperties.Name="Anzuzeigender Zeitraum von"
                                                     SelectedDate="{Binding TimelineRangeStart, UpdateSourceTrigger=PropertyChanged}" />
                                         <TextBlock Margin="8,0"
                                                    VerticalAlignment="Center"
                                                    Text="bis" />
                                         <DatePicker Width="125"
+                                                    AutomationProperties.Name="Anzuzeigender Zeitraum bis"
                                                     SelectedDate="{Binding TimelineRangeEnd, UpdateSourceTrigger=PropertyChanged}" />
                                         <Button Margin="9,0,0,0"
                                                 Style="{StaticResource CompactButtonStyle}"
@@ -566,6 +597,8 @@
                                               CanContentScroll="True"
                                               Focusable="False">
                                     <local:TimelineView x:Name="TimelineControl"
+                                                        AutomationProperties.Name="Interaktiver Zeitstrahl"
+                                                        AutomationProperties.HelpText="Mit Plus und Minus zoomen, mit Pos1 das ganze Projekt anzeigen und Ereigniskarten mit den Pfeiltasten auswählen."
                                                         Project="{Binding CurrentProject}"
                                                         Workspace="{Binding ActiveWorkspace}"
                                                         ThumbnailService="{Binding TimelineThumbnailService}"
@@ -595,6 +628,7 @@
                                 <Border Grid.Column="0" CornerRadius="6">
                         <ListBox x:Name="EventList"
                                  Margin="12"
+                                 AutomationProperties.Name="Chronologische Ereignisliste"
                                  ItemsSource="{Binding Events}"
                                  SelectedItem="{Binding SelectedEvent}"
                                  Background="Transparent"
@@ -678,6 +712,7 @@
                                         BorderThickness="1"
                                         CornerRadius="6"
                                         AllowDrop="True"
+                                        AutomationProperties.Name="Anhangsbereich des ausgewählten Ereignisses"
                                         DragOver="AttachmentDropZone_DragOver"
                                         Drop="AttachmentDropZone_Drop"
                                         ToolTip="Eine oder mehrere lokale Dateien hier ablegen">
@@ -704,6 +739,7 @@
                                                        TextWrapping="Wrap" />
                                         </StackPanel>
                                         <ListBox Grid.Row="2"
+                                                 AutomationProperties.Name="Anhänge des ausgewählten Ereignisses"
                                                  ItemsSource="{Binding SelectedEvent.Attachments}"
                                                  BorderThickness="0"
                                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
@@ -785,6 +821,7 @@
                         Padding="10,3"
                         Command="{Binding CancelAttachmentImportCommand}"
                         Visibility="{Binding IsAttachmentImporting, Converter={StaticResource BooleanToVisibilityConverter}}"
+                        ToolTip="Laufenden Datei- oder Analysevorgang abbrechen (Esc)"
                         Content="Vorgang abbrechen" />
                 <ProgressBar DockPanel.Dock="Right"
                              Width="110"
@@ -793,7 +830,10 @@
                              VerticalAlignment="Center"
                              IsIndeterminate="True"
                              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding StatusMessage}" />
+                <TextBlock VerticalAlignment="Center"
+                           AutomationProperties.LiveSetting="Polite"
+                           Foreground="{DynamicResource SecondaryTextBrush}"
+                           Text="{Binding StatusMessage}" />
             </DockPanel>
         </Border>
     </Grid>

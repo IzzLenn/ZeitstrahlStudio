@@ -154,3 +154,12 @@ Melde das Projekt nur dann als fertig, wenn:
 * keine unfertigen Platzhalter in produktivem Code verbleiben
 
 Ein erfolgreicher Compilerlauf allein bedeutet nicht, dass das Projekt fertig ist.
+
+## Kosteneffiziente Teststrategie
+
+- Während der Implementierung nur die unmittelbar betroffenen Testklassen oder Testprojekte ausführen.
+- Die vollständige Debug- und Release-Test-Suite höchstens einmal am Ende eines Meilensteins ausführen.
+- Derselbe fehlgeschlagene Test darf ohne relevante Codeänderung nicht öfter als zweimal wiederholt werden.
+- Bei länger als 30 Minuten dauernden Fehleranalysen STATUS.md mit einem Zwischenstand aktualisieren.
+- Bei unklarer oder wiederkehrender Ursache pausieren und einen kompakten Fehlerbericht erstellen.
+- Große Testausgaben nicht wiederholt vollständig lesen; relevante Fehlerstellen gezielt filtern.
