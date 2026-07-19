@@ -32,4 +32,14 @@
     <ProjectReference Include="..\..\src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="../../tools/ZeitstrahlStudio.SampleGenerator/ZeitstrahlStudio.SampleGenerator.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Content Include="../../samples/ZeitstrahlStudio-Beispiel.zeitprojekt"
+             Link="SampleData/ZeitstrahlStudio-Beispiel.zeitprojekt"
+             CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

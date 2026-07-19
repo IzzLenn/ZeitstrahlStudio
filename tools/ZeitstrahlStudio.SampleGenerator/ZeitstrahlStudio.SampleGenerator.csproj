@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <SupportedOSPlatformVersion>10.0.10240.0</SupportedOSPlatformVersion>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/ZeitstrahlStudio.Application/ZeitstrahlStudio.Application.csproj" />
+    <ProjectReference Include="../../src/ZeitstrahlStudio.DocumentProcessing/ZeitstrahlStudio.DocumentProcessing.csproj" />
+    <ProjectReference Include="../../src/ZeitstrahlStudio.Domain/ZeitstrahlStudio.Domain.csproj" />
+    <ProjectReference Include="../../src/ZeitstrahlStudio.Export/ZeitstrahlStudio.Export.csproj" />
+    <ProjectReference Include="../../src/ZeitstrahlStudio.Infrastructure/ZeitstrahlStudio.Infrastructure.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Kernfunktionen einschließlich zielgenauem Drag-and-drop umgesetzt, noch kein Release
+Status: In Entwicklung – Beispiel- und Lastabnahme umgesetzt, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Übergabestand nach Meilenstein 6E – kein neuer Meilenstein begonnen
+Übergabestand nach Meilenstein 11A – kein neuer Meilenstein begonnen
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -319,22 +319,32 @@ Letzte Aktualisierung: 19.07.2026
 - vor jeder bestätigten Wiederherstellung wird eine manuelle Sicherheitssicherung des aktuellen Zustands erzeugt; die Auswahl wird vor und nach dem Import gegen Größe und SHA-256 geprüft, in einen neuen verwalteten Workspace geladen, mit dem bisherigen Archivpfad als ungespeichert markiert und im Audit protokolliert
 - zwei neue Unit-Tests prüfen Aufbewahrungsstufen und Fälligkeit; acht neue Integrationstests prüfen Snapshot/Wiederherstellung, Manipulationsabwehr, Rotation, Metadatenrekonstruktion, Autosave-Anbindung, Einstellungs-Checkpoint, Wiederherstellungsbefehl und den realen WPF-Dialog
 
+### Meilenstein 11A – freies Beispielprojekt und große integrierte Szenarien
+
+- ein weitergebbares `.zeitprojekt`-Beispielarchiv enthält zehn vollständig frei erfundene Ereignisse mit allen fünf Datumsgenauigkeiten, zwei manuell geordneten Ereignissen am selben Datum, vier Fristen in allen Zuständen, unterschiedlichen Farben/Prioritäten/Schlagwörtern, einem reservierten `example.com`-Link, großen Zeitlücken und manuellen Positionen für beide Ausrichtungen
+- fünf frei lizenzierte Quelldokumente werden mit fest definierten Inhalten erzeugt: zwei textbasierte PDFs, eine PNG-Planungstafel, eine DOCX-Werkstattnotiz und ein XLSX-Meilensteinplan; `samples/README.md` und `samples/LICENSE.txt` dokumentieren Inhalt, Nutzung, Neuerzeugung und MIT-Lizenz
+- das neue Generatorwerkzeug verwendet ausschließlich vorhandene Produktionsdienste für sicheren Anhangsimport, PDF-/Office-Analyse, SQLite-Persistenz, Thumbnail-Erzeugung und Archivexport; es wurden keine neuen Produktionsabhängigkeiten eingeführt
+- das Archiv enthält fünf validierte lokale Projektkopien ohne maschinenspezifische Ursprungsdateipfade, extrahierte und per FTS auffindbare Prüfterme, eine erzeugte Bildminiatur sowie drei nachvollziehbare Audit-Einträge
+- zwei End-to-End-Integrationstests prüfen das eingecheckte und das neu erzeugte Archiv über realen Import, Anhangsintegrität, PDFium-Vorschau, Dokumentvolltextsuche, PDF-/Standalone-HTML-Export, semantische Reproduzierbarkeit, nachträgliche Ereignisbearbeitung und erneuten Projekttransfer mit unveränderten SHA-256-Prüfsummen
+- ein weiterer Integrationstest persistiert und lädt 5.000 fachlich gemischte Ereignisse mit 40 Anhangsmetadaten, findet einen eindeutigen Begriff im letzten Ereignis und berechnet horizontales sowie vertikales Layout mit endlichen Koordinaten und höchstens 2.000 Achsenticks innerhalb einer großzügigen Zwei-Minuten-Grenze
+- drei neue Integrationstests erhöhen den vollständigen Integrationsstand von 73 auf 76 Tests
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
 
 ```powershell
 dotnet restore ZeitstrahlStudio.sln
-dotnet restore src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -r win-x64
 dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
-dotnet test ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore --no-build
 dotnet build ZeitstrahlStudio.sln -c Release --no-restore
-dotnet test ZeitstrahlStudio.sln -c Release --no-restore
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
+dotnet restore src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -r win-x64
 dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 6E: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 62 Unit-Tests und 73 Integrationstests bestanden. Die neuen Tests decken zusätzlich beliebige Sortier-Drops innerhalb identischer Datumswerte, abgelehnte Gruppen-/No-op-Drops, Undo/Redo sowie zielstabilen Mehrfachdateiimport mit Checkpoint und Audit ab. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 220.066.983 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft, antwortete und blieb über das Prüfintervall stabil.
+Aktueller Stand nach Meilenstein 11A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 62 Unit-Tests und 76 Integrationstests bestanden. Die drei neuen Tests decken das eingecheckte und neu erzeugte Beispielprojekt, Import/Analyse/Suche/Bearbeitung/Transfer, reale PDF-/HTML-Exporte sowie einen 5.000-Ereignisse-SQLite-/Such-/Layoutlauf ab. Die Formatprüfung meldet keine Abweichung. Die selbstenthaltende Veröffentlichung umfasst unverändert 496 Dateien mit 220.066.983 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der bereits im vorherigen Übergabestand ausgeführte EXE-Smoke-Test erreichte die Eingabebereitschaft, antwortete und blieb über das Prüfintervall stabil.
 
 ## Phasenweiser Implementierungsplan
 
@@ -348,7 +358,7 @@ Aktueller Stand nach Meilenstein 6E: Debug und Release jeweils 0 Warnungen/0 Feh
 8. **PDF-Export – abgeschlossen:** tatsächliche PDF-Vorschau, A4/A3/Letter/benutzerdefiniert, Hoch-/Querformat, mehrseitig, große Einzelseite, Zeitraum, Fortsetzungen, Miniaturen und drucktaugliche Kennzeichnungen sind in 8A umgesetzt.
 9. **Standalone-HTML-Export – abgeschlossen:** eine einzelne responsive Offlinedatei mit eingebetteten Daten und Miniaturen, horizontaler/vertikaler Darstellung, Zoom, Verschieben, Suche, kombinierten Filtern, Detailkarten, externen Linkwarnungen und Druck-CSS ist in 8B umgesetzt.
 10. **Projektarchiv, Sicherung und Wiederherstellung – abgeschlossen:** Manifest, SHA-256, sichere ZIP-Verarbeitung, Projekttransfer, Crash-Recovery, manuelle und rotierende Sicherungen, validierte Wiederherstellung, Audit und Sicherungsverwaltung sind umgesetzt.
-11. **Tests und Beispielprojekt:** vollständige Unit-/Integrationstestmatrix, Fehlerfälle, freie PDF/Bild/DOCX/XLSX-Testdokumente und mindestens zehn Beispielereignisse.
+11. **Tests und Beispielprojekt – teilweise abgeschlossen:** das freie Beispielprojekt, seine PDF-/Bild-/DOCX-/XLSX-Dokumente, integrierte Transfer-/Exportabnahme und der 5.000-Ereignisse-Lasttest sind in 11A abgeschlossen; UI-/DPI-/Tastaturabnahme sowie weitere negative Großdatei-/Fehlerszenarien bleiben offen.
 12. **Installer, portable Veröffentlichung und Dokumentation:** Buildskripte, selbstenthaltendes Publish, ZIP, Inno-Setup-Dateizuordnung, Handbuch, Datenschutz, Release-Audit.
 
 Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgeführt, Status/Entscheidungen aktualisiert und ein kleiner Git-Commit erstellt.
@@ -356,7 +366,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 ## Noch offene Anforderungen
 
 - vollständige UI-/Abnahmeprüfung einschließlich 100/125/150/200 Prozent Skalierung, Tastaturbedienung sowie HTML-Offlinetest und Druckvorschau in üblichen Windows-Browsern durchführen
-- freies Beispielprojekt mit mindestens zehn Ereignissen und den geforderten Testdokumenten erstellen und die noch fehlenden End-to-End- und großen Lastszenarien abdecken
+- die noch fehlenden negativen End-to-End-Szenarien, insbesondere reale mehrgigabytegroße Archive und ausgewählte Dateisystemfehler, abdecken
 - reproduzierbare Buildskripte, portable ZIP-Datei, Installer mit `.zeitprojekt`-Zuordnung, Benutzerhandbuch, Datenschutz-/Lizenzbündelung und Release-Anleitung fertigstellen
 
 ## Bekannte Probleme und Risiken
@@ -373,4 +383,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 11A beginnen: ein frei weitergebbares Beispielprojekt mit mindestens zehn fachlich vielfältigen Ereignissen und den geforderten PDF-, Bild-, DOCX- und XLSX-Testdokumenten erstellen und daraus die noch fehlenden End-to-End- und Lastszenarien ableiten.
+Meilenstein 11B beginnen: die verbleibende UI-/DPI-/Tastaturabnahme und die priorisierten negativen Datei-/Archiv-End-to-End-Szenarien ergänzen, ohne den bereits abgeschlossenen Beispielprojektumfang erneut zu bearbeiten.
