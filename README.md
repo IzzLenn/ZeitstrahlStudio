@@ -1,10 +1,10 @@
 # Zeitstrahl Studio
 
-Zeitstrahl Studio wird als vollständig lokale, deutschsprachige Windows-Desktopanwendung für chronologische Projekte entwickelt. Zielplattform ist .NET 8/WPF auf Windows 10 und 11 x64. Die Anwendung wird keine Telemetrie, Cloud-Synchronisation oder automatische Datenübertragung enthalten.
+Zeitstrahl Studio ist eine vollständig lokale, deutschsprachige Windows-Desktopanwendung für chronologische Projekte. Zielplattform ist .NET 8/WPF auf Windows 10 und 11 x64. Die Anwendung enthält keine Telemetrie, Cloud-Synchronisation oder automatische Datenübertragung.
 
 ## Aktueller Stand
 
-Das Repository befindet sich nach Meilenstein 11A im Aufbau. Solution, Schichtengrenzen, fachliches Grundmodell, SQLite-Persistenz, lokale Volltextsuche und kombinierbare Filter, sichere atomare `.zeitprojekt`-Archive, Autosave/Recovery, manuelle und rotierende lokale Sicherungen samt validierter Wiederherstellung, die verbundene WPF-Projekt-/Ereignisoberfläche, Dokumentimport und -analyse, lokale OCR, die virtualisierte horizontale/vertikale Zeitstrahlansicht mit verzögert geladenen Dokumentminiaturen und projektbezogenen Hell-/Dunkel-/Schriftvorgaben sowie PDF- und eigenständiger Offline-HTML-Export sind implementiert und automatisiert getestet. Ein frei erfundenes, weitergebbares Beispielprojekt mit lokalen PDF-, Bild-, DOCX- und XLSX-Testdokumenten sowie ein 5.000-Ereignisse-Lasttest sind enthalten. Vollständige UI-Abnahme, portable ZIP-Datei, Installer und Endbenutzerdokumentation folgen in den in `STATUS.md` dokumentierten Meilensteinen. Dieser Stand ist noch kein Release.
+Version 0.1.0 ist fertiggestellt. Solution, Schichtengrenzen, fachliches Grundmodell, SQLite-Persistenz, lokale Volltextsuche und kombinierbare Filter, sichere atomare `.zeitprojekt`-Archive, Autosave/Recovery, manuelle und rotierende lokale Sicherungen samt validierter Wiederherstellung, die verbundene WPF-Projekt-/Ereignisoberfläche, Dokumentimport und -analyse, lokale OCR, die virtualisierte horizontale/vertikale Zeitstrahlansicht mit verzögert geladenen Dokumentminiaturen und projektbezogenen Hell-/Dunkel-/Schriftvorgaben sowie PDF- und eigenständiger Offline-HTML-Export sind implementiert und automatisiert getestet. Ein frei erfundenes, weitergebbares Beispielprojekt mit lokalen PDF-, Bild-, DOCX- und XLSX-Testdokumenten sowie ein 5.000-Ereignisse-Lasttest sind enthalten. Buildskript, portable ZIP-Datei, Installer mit `.zeitprojekt`-Dateizuordnung, Benutzerhandbuch, Datenschutzhinweis und Release-Dokumentation sind verfügbar.
 
 ## Beispielprojekt
 
@@ -20,8 +20,17 @@ Voraussetzungen:
 
 - Windows 10 oder 11 x64
 - .NET SDK 8.x
-- für deutsche OCR: in Windows installiertes deutsches Sprachpaket einschließlich Texterkennung; die Anwendung erkennt eine fehlende Ressource und zeigt eine lokale Handlungsanweisung
-- für den späteren Installer: Inno Setup 6
+- PowerShell 5.1 oder höher
+- für deutsche OCR: in Windows installiertes deutsches Sprachpaket einschließlich Texterkennung; die Anwendung erkennt eine fehlende Ressource und zeigt eine lokale Handlungsanleitung
+- für den Installer: Inno Setup 6
+
+Schnellstart für den vollständigen Release-Build:
+
+```powershell
+.\build.ps1 -Task All -Version 0.1.0
+```
+
+Einzelne Schritte:
 
 ```powershell
 dotnet restore
@@ -29,8 +38,22 @@ dotnet build ZeitstrahlStudio.sln -c Debug
 dotnet test ZeitstrahlStudio.sln -c Debug --no-restore
 dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore
+dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
+dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
 OCR verwendet ausschließlich die lokale Windows-Texterkennung. Dokumente, Bilder und erkannte Texte werden weder hochgeladen noch an externe Prozesse übergeben. OCR-Ergebnisse werden im Projekt ausdrücklich als potenziell fehlerhaft gekennzeichnet.
 
-Die fachliche Spezifikation steht in `SPEC.md`, die Architektur in `ARCHITECTURE.md`, das geplante Archivformat in `PROJECT_FORMAT.md` und der tatsächliche Arbeitsstand in `STATUS.md`.
+## Dokumentation
+
+- `SPEC.md` – Fachliche Spezifikation
+- `ARCHITECTURE.md` – Architekturübersicht
+- `PROJECT_FORMAT.md` – Projektdateiformat `.zeitprojekt`
+- `BUILD.md` – Build- und Release-Anleitung
+- `USER_GUIDE.md` – Benutzerhandbuch
+- `PRIVACY.md` – Datenschutzerklärung
+- `THIRD_PARTY_LICENSES.md` – Drittanbieterlizenzen
+- `CHANGELOG.md` – Änderungshistorie
+- `RELEASE.md` – Release-Prozess
+- `MANUAL_RELEASE_CHECKLIST.md` – Manuelle Abnahmeprüfungen
+- `STATUS.md` – Aktueller Projektstatus
