@@ -85,11 +85,15 @@ public sealed class TimelineLayoutEngine
 
     public TimelineLayoutResult Create(
         TimelineProject project,
-        TimelineLayoutOptions options)
+        TimelineLayoutOptions options,
+        IReadOnlySet<Guid>? visibleEventIds = null)
     {
         ArgumentNullException.ThrowIfNull(project);
         ValidateOptions(options);
-        var events = project.GetChronologicalEvents();
+        var chronologicalEvents = project.GetChronologicalEvents();
+        IReadOnlyList<TimelineEvent> events = visibleEventIds is null
+            ? chronologicalEvents
+            : chronologicalEvents.Where(timelineEvent => visibleEventIds.Contains(timelineEvent.Id)).ToArray();
         if (events.Count == 0)
         {
             return Empty(options);

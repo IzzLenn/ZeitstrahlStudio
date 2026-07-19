@@ -9,6 +9,7 @@
         MinHeight="600"
         WindowStartupLocation="CenterScreen"
         Closing="Window_Closing"
+        PreviewKeyDown="Window_PreviewKeyDown"
         AllowDrop="True"
         PreviewDragOver="Window_PreviewDragOver"
         Drop="Window_Drop"
@@ -79,6 +80,7 @@
                 <Border DockPanel.Dock="Left" Width="1" Margin="4,2,12,2" Background="#475569" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding UndoCommand}" Content="Rückgängig" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RedoCommand}" Content="Wiederholen" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Click="SearchFocus_Click" Content="Suchen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ShowAuditLogCommand}" Content="Protokoll" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SetHorizontalTimelineCommand}" Content="Horizontal" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SetVerticalTimelineCommand}" Content="Vertikal" />
@@ -121,6 +123,182 @@
                                    FontSize="11"
                                    Text="{Binding ProjectArchivePath}"
                                    TextWrapping="Wrap" />
+
+                        <Expander x:Name="SearchExpander"
+                                  Margin="0,22,0,0"
+                                  IsExpanded="True"
+                                  IsEnabled="{Binding HasProject}">
+                            <Expander.Header>
+                                <DockPanel Width="270">
+                                    <TextBlock DockPanel.Dock="Left"
+                                               Foreground="#1D4ED8"
+                                               FontSize="11"
+                                               FontWeight="Bold"
+                                               Text="SUCHE UND FILTER" />
+                                    <TextBlock DockPanel.Dock="Right"
+                                               Foreground="#64748B"
+                                               FontSize="11"
+                                               Text="{Binding ActiveFilterText}" />
+                                </DockPanel>
+                            </Expander.Header>
+                            <StackPanel Margin="0,10,0,0">
+                                <TextBox x:Name="SearchQueryTextBox"
+                                         Padding="8,6"
+                                         ToolTip="Projektdaten, Ereignisse, Dateinamen, Links und extrahierte Dokumenttexte durchsuchen"
+                                         Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" />
+                                <Grid Margin="0,8,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="10" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <DatePicker Grid.Column="0"
+                                                ToolTip="Zeitraum ab"
+                                                SelectedDate="{Binding SearchFrom, UpdateSourceTrigger=PropertyChanged}" />
+                                    <DatePicker Grid.Column="2"
+                                                ToolTip="Zeitraum bis"
+                                                SelectedDate="{Binding SearchUntil, UpdateSourceTrigger=PropertyChanged}" />
+                                </Grid>
+                                <ComboBox Margin="0,7,0,0"
+                                          ItemsSource="{Binding SearchPrecisionOptions}"
+                                          DisplayMemberPath="Label"
+                                          SelectedValuePath="Value"
+                                          SelectedValue="{Binding SearchPrecision}" />
+                                <Grid Margin="0,7,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="7" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0"
+                                              ItemsSource="{Binding SearchDeadlinePresenceOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SearchHasDeadline}" />
+                                    <ComboBox Grid.Column="2"
+                                              ItemsSource="{Binding SearchDeadlineStatusOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SearchDeadlineStatus}" />
+                                </Grid>
+                                <Grid Margin="0,7,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="7" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0"
+                                              ItemsSource="{Binding SearchPriorityOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SearchPriority}" />
+                                    <ComboBox Grid.Column="2"
+                                              ItemsSource="{Binding SearchColorOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SearchColor}" />
+                                </Grid>
+                                <Grid Margin="0,7,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="7" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0"
+                                              ItemsSource="{Binding SearchTagOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SearchTag}" />
+                                    <ComboBox Grid.Column="2"
+                                              ItemsSource="{Binding SearchMediaTypeOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SearchMediaType}" />
+                                </Grid>
+                                <Grid Margin="0,7,0,0">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="7" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <ComboBox Grid.Column="0"
+                                              ItemsSource="{Binding SearchAttachmentPresenceOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SearchHasAttachment}" />
+                                    <ComboBox Grid.Column="2"
+                                              ItemsSource="{Binding SearchPdfPresenceOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SearchHasPdf}" />
+                                </Grid>
+                                <DockPanel Margin="0,8,0,6">
+                                    <Button DockPanel.Dock="Right"
+                                            Style="{StaticResource LinkButtonStyle}"
+                                            Command="{Binding ResetSearchFiltersCommand}"
+                                            Content="Alle zurücksetzen" />
+                                    <ComboBox Width="105"
+                                              DockPanel.Dock="Left"
+                                              ItemsSource="{Binding SearchSortOptions}"
+                                              DisplayMemberPath="Label"
+                                              SelectedValuePath="Value"
+                                              SelectedValue="{Binding SearchSortMode}" />
+                                    <TextBlock Margin="8,0,0,0"
+                                               VerticalAlignment="Center"
+                                               Foreground="#64748B"
+                                               FontSize="11"
+                                               Text="{Binding SearchSummaryText}" />
+                                </DockPanel>
+                                <ListBox Height="330"
+                                         ItemsSource="{Binding SearchResults}"
+                                         Background="#FFFFFF"
+                                         BorderBrush="#E2E8F0"
+                                         BorderThickness="1"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         VirtualizingPanel.IsVirtualizing="True"
+                                         VirtualizingPanel.VirtualizationMode="Recycling">
+                                    <ListBox.ItemContainerStyle>
+                                        <Style TargetType="ListBoxItem">
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                            <Setter Property="Padding" Value="0" />
+                                        </Style>
+                                    </ListBox.ItemContainerStyle>
+                                    <ListBox.ItemTemplate>
+                                        <DataTemplate>
+                                            <Button Padding="9"
+                                                    HorizontalContentAlignment="Stretch"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Command="{Binding DataContext.SelectSearchResultCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                    CommandParameter="{Binding}">
+                                                <StackPanel>
+                                                    <DockPanel>
+                                                        <TextBlock DockPanel.Dock="Right"
+                                                                   Margin="8,0,0,0"
+                                                                   Foreground="#64748B"
+                                                                   FontSize="10"
+                                                                   Text="{Binding Date}" />
+                                                        <TextBlock FontWeight="SemiBold"
+                                                                   Text="{Binding EventTitle}"
+                                                                   TextWrapping="Wrap" />
+                                                    </DockPanel>
+                                                    <ItemsControl Margin="0,4,0,0" ItemsSource="{Binding Highlights}">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate>
+                                                                <local:HighlightedTextBlock Margin="0,2,0,0"
+                                                                                            Foreground="#475569"
+                                                                                            FontSize="10"
+                                                                                            HighlightedText="{Binding}" />
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                </StackPanel>
+                                            </Button>
+                                        </DataTemplate>
+                                    </ListBox.ItemTemplate>
+                                </ListBox>
+                            </StackPanel>
+                        </Expander>
 
                         <Grid Margin="0,28,0,10">
                             <TextBlock VerticalAlignment="Center"
@@ -392,6 +570,8 @@
                                                         LayoutRevision="{Binding TimelineLayoutRevision}"
                                                         MoveCardCommand="{Binding MoveTimelineCardCommand}"
                                                         RangeRequest="{Binding TimelineRangeRequest}"
+                                                        VisibleEventIds="{Binding TimelineVisibleEventIds}"
+                                                        CenterSelectionRevision="{Binding TimelineSelectionNavigationRevision}"
                                                         ToolTip="Ereigniskarte auswählen oder rein visuell ziehen; Hintergrund ziehen; Mausrad zoomt" />
                                 </ScrollViewer>
                             </Grid>
@@ -463,6 +643,11 @@
                 BorderBrush="#CBD5E1"
                 BorderThickness="0,1,0,0">
             <DockPanel>
+                <TextBlock DockPanel.Dock="Right"
+                           Margin="18,0,0,0"
+                           VerticalAlignment="Center"
+                           Foreground="#334155"
+                           Text="{Binding ActiveFilterText}" />
                 <TextBlock DockPanel.Dock="Right"
                            Margin="18,0,0,0"
                            VerticalAlignment="Center"

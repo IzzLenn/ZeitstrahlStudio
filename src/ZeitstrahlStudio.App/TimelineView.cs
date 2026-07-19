@@ -122,6 +122,18 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         typeof(TimelineView),
         new FrameworkPropertyMetadata(null, OnRangeRequestChanged));
 
+    public static readonly DependencyProperty VisibleEventIdsProperty = DependencyProperty.Register(
+        nameof(VisibleEventIds),
+        typeof(IReadOnlyCollection<Guid>),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(null, OnLayoutInputChanged));
+
+    public static readonly DependencyProperty CenterSelectionRevisionProperty = DependencyProperty.Register(
+        nameof(CenterSelectionRevision),
+        typeof(int),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(0, OnCenterSelectionRequested));
+
     public TimelineProject? Project
     {
         get => (TimelineProject?)GetValue(ProjectProperty);
@@ -170,6 +182,18 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         set => SetValue(RangeRequestProperty, value);
     }
 
+    public IReadOnlyCollection<Guid>? VisibleEventIds
+    {
+        get => (IReadOnlyCollection<Guid>?)GetValue(VisibleEventIdsProperty);
+        set => SetValue(VisibleEventIdsProperty, value);
+    }
+
+    public int CenterSelectionRevision
+    {
+        get => (int)GetValue(CenterSelectionRevisionProperty);
+        set => SetValue(CenterSelectionRevisionProperty, value);
+    }
+
     public bool CanHorizontallyScroll { get; set; } = true;
     public bool CanVerticallyScroll { get; set; } = true;
     public double ExtentWidth => extentWidth;
@@ -203,7 +227,8 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         var axisViewport = Orientation == TimelineOrientation.Horizontal ? viewportWidth : viewportHeight;
         var baseline = layoutEngine.Create(
             Project,
-            CreateOptions(zoomFactor: 1));
+            CreateOptions(zoomFactor: 1),
+            VisibleEventIds?.ToHashSet());
         var baselineAxis = baseline.ContentAxisLength;
         var zoom = Math.Clamp((axisViewport - 24) / Math.Max(1, baselineAxis), 0.25, 8);
         SetCurrentValue(ZoomFactorProperty, zoom);
@@ -533,6 +558,14 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         view.TryApplyRangeRequest();
     }
 
+    private static void OnCenterSelectionRequested(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs e)
+    {
+        var view = (TimelineView)dependencyObject;
+        view.CenterSelectedEvent();
+    }
+
     private static object CoerceZoom(DependencyObject dependencyObject, object baseValue)
     {
         var value = (double)baseValue;
@@ -549,7 +582,10 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
             return;
         }
 
-        layout = layoutEngine.Create(Project, CreateOptions(ZoomFactor));
+        layout = layoutEngine.Create(
+            Project,
+            CreateOptions(ZoomFactor),
+            VisibleEventIds?.ToHashSet());
         var width = Orientation == TimelineOrientation.Horizontal
             ? layout.ContentAxisLength
             : layout.ContentCrossLength;
@@ -1038,7 +1074,9 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
             drawingContext,
             Project is null
                 ? "Kein Projekt geöffnet"
-                : "Noch keine Ereignisse für den Zeitstrahl vorhanden",
+                : VisibleEventIds is not null
+                    ? "Keine Ereignisse entsprechen den aktiven Filtern"
+                    : "Noch keine Ereignisse für den Zeitstrahl vorhanden",
             15,
             MutedTextBrush,
             new Point(20, Math.Max(20, (RenderSize.Height / 2) - 12)),

@@ -33,13 +33,46 @@ public sealed class SqliteProjectRepositoryTests
             "Projects", "Events", "EventDates", "Deadlines", "Attachments",
             "AttachmentMetadata", "ExtractedTexts", "WebLinks", "Tags", "EventTags",
             "LayoutPositions", "ProjectSettings", "AuditLog", "ApplicationLogReferences",
-            "Backups", "SchemaMigrations", "SearchIndex",
+            "Backups", "SchemaMigrations", "SearchIndex", "DocumentSearchIndex",
         };
         Assert.All(requiredTables, name => Assert.Contains(name, names));
 
         await reader.DisposeAsync();
-        command.CommandText = "SELECT Version FROM SchemaMigrations;";
+        command.CommandText = "SELECT MAX(Version) FROM SchemaMigrations;";
         Assert.Equal(SqliteSchemaMigrator.CurrentVersion, Convert.ToInt32(await command.ExecuteScalarAsync()));
+    }
+
+    [Fact]
+    public async Task InitializeAsync_UpgradesVersionOneWithDocumentOnlySearchIndex()
+    {
+        await using var database = new TemporaryDatabase();
+        var repository = new SqliteProjectRepository();
+        await repository.InitializeAsync(database.Path, CancellationToken.None);
+        await using (var connection = new SqliteConnection($"Data Source={database.Path}"))
+        {
+            await connection.OpenAsync(CancellationToken.None);
+            await using var command = connection.CreateCommand();
+            command.CommandText = """
+                DROP TABLE DocumentSearchIndex;
+                DELETE FROM SchemaMigrations WHERE Version = 2;
+                """;
+            await command.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+
+        await repository.InitializeAsync(database.Path, CancellationToken.None);
+
+        await using var verification = new SqliteConnection($"Data Source={database.Path}");
+        await verification.OpenAsync(CancellationToken.None);
+        await using var verificationCommand = verification.CreateCommand();
+        verificationCommand.CommandText = """
+            SELECT
+                (SELECT COUNT(*) FROM sqlite_master WHERE name = 'DocumentSearchIndex'),
+                (SELECT MAX(Version) FROM SchemaMigrations);
+            """;
+        await using var reader = await verificationCommand.ExecuteReaderAsync(CancellationToken.None);
+        Assert.True(await reader.ReadAsync(CancellationToken.None));
+        Assert.Equal(1, reader.GetInt32(0));
+        Assert.Equal(SqliteSchemaMigrator.CurrentVersion, reader.GetInt32(1));
     }
 
     [Fact]
@@ -126,13 +159,15 @@ public sealed class SqliteProjectRepositoryTests
         verificationCommand.CommandText = """
             SELECT
                 (SELECT COUNT(*) FROM ExtractedTexts WHERE AttachmentId = $attachmentId),
-                (SELECT COUNT(*) FROM SearchIndex WHERE SearchIndex MATCH 'Prüftext');
+                (SELECT COUNT(*) FROM SearchIndex WHERE SearchIndex MATCH 'Prüftext'),
+                (SELECT COUNT(*) FROM DocumentSearchIndex WHERE DocumentSearchIndex MATCH 'Prüftext');
             """;
         verificationCommand.Parameters.AddWithValue("$attachmentId", attachment.Id.ToString("D"));
         await using var reader = await verificationCommand.ExecuteReaderAsync(CancellationToken.None);
         Assert.True(await reader.ReadAsync(CancellationToken.None));
         Assert.Equal(1, reader.GetInt32(0));
         Assert.Equal(1, reader.GetInt32(1));
+        Assert.Equal(1, reader.GetInt32(2));
     }
 
     [Fact]

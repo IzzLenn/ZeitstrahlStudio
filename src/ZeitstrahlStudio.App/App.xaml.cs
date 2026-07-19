@@ -78,6 +78,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IRecentProjectsService>(_ => new JsonRecentProjectsService());
         services.AddSingleton<ILocalLogService>(_ => new JsonLinesLocalLogService());
         services.AddSingleton<IAuditLogService, SqliteAuditLogService>();
+        services.AddSingleton<IProjectSearchService, SqliteProjectSearchService>();
         services.AddSingleton<IAttachmentImportService, LocalAttachmentImportService>();
         services.AddSingleton<IAttachmentFileService, LocalAttachmentFileService>();
         services.AddSingleton<IAttachmentAnalysisStore, SqliteAttachmentAnalysisStore>();

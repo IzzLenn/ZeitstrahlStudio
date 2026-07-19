@@ -70,8 +70,15 @@ public sealed class SqliteAttachmentAnalysisStoreTests : IDisposable
         await using var connection = new SqliteConnection($"Data Source={databasePath}");
         await connection.OpenAsync();
         await using var command = connection.CreateCommand();
-        command.CommandText = "SELECT COUNT(*) FROM SearchIndex WHERE SearchIndex MATCH 'Findebegriff';";
-        Assert.Equal(1L, (long)(await command.ExecuteScalarAsync())!);
+        command.CommandText = """
+            SELECT
+                (SELECT COUNT(*) FROM SearchIndex WHERE SearchIndex MATCH 'Findebegriff'),
+                (SELECT COUNT(*) FROM DocumentSearchIndex WHERE DocumentSearchIndex MATCH 'Findebegriff');
+            """;
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        Assert.Equal(1, reader.GetInt32(0));
+        Assert.Equal(1, reader.GetInt32(1));
     }
 
     public void Dispose()

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows;
+using System.Windows.Input;
 
 namespace ZeitstrahlStudio.App;
 
@@ -76,4 +77,22 @@ public partial class MainWindow : Window
         TimelineControl.CenterSelectedEvent();
 
     private void TimelineResetView_Click(object sender, RoutedEventArgs e) => TimelineControl.ResetView();
+
+    private void SearchFocus_Click(object sender, RoutedEventArgs e) => FocusSearch();
+
+    private void Window_PreviewKeyDown(object sender, KeyEventArgs e)
+    {
+        if (e.Key == Key.F && Keyboard.Modifiers.HasFlag(ModifierKeys.Control))
+        {
+            FocusSearch();
+            e.Handled = true;
+        }
+    }
+
+    private void FocusSearch()
+    {
+        SearchExpander.IsExpanded = true;
+        SearchQueryTextBox.Focus();
+        SearchQueryTextBox.SelectAll();
+    }
 }

@@ -42,6 +42,8 @@ public sealed class TimelineViewTests
                 Assert.Equal(TimelineOrientation.Horizontal, moveRequest.Orientation);
                 Assert.Equal(24.5, moveRequest.HorizontalDelta);
                 Assert.Equal(-13.25, moveRequest.VerticalDelta);
+                view.VisibleEventIds = project.Events.Take(10).Select(item => item.Id).ToArray();
+                view.CenterSelectionRevision++;
                 view.RangeRequest = new TimelineRangeRequest(
                     new DateOnly(1910, 1, 1),
                     new DateOnly(1920, 12, 31),
@@ -56,6 +58,11 @@ public sealed class TimelineViewTests
                 view.LayoutRevision++;
                 var verticalPixels = Render(view, 900, 560);
                 Assert.Contains(verticalPixels, value => value < 80);
+                var highlighted = new HighlightedTextBlock
+                {
+                    HighlightedText = "Quelle: friedliche ⟦Wiedervereinigung⟧",
+                };
+                Assert.Equal(2, highlighted.Inlines.Count);
                 view.ResetView();
                 Assert.Equal(1, view.ZoomFactor);
                 completion.SetResult();

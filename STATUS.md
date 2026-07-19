@@ -6,7 +6,7 @@ Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 6C – manuelle Kartenpositionen und Zeitraum-Navigation
+Meilenstein 7A – lokale Volltextsuche und kombinierbare Filter
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -245,6 +245,19 @@ Meilenstein 6C – manuelle Kartenpositionen und Zeitraum-Navigation
 - vier neue Unit-Tests prüfen orientierungsbezogenes Layout-Undo/Redo, gemeinsames Zurücksetzen, Positionswiederherstellung nach Löschen und die Datumsprojektion; der WPF-Integrationstest prüft zusätzlich Move-Command und Zeitraumauftrag
 - die Integrationsklassen laufen seriell, weil mehrere dateibasierte Tests prozessweite SQLite-Verbindungspools bereinigen; dadurch kann eine Klassenbereinigung nicht mehr mit dem Datenbanklebenszyklus einer anderen Klasse kollidieren
 
+### Meilenstein 7A – lokale Volltextsuche und kombinierbare Filter
+
+- die Schema-Migration 2 ergänzt einen getrennten FTS5-Index ausschließlich für extrahierte PDF-, OCR-, DOCX- und XLSX-Inhalte; vorhandene Datenbanken der Version 1 werden transaktional aktualisiert und vorhandene Dokumenttexte übernommen
+- aktuelle Projekt- und Ereignisfelder werden direkt aus dem geöffneten Aggregat durchsucht, sodass noch nicht ins Archiv geschriebene Änderungen sofort erscheinen und veraltete gespeicherte Titel keine falschen Treffer erzeugen
+- Benutzereingaben werden auf höchstens 32 alphanumerische Präfixbegriffe mit je 64 Zeichen begrenzt, als parametrisierte FTS-Ausdrücke ausgeführt und liefern höchstens 5.000 Ereignistreffer
+- Projekttitel/-beschreibung, Ereignistitel, Infotext, Beschreibung, Notizen, Quelle, Schlagwörter, Dateinamen und Webseiten werden gemeinsam mit extrahierten Dokumentinhalten durchsucht
+- Zeitraum, Datumsart, Frist vorhanden, Friststatus, Priorität, Farbe, Schlagwort, Dateityp, Anhang vorhanden, PDF vorhanden und Suchbegriff sind frei kombinierbar
+- die linke Such-/Filteroberfläche aktualisiert nach 250 Millisekunden Eingabepause, bricht überholte Suchen ab, meldet ungültige Zeiträume, sortiert nach Relevanz oder Datum und setzt alle Filter gemeinsam zurück
+- FTS- und Feldfundstellen tragen eindeutige Marker und werden durch ein kleines WPF-Steuerelement visuell hervorgehoben
+- ein Treffer wählt das Ereignis aus und zentriert es direkt im Zeitstrahl; aktive Filter liefern eine ID-Menge an dasselbe Layoutmodell, sodass auch die horizontale/vertikale Darstellung ausschließlich passende Karten zeigt
+- `Strg+F` und die sichtbare Werkzeugleistenaktion fokussieren das Suchfeld; Statusleiste und Suchkopf zeigen die Anzahl aktiver Filter und Treffer
+- ein zusätzlicher Unit-Test prüft das gefilterte Layout; vier neue Integrationstests prüfen Dokumentpräfix/Hervorhebung, sämtliche kombinierte Filter, ungespeicherten Text samt Alttextabwehr und die Schema-Aktualisierung 1→2
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -259,7 +272,7 @@ dotnet test ZeitstrahlStudio.sln -c Release --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 6C: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 46 Unit-Tests und 48 Integrationstests bestanden. `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` meldet keine Formatabweichung. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.605.406 Bytes; sie enthält die WinRT-Projektion, aber keine Tesseract-, Sprachmodell- oder fremden Runtime-Assets. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft und blieb über das Prüfintervall stabil.
+Aktueller Stand nach Meilenstein 7A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 47 Unit-Tests und 52 Integrationstests bestanden. `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` meldet keine Formatabweichung. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.655.006 Bytes; sie enthält die WinRT-Projektion, aber keine Tesseract-, Sprachmodell- oder fremden Runtime-Assets. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft und blieb über das Prüfintervall stabil.
 
 ## Phasenweiser Implementierungsplan
 
@@ -269,7 +282,7 @@ Aktueller Stand nach Meilenstein 6C: Debug und Release jeweils 0 Warnungen/0 Feh
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
 5. **Anhänge und lokale Dokumentenanalyse – abgeschlossen:** sicherer Import und Undo-fähige Zuordnung, DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bild- und PDF-Vorschau, Integritätsprüfung, Standardprogramm und lokale OCR für Bilder sowie bildbasierte PDF-Seiten sind in 5A bis 5D umgesetzt.
 6. **Zeitstrahldarstellung – in Arbeit:** gemeinsames Layoutmodell, automatische Skala, Lückenkompression, Kollisionsbahnen und Fristprojektion sind in 6A umgesetzt; die virtualisierte horizontale/vertikale WPF-Ansicht samt Zoom, Mausverschiebung, Scrollleisten und Navigation ist in 6B aktiv. Manuelle, persistente und Undo-fähige Kartenpositionen sowie ausgewählte Zeiträume sind in 6C umgesetzt. Kleine Dokumentvorschaubilder und projektbezogene Darstellungsoptionen bleiben offen.
-7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
+7. **Suche und Filter – abgeschlossen:** getrennte lokale Dokument-FTS, Suche in aktuellen Aggregatfeldern, kombinierbare Filter, Eingabedebounce/Abbruch, Relevanz-/Datumssortierung, hervorgehobene Fundstellen, direkte Navigation und gefilterte Zeitstrahldarstellung sind in 7A umgesetzt.
 8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
 9. **Standalone-HTML-Export:** eine offlinefähige responsive Datei mit eingebetteten Daten, Suche, Filtern, Zoom und Druck-CSS.
 10. **Projektarchiv, Sicherung und Wiederherstellung:** Manifest, SHA-256, sichere ZIP-Verarbeitung, Transfer, rotierende Sicherungen, Crash-Recovery.
@@ -291,4 +304,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 7A umsetzen: lokale Volltextsuche und kombinierbare Filter für Zeitraum, Datumsart, Frist, Priorität, Farbe, Schlagwörter, Anhänge und Quelle mit Trefferliste, Navigation, Sortierung und gemeinsamem Zurücksetzen in die Oberfläche integrieren.
+Meilenstein 8A umsetzen: den gemeinsamen Zeitstrahl als druckoptimierte PDF-Vorschau und Datei mit A4/A3/benutzerdefinierten Formaten, Hoch-/Querformat, mehrseitigem Modus, großer Einzelseite und ausgewähltem Zeitraum integrieren.

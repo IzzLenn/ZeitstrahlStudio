@@ -289,6 +289,7 @@ public sealed partial class LocalProjectWorkspaceService : IProjectWorkspaceServ
         command.CommandText = """
             UPDATE Projects SET Id = $newProjectId WHERE Id = $oldProjectId;
             UPDATE SearchIndex SET ProjectId = $newProjectId WHERE ProjectId = $oldProjectId;
+            UPDATE DocumentSearchIndex SET ProjectId = $newProjectId WHERE ProjectId = $oldProjectId;
             """;
         command.Parameters.AddWithValue("$oldProjectId", oldProjectId.ToString("D"));
         command.Parameters.AddWithValue("$newProjectId", newProjectId.ToString("D"));

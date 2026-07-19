@@ -7,7 +7,7 @@ namespace ZeitstrahlStudio.Infrastructure;
 public sealed class SqliteSchemaMigrator
 {
     /// <summary>Aktuell von dieser Anwendung unterstützte Schema-Version.</summary>
-    public const int CurrentVersion = 1;
+    public const int CurrentVersion = 2;
 
     private const string MigrationOneSql = """
         CREATE TABLE Projects (
@@ -190,6 +190,25 @@ public sealed class SqliteSchemaMigrator
         CREATE INDEX IX_Backups_ProjectId_CreatedAtUtc ON Backups(ProjectId, CreatedAtUtc DESC);
         """;
 
+    private const string MigrationTwoSql = """
+        CREATE VIRTUAL TABLE DocumentSearchIndex USING fts5(
+            ProjectId UNINDEXED,
+            EventId UNINDEXED,
+            Content,
+            tokenize = 'unicode61 remove_diacritics 2'
+        );
+
+        INSERT INTO DocumentSearchIndex (ProjectId, EventId, Content)
+        SELECT
+            e.ProjectId,
+            e.Id,
+            COALESCE(group_concat(x.Content, char(10)), '')
+        FROM Events e
+        JOIN Attachments a ON a.EventId = e.Id
+        JOIN ExtractedTexts x ON x.AttachmentId = a.Id
+        GROUP BY e.ProjectId, e.Id;
+        """;
+
     /// <summary>Wendet alle fehlenden Migrationen in Transaktionen an.</summary>
     public async Task MigrateAsync(string databasePath, CancellationToken cancellationToken)
     {
@@ -229,6 +248,17 @@ public sealed class SqliteSchemaMigrator
                 transaction,
                 1,
                 "Initiales normalisiertes Projektschema",
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        if (currentVersion < 2)
+        {
+            await ExecuteAsync(connection, transaction, MigrationTwoSql, cancellationToken).ConfigureAwait(false);
+            await RecordMigrationAsync(
+                connection,
+                transaction,
+                2,
+                "Getrennter Volltextindex für extrahierte Dokumentinhalte",
                 cancellationToken).ConfigureAwait(false);
         }
 

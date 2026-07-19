@@ -6,7 +6,7 @@ using ZeitstrahlStudio.Domain;
 namespace ZeitstrahlStudio.App;
 
 /// <summary>Orchestriert die verbundene Projektverwaltung des Hauptfensters.</summary>
-public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
+public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDisposable
 {
     private readonly IProjectWorkspaceService workspaceService;
     private readonly IRecentProjectsService recentProjectsService;
@@ -14,6 +14,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private readonly IProjectAutosaveService autosaveService;
     private readonly ILocalLogService logService;
     private readonly IAuditLogService auditLogService;
+    private readonly IProjectSearchService searchService;
     private readonly IAttachmentImportService attachmentImportService;
     private readonly IAttachmentFileService attachmentFileService;
     private readonly IAttachmentAnalysisQueue attachmentAnalysisQueue;
@@ -44,6 +45,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         IProjectAutosaveService autosaveService,
         ILocalLogService logService,
         IAuditLogService auditLogService,
+        IProjectSearchService searchService,
         IAttachmentImportService attachmentImportService,
         IAttachmentFileService attachmentFileService,
         IAttachmentAnalysisQueue attachmentAnalysisQueue,
@@ -57,6 +59,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         this.autosaveService = autosaveService;
         this.logService = logService;
         this.auditLogService = auditLogService;
+        this.searchService = searchService;
         this.attachmentImportService = attachmentImportService;
         this.attachmentFileService = attachmentFileService;
         this.attachmentAnalysisQueue = attachmentAnalysisQueue;
@@ -160,6 +163,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         CancelAttachmentImportCommand = new AsyncRelayCommand(
             CancelAttachmentImportAsync,
             () => IsAttachmentImporting);
+        InitializeSearchPresentation();
     }
 
     public ObservableCollection<RecentProject> RecentProjects { get; } = [];
@@ -330,6 +334,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
 
             RefreshEventList(selectedEventId: null);
             InitializeTimelineRange();
+            ResetSearchForWorkspace();
 
             OnPropertyChanged(nameof(HasProject));
             OnPropertyChanged(nameof(HasNoProject));
@@ -412,6 +417,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public async ValueTask DisposeAsync()
     {
         attachmentImportCancellation?.Cancel();
+        DisposeSearchPresentation();
         lifetimeCancellation.Cancel();
         if (autosaveTask is not null)
         {
@@ -575,6 +581,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             eventId,
             $"Ereignis „{SelectedEvent?.Title ?? request.Title}“ bearbeitet",
             timestampUtc).ConfigureAwait(true);
+        await CheckpointCurrentWorkspaceAsync(eventId, lifetimeCancellation.Token).ConfigureAwait(true);
         StatusMessage = "Ereignis wurde aktualisiert.";
     }
 
@@ -618,6 +625,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             result.SelectedEventId,
             result.Description,
             timestampUtc).ConfigureAwait(true);
+        await CheckpointCurrentWorkspaceAsync(
+            result.SelectedEventId,
+            lifetimeCancellation.Token).ConfigureAwait(true);
         StatusMessage = result.Description;
     }
 
@@ -636,6 +646,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             result.SelectedEventId,
             result.Description,
             timestampUtc).ConfigureAwait(true);
+        await CheckpointCurrentWorkspaceAsync(
+            result.SelectedEventId,
+            lifetimeCancellation.Token).ConfigureAwait(true);
         StatusMessage = result.Description;
     }
 
@@ -1145,6 +1158,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             eventId,
             $"Anhang „{attachment.OriginalFileName}“ entfernt",
             timestampUtc).ConfigureAwait(true);
+        await CheckpointCurrentWorkspaceAsync(eventId, lifetimeCancellation.Token).ConfigureAwait(true);
         StatusMessage = $"Anhang „{attachment.OriginalFileName}“ wurde entfernt.";
     }
 
@@ -1156,7 +1170,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     }
 
     private async Task CheckpointCurrentWorkspaceAsync(
-        Guid selectedEventId,
+        Guid? selectedEventId,
         CancellationToken cancellationToken)
     {
         if (currentWorkspace is null)
@@ -1330,6 +1344,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             : null;
         OnPropertyChanged(nameof(EventCount));
         RefreshTimelinePresentation();
+        RefreshSearchPresentation();
     }
 
     private void RefreshTimelinePresentation()
@@ -1536,6 +1551,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         OpenAttachmentCommand.RaiseCanExecuteChanged();
         RemoveAttachmentCommand.RaiseCanExecuteChanged();
         CancelAttachmentImportCommand.RaiseCanExecuteChanged();
+        RaiseSearchCommandStates();
         OnPropertyChanged(nameof(CanAcceptDroppedFiles));
     }
 }

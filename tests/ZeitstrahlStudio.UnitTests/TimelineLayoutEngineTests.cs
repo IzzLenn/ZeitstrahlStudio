@@ -210,6 +210,23 @@ public sealed class TimelineLayoutEngineTests
         Assert.Equal(layout.Cards[1].AxisPosition, after, precision: 6);
     }
 
+    [Fact]
+    public void Create_WithVisibleEventIdsReturnsOnlyMatchingCards()
+    {
+        var project = CreateProject(
+            EventDate.Year(1990),
+            EventDate.Year(2000),
+            EventDate.Year(2010));
+        var visibleId = project.Events[1].Id;
+
+        var result = engine.Create(
+            project,
+            new TimelineLayoutOptions(TimelineOrientation.Horizontal),
+            new HashSet<Guid> { visibleId });
+
+        Assert.Equal(visibleId, Assert.Single(result.Cards).EventId);
+    }
+
     private static TimelineProject CreateProject(params EventDate[] dates)
     {
         var project = TimelineProject.Create(Guid.NewGuid(), "Layouttest", Timestamp);

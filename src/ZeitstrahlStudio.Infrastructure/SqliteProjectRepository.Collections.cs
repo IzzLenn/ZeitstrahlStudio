@@ -202,6 +202,7 @@ public sealed partial class SqliteProjectRepository
             transaction,
             """
             DELETE FROM SearchIndex WHERE ProjectId = $projectId;
+            DELETE FROM DocumentSearchIndex WHERE ProjectId = $projectId;
 
             INSERT INTO SearchIndex (ProjectId, EventId, Content)
             SELECT
@@ -237,6 +238,17 @@ public sealed partial class SqliteProjectRepository
             FROM Events e
             JOIN Projects p ON p.Id = e.ProjectId
             WHERE e.ProjectId = $projectId;
+
+            INSERT INTO DocumentSearchIndex (ProjectId, EventId, Content)
+            SELECT
+                e.ProjectId,
+                e.Id,
+                COALESCE(group_concat(x.Content, char(10)), '')
+            FROM Events e
+            JOIN Attachments a ON a.EventId = e.Id
+            JOIN ExtractedTexts x ON x.AttachmentId = a.Id
+            WHERE e.ProjectId = $projectId
+            GROUP BY e.ProjectId, e.Id;
             """);
         command.Parameters.AddWithValue("$projectId", projectId.ToString("D"));
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);

@@ -117,7 +117,7 @@ public interface IPdfPreviewService
 public interface IProjectSearchService
 {
     Task<IReadOnlyList<SearchResult>> SearchAsync(
-        Guid projectId,
+        ProjectWorkspace workspace,
         SearchCriteria criteria,
         CancellationToken cancellationToken);
 }
