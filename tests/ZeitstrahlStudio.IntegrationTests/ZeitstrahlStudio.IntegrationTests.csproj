@@ -3,6 +3,7 @@
   <PropertyGroup>
     <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
     <SupportedOSPlatformVersion>10.0.10240.0</SupportedOSPlatformVersion>
+    <UseWPF>true</UseWPF>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
 
@@ -18,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Using Include="System.IO" />
     <Using Include="Xunit" />
   </ItemGroup>
 
@@ -27,6 +29,7 @@
     <ProjectReference Include="..\..\src\ZeitstrahlStudio.Domain\ZeitstrahlStudio.Domain.csproj" />
     <ProjectReference Include="..\..\src\ZeitstrahlStudio.Export\ZeitstrahlStudio.Export.csproj" />
     <ProjectReference Include="..\..\src\ZeitstrahlStudio.Infrastructure\ZeitstrahlStudio.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj" />
   </ItemGroup>
 
 </Project>

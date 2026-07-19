@@ -205,3 +205,13 @@ Horizontale und vertikale Zeitstrahlen verwenden denselben UI-unabhängigen `Tim
 Die Zeiteinheit wird aus der gesamten belegten Projektspanne inklusive Ereigniszeiträumen, Projektgrenzen und Fristen gewählt. Die Projektion ist stückweise linear. Große leere Intervalle werden nur oberhalb skalenabhängiger Schwellen komprimiert; ein von einem Ereigniszeitraum belegtes Intervall ist ausdrücklich keine leere Lücke. Die feste sichtbare Restlänge einer Unterbrechung wächst moderat mit dem Zoom, sodass eine Unterbrechung stets als reale Zeitspanne erkennbar bleibt.
 
 Karten wechseln zunächst die Achsenseite. Überlappende Karten derselben Seite werden der ersten freien Bahn zugeordnet. Persistierte `LayoutPosition`-Werte werden danach als rein visuelle orientierungsabhängige Versätze angewendet und ändern niemals das Datum. Tickzahl und manuelle Darstellungsversätze sind begrenzt, alle Eingaben müssen endlich sein. Diese deterministische Stufe bleibt schnell genug für mindestens 5.000 Ereignisse und wird vor der WPF-Integration vollständig durch Unit-Tests abgesichert.
+
+## ADR-027: Viewport-Zeichnung statt einer visuellen Karteninstanz pro Ereignis
+
+**Status:** angenommen am 19.07.2026
+
+Die interaktive WPF-Zeitstrahlansicht ist ein eigenes `FrameworkElement` mit `IScrollInfo`. Sie übernimmt das reine Ergebnis des `TimelineLayoutEngine`, transformiert es anhand der Scrollposition in den Viewport und zeichnet nur sichtbare Ticks, Unterbrechungen, Fristverbindungen und Karten. Ein `ItemsControl` mit `Canvas` und einer WPF-Elementinstanz pro Ereignis wurde verworfen, weil übliche Virtualisierungspanels die frei positionierten, beidseitig verteilten Karten nicht korrekt virtualisieren und bei mindestens 5.000 Ereignissen unnötig viele Layout- und Visualobjekte erzeugen würden.
+
+Der Renderer besitzt keine fachliche Datums- oder Speicherlogik. Projekt, Auswahl, Orientierung, Zoom, Lückenkompression und eine reine Layoutrevision werden über Dependency Properties eingespeist. Auswahl und Viewportnavigation bleiben lokale Präsentationszustände; Änderungen der projektweiten Orientierung und Lückenkompression laufen über das Haupt-ViewModel, markieren das Projekt als geändert und erzeugen einen Audit-Eintrag.
+
+Zoom wird auf 25 bis 800 Prozent begrenzt und beim Mausrad am Inhalt unter dem Zeiger verankert. `IScrollInfo` stellt dieselben berechneten Ausmaße für Scrollleisten, Mausverschiebung, Zentrierung und Gesamtprojektansicht bereit. Dadurch bleibt die Bedienung unabhängig von der Orientierung konsistent, während die chronologische Liste als zugängliche alternative Darstellung erhalten bleibt.

@@ -29,6 +29,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private bool isBusy;
     private bool isAttachmentImporting;
     private TimelineEvent? selectedEvent;
+    private double timelineZoom = 1;
+    private int timelineLayoutRevision;
     private string statusMessage = "Bereit";
 
     public MainWindowViewModel(
@@ -109,6 +111,15 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         MoveEventLaterCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(() => MoveSelectedEventAsync(moveEarlier: false)),
             () => CanMoveSelectedEvent(moveEarlier: false));
+        SetHorizontalTimelineCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(() => SetTimelineOrientationAsync(TimelineOrientation.Horizontal)),
+            () => !IsBusy && HasProject && TimelineViewOrientation != TimelineOrientation.Horizontal);
+        SetVerticalTimelineCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(() => SetTimelineOrientationAsync(TimelineOrientation.Vertical)),
+            () => !IsBusy && HasProject && TimelineViewOrientation != TimelineOrientation.Vertical);
+        ToggleGapCompressionCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(ToggleGapCompressionAsync),
+            () => !IsBusy && HasProject);
         ShowAuditLogCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ShowAuditLogAsync),
             () => !IsBusy && HasProject);
@@ -159,6 +170,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public AsyncRelayCommand RedoCommand { get; }
     public AsyncRelayCommand MoveEventEarlierCommand { get; }
     public AsyncRelayCommand MoveEventLaterCommand { get; }
+    public AsyncRelayCommand SetHorizontalTimelineCommand { get; }
+    public AsyncRelayCommand SetVerticalTimelineCommand { get; }
+    public AsyncRelayCommand ToggleGapCompressionCommand { get; }
     public AsyncRelayCommand ShowAuditLogCommand { get; }
     public AsyncRelayCommand AddAttachmentsCommand { get; }
     public AsyncRelayCommand AnalyzeAttachmentsCommand { get; }
@@ -186,9 +200,32 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public string ProjectName => CurrentWorkspace?.Project.Name ?? "Kein Projekt geöffnet";
     public string ProjectDescription => CurrentWorkspace?.Project.Description ?? string.Empty;
     public string ProjectArchivePath => CurrentWorkspace?.ArchivePath ?? string.Empty;
+    public TimelineProject? CurrentProject => CurrentWorkspace?.Project;
     public int EventCount => CurrentWorkspace?.Project.Events.Count ?? 0;
     public bool HasUnsavedChanges => CurrentWorkspace?.HasUnsavedChanges ?? false;
     public bool CanAcceptDroppedFiles => !IsBusy && HasProject && SelectedEvent is not null;
+    public TimelineOrientation TimelineViewOrientation =>
+        CurrentProject?.Settings.PreferredOrientation ?? TimelineOrientation.Horizontal;
+    public bool CompressLargeGaps => CurrentProject?.Settings.CompressLargeGaps ?? true;
+    public string GapCompressionText => CompressLargeGaps
+        ? "Zeitlücken: komprimiert"
+        : "Zeitlücken: vollständig";
+    public int TimelineLayoutRevision => timelineLayoutRevision;
+
+    public double TimelineZoom
+    {
+        get => timelineZoom;
+        set
+        {
+            var normalized = double.IsFinite(value) ? Math.Clamp(value, 0.25, 8) : 1;
+            if (SetProperty(ref timelineZoom, normalized))
+            {
+                OnPropertyChanged(nameof(TimelineZoomText));
+            }
+        }
+    }
+
+    public string TimelineZoomText => $"{TimelineZoom:P0}";
 
     public bool IsAttachmentImporting
     {
@@ -248,8 +285,11 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             OnPropertyChanged(nameof(ProjectName));
             OnPropertyChanged(nameof(ProjectDescription));
             OnPropertyChanged(nameof(ProjectArchivePath));
+            OnPropertyChanged(nameof(CurrentProject));
             OnPropertyChanged(nameof(EventCount));
             OnPropertyChanged(nameof(HasUnsavedChanges));
+            TimelineZoom = 1;
+            RefreshTimelinePresentation();
             RaiseCommandStates();
         }
     }
@@ -572,6 +612,53 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             ? $"Ereignis „{eventTitle}“ früher eingeordnet"
             : $"Ereignis „{eventTitle}“ später eingeordnet";
         await WriteAuditAsync("Reorder", eventId, description, timestampUtc).ConfigureAwait(true);
+        StatusMessage = description;
+    }
+
+    private async Task SetTimelineOrientationAsync(TimelineOrientation orientation)
+    {
+        if (CurrentWorkspace is null || CurrentWorkspace.Project.Settings.PreferredOrientation == orientation)
+        {
+            return;
+        }
+
+        var timestampUtc = DateTimeOffset.UtcNow;
+        CurrentWorkspace.Project.ChangeSettings(
+            CurrentWorkspace.Project.Settings with { PreferredOrientation = orientation },
+            timestampUtc);
+        MarkCurrentProjectChanged(SelectedEvent?.Id);
+        var description = orientation == TimelineOrientation.Horizontal
+            ? "Horizontale Zeitstrahlansicht aktiviert"
+            : "Vertikale Zeitstrahlansicht aktiviert";
+        await WriteAuditAsync(
+            "TimelineOrientation",
+            entityId: null,
+            description,
+            timestampUtc).ConfigureAwait(true);
+        StatusMessage = description;
+    }
+
+    private async Task ToggleGapCompressionAsync()
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var timestampUtc = DateTimeOffset.UtcNow;
+        var enabled = !CurrentWorkspace.Project.Settings.CompressLargeGaps;
+        CurrentWorkspace.Project.ChangeSettings(
+            CurrentWorkspace.Project.Settings with { CompressLargeGaps = enabled },
+            timestampUtc);
+        MarkCurrentProjectChanged(SelectedEvent?.Id);
+        var description = enabled
+            ? "Komprimierung großer Zeitlücken aktiviert"
+            : "Komprimierung großer Zeitlücken deaktiviert";
+        await WriteAuditAsync(
+            "TimelineGapCompression",
+            entityId: null,
+            description,
+            timestampUtc).ConfigureAwait(true);
         StatusMessage = description;
     }
 
@@ -1110,6 +1197,17 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             ? Events.FirstOrDefault(timelineEvent => timelineEvent.Id == selectedEventId.Value)
             : null;
         OnPropertyChanged(nameof(EventCount));
+        RefreshTimelinePresentation();
+    }
+
+    private void RefreshTimelinePresentation()
+    {
+        timelineLayoutRevision = unchecked(timelineLayoutRevision + 1);
+        OnPropertyChanged(nameof(TimelineLayoutRevision));
+        OnPropertyChanged(nameof(CurrentProject));
+        OnPropertyChanged(nameof(TimelineViewOrientation));
+        OnPropertyChanged(nameof(CompressLargeGaps));
+        OnPropertyChanged(nameof(GapCompressionText));
     }
 
     private bool CanMoveSelectedEvent(bool moveEarlier) =>
@@ -1245,6 +1343,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         RedoCommand.RaiseCanExecuteChanged();
         MoveEventEarlierCommand.RaiseCanExecuteChanged();
         MoveEventLaterCommand.RaiseCanExecuteChanged();
+        SetHorizontalTimelineCommand.RaiseCanExecuteChanged();
+        SetVerticalTimelineCommand.RaiseCanExecuteChanged();
+        ToggleGapCompressionCommand.RaiseCanExecuteChanged();
         ShowAuditLogCommand.RaiseCanExecuteChanged();
         AddAttachmentsCommand.RaiseCanExecuteChanged();
         AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();

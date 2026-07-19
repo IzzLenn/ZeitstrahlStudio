@@ -1,0 +1,897 @@
+using System.Globalization;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
+using System.Windows.Input;
+using System.Windows.Media;
+using ZeitstrahlStudio.Application;
+using ZeitstrahlStudio.Domain;
+
+namespace ZeitstrahlStudio.App;
+
+/// <summary>
+/// Viewportbezogen gezeichneter WPF-Zeitstrahl. Es werden keine visuellen Kartenobjekte für
+/// außerhalb des sichtbaren Ausschnitts liegende Ereignisse erzeugt.
+/// </summary>
+public sealed class TimelineView : FrameworkElement, IScrollInfo
+{
+    private const double LineScrollAmount = 48;
+    private const double CardCornerRadius = 8;
+    private static readonly Brush BackgroundBrush = CreateBrush("#F8FAFC");
+    private static readonly Brush AxisBrush = CreateBrush("#64748B");
+    private static readonly Brush MutedTextBrush = CreateBrush("#64748B");
+    private static readonly Brush PrimaryTextBrush = CreateBrush("#0F172A");
+    private static readonly Brush SelectedBrush = CreateBrush("#2563EB");
+    private static readonly Brush DeadlineBrush = CreateBrush("#D97706");
+    private static readonly Brush CardBrush = CreateBrush("#FFFFFF");
+    private static readonly Pen AxisPen = CreatePen(AxisBrush, 2);
+    private static readonly Pen ConnectorPen = CreatePen(CreateBrush("#94A3B8"), 1);
+    private static readonly Pen DeadlinePen = CreateDashedPen(DeadlineBrush, 1.5);
+    private readonly TimelineLayoutEngine layoutEngine = new();
+    private readonly Dictionary<string, Brush> eventBrushes = new(StringComparer.OrdinalIgnoreCase);
+    private TimelineLayoutResult? layout;
+    private double horizontalOffset;
+    private double verticalOffset;
+    private double extentWidth;
+    private double extentHeight;
+    private double viewportWidth;
+    private double viewportHeight;
+    private Point panStart;
+    private double panStartHorizontalOffset;
+    private double panStartVerticalOffset;
+    private bool isPanning;
+
+    public TimelineView()
+    {
+        Focusable = true;
+        ClipToBounds = true;
+    }
+
+    public static readonly DependencyProperty ProjectProperty = DependencyProperty.Register(
+        nameof(Project),
+        typeof(TimelineProject),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnLayoutInputChanged));
+
+    public static readonly DependencyProperty SelectedEventProperty = DependencyProperty.Register(
+        nameof(SelectedEvent),
+        typeof(TimelineEvent),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(
+            null,
+            FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.BindsTwoWayByDefault));
+
+    public static readonly DependencyProperty OrientationProperty = DependencyProperty.Register(
+        nameof(Orientation),
+        typeof(TimelineOrientation),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(
+            TimelineOrientation.Horizontal,
+            FrameworkPropertyMetadataOptions.AffectsRender,
+            OnLayoutInputChanged));
+
+    public static readonly DependencyProperty ZoomFactorProperty = DependencyProperty.Register(
+        nameof(ZoomFactor),
+        typeof(double),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(
+            1d,
+            FrameworkPropertyMetadataOptions.AffectsRender | FrameworkPropertyMetadataOptions.BindsTwoWayByDefault,
+            OnLayoutInputChanged,
+            CoerceZoom));
+
+    public static readonly DependencyProperty CompressLargeGapsProperty = DependencyProperty.Register(
+        nameof(CompressLargeGaps),
+        typeof(bool),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(
+            true,
+            FrameworkPropertyMetadataOptions.AffectsRender,
+            OnLayoutInputChanged));
+
+    public static readonly DependencyProperty LayoutRevisionProperty = DependencyProperty.Register(
+        nameof(LayoutRevision),
+        typeof(int),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.AffectsRender, OnLayoutInputChanged));
+
+    public TimelineProject? Project
+    {
+        get => (TimelineProject?)GetValue(ProjectProperty);
+        set => SetValue(ProjectProperty, value);
+    }
+
+    public TimelineEvent? SelectedEvent
+    {
+        get => (TimelineEvent?)GetValue(SelectedEventProperty);
+        set => SetValue(SelectedEventProperty, value);
+    }
+
+    public TimelineOrientation Orientation
+    {
+        get => (TimelineOrientation)GetValue(OrientationProperty);
+        set => SetValue(OrientationProperty, value);
+    }
+
+    public double ZoomFactor
+    {
+        get => (double)GetValue(ZoomFactorProperty);
+        set => SetValue(ZoomFactorProperty, value);
+    }
+
+    public bool CompressLargeGaps
+    {
+        get => (bool)GetValue(CompressLargeGapsProperty);
+        set => SetValue(CompressLargeGapsProperty, value);
+    }
+
+    public int LayoutRevision
+    {
+        get => (int)GetValue(LayoutRevisionProperty);
+        set => SetValue(LayoutRevisionProperty, value);
+    }
+
+    public bool CanHorizontallyScroll { get; set; } = true;
+    public bool CanVerticallyScroll { get; set; } = true;
+    public double ExtentWidth => extentWidth;
+    public double ExtentHeight => extentHeight;
+    public double ViewportWidth => viewportWidth;
+    public double ViewportHeight => viewportHeight;
+    public double HorizontalOffset => horizontalOffset;
+    public double VerticalOffset => verticalOffset;
+    public ScrollViewer? ScrollOwner { get; set; }
+
+    public void ZoomIn() => SetCurrentValue(ZoomFactorProperty, ZoomFactor * 1.2);
+
+    public void ZoomOut() => SetCurrentValue(ZoomFactorProperty, ZoomFactor / 1.2);
+
+    public void ResetView()
+    {
+        SetCurrentValue(ZoomFactorProperty, 1d);
+        RebuildLayout();
+        CenterCrossAxis();
+        SetPrimaryOffset(0);
+    }
+
+    public void ShowWholeProject()
+    {
+        if (Project is null || Project.Events.Count == 0)
+        {
+            ResetView();
+            return;
+        }
+
+        var axisViewport = Orientation == TimelineOrientation.Horizontal ? viewportWidth : viewportHeight;
+        var baseline = layoutEngine.Create(
+            Project,
+            CreateOptions(zoomFactor: 1));
+        var baselineAxis = baseline.ContentAxisLength;
+        var zoom = Math.Clamp((axisViewport - 24) / Math.Max(1, baselineAxis), 0.25, 8);
+        SetCurrentValue(ZoomFactorProperty, zoom);
+        RebuildLayout();
+        CenterCrossAxis();
+        SetPrimaryOffset(0);
+    }
+
+    public void CenterSelectedEvent()
+    {
+        if (layout is null || SelectedEvent is null)
+        {
+            return;
+        }
+
+        var card = layout.Cards.FirstOrDefault(item => item.EventId == SelectedEvent.Id);
+        if (card is null)
+        {
+            return;
+        }
+
+        if (Orientation == TimelineOrientation.Horizontal)
+        {
+            SetHorizontalOffset(card.AxisPosition - (viewportWidth / 2));
+            SetVerticalOffset(GetCrossCenter() + card.CrossPosition - (viewportHeight / 2));
+        }
+        else
+        {
+            SetVerticalOffset(card.AxisPosition - (viewportHeight / 2));
+            SetHorizontalOffset(GetCrossCenter() + card.CrossPosition - (viewportWidth / 2));
+        }
+    }
+
+    public void LineUp() => SetVerticalOffset(VerticalOffset - LineScrollAmount);
+    public void LineDown() => SetVerticalOffset(VerticalOffset + LineScrollAmount);
+    public void LineLeft() => SetHorizontalOffset(HorizontalOffset - LineScrollAmount);
+    public void LineRight() => SetHorizontalOffset(HorizontalOffset + LineScrollAmount);
+    public void MouseWheelUp() => LineUp();
+    public void MouseWheelDown() => LineDown();
+    public void MouseWheelLeft() => LineLeft();
+    public void MouseWheelRight() => LineRight();
+    public void PageUp() => SetVerticalOffset(VerticalOffset - ViewportHeight);
+    public void PageDown() => SetVerticalOffset(VerticalOffset + ViewportHeight);
+    public void PageLeft() => SetHorizontalOffset(HorizontalOffset - ViewportWidth);
+    public void PageRight() => SetHorizontalOffset(HorizontalOffset + ViewportWidth);
+
+    public Rect MakeVisible(Visual visual, Rect rectangle)
+    {
+        if (visual == this)
+        {
+            SetHorizontalOffset(rectangle.Left);
+            SetVerticalOffset(rectangle.Top);
+        }
+
+        return rectangle;
+    }
+
+    public void SetHorizontalOffset(double offset)
+    {
+        var coerced = CoerceOffset(offset, extentWidth, viewportWidth);
+        if (Math.Abs(coerced - horizontalOffset) < 0.1)
+        {
+            return;
+        }
+
+        horizontalOffset = coerced;
+        ScrollOwner?.InvalidateScrollInfo();
+        InvalidateVisual();
+    }
+
+    public void SetVerticalOffset(double offset)
+    {
+        var coerced = CoerceOffset(offset, extentHeight, viewportHeight);
+        if (Math.Abs(coerced - verticalOffset) < 0.1)
+        {
+            return;
+        }
+
+        verticalOffset = coerced;
+        ScrollOwner?.InvalidateScrollInfo();
+        InvalidateVisual();
+    }
+
+    protected override Size MeasureOverride(Size availableSize)
+    {
+        var width = double.IsFinite(availableSize.Width) ? availableSize.Width : 0;
+        var height = double.IsFinite(availableSize.Height) ? availableSize.Height : 0;
+        UpdateViewport(width, height);
+        return new Size(width, height);
+    }
+
+    protected override Size ArrangeOverride(Size finalSize)
+    {
+        UpdateViewport(finalSize.Width, finalSize.Height);
+        return finalSize;
+    }
+
+    protected override void OnRender(DrawingContext drawingContext)
+    {
+        base.OnRender(drawingContext);
+        drawingContext.DrawRectangle(BackgroundBrush, null, new Rect(RenderSize));
+        if (layout is null || Project is null || layout.Cards.Count == 0)
+        {
+            DrawEmptyState(drawingContext);
+            return;
+        }
+
+        drawingContext.PushClip(new RectangleGeometry(new Rect(RenderSize)));
+        drawingContext.PushTransform(new TranslateTransform(-horizontalOffset, -verticalOffset));
+        DrawAxis(drawingContext);
+        DrawConnectionsAndDeadlines(drawingContext);
+        DrawVisibleCards(drawingContext);
+        drawingContext.Pop();
+        drawingContext.Pop();
+    }
+
+    protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
+    {
+        base.OnMouseLeftButtonDown(e);
+        Focus();
+        var hit = HitTestCard(e.GetPosition(this));
+        if (hit is not null && Project is not null)
+        {
+            var timelineEvent = Project.Events.FirstOrDefault(item => item.Id == hit.EventId);
+            if (timelineEvent is not null)
+            {
+                SetCurrentValue(SelectedEventProperty, timelineEvent);
+            }
+
+            e.Handled = true;
+            return;
+        }
+
+        BeginPan(e.GetPosition(this));
+        e.Handled = true;
+    }
+
+    protected override void OnMouseDown(MouseButtonEventArgs e)
+    {
+        base.OnMouseDown(e);
+        if (e.ChangedButton == MouseButton.Middle)
+        {
+            Focus();
+            BeginPan(e.GetPosition(this));
+            e.Handled = true;
+        }
+    }
+
+    protected override void OnMouseMove(MouseEventArgs e)
+    {
+        base.OnMouseMove(e);
+        if (!isPanning || e.LeftButton != MouseButtonState.Pressed && e.MiddleButton != MouseButtonState.Pressed)
+        {
+            return;
+        }
+
+        var current = e.GetPosition(this);
+        SetHorizontalOffset(panStartHorizontalOffset - (current.X - panStart.X));
+        SetVerticalOffset(panStartVerticalOffset - (current.Y - panStart.Y));
+        e.Handled = true;
+    }
+
+    protected override void OnMouseUp(MouseButtonEventArgs e)
+    {
+        base.OnMouseUp(e);
+        if (isPanning)
+        {
+            isPanning = false;
+            ReleaseMouseCapture();
+            Cursor = Cursors.Arrow;
+            e.Handled = true;
+        }
+    }
+
+    protected override void OnMouseWheel(MouseWheelEventArgs e)
+    {
+        base.OnMouseWheel(e);
+        var pointer = e.GetPosition(this);
+        var oldZoom = ZoomFactor;
+        var newZoom = Math.Clamp(oldZoom * (e.Delta > 0 ? 1.15 : 1 / 1.15), 0.25, 8);
+        if (Math.Abs(newZoom - oldZoom) < 0.0001)
+        {
+            return;
+        }
+
+        var oldAxisCoordinate = Orientation == TimelineOrientation.Horizontal
+            ? horizontalOffset + pointer.X
+            : verticalOffset + pointer.Y;
+        SetCurrentValue(ZoomFactorProperty, newZoom);
+        var newAxisCoordinate = 180 + ((oldAxisCoordinate - 180) * (newZoom / oldZoom));
+        if (Orientation == TimelineOrientation.Horizontal)
+        {
+            SetHorizontalOffset(newAxisCoordinate - pointer.X);
+        }
+        else
+        {
+            SetVerticalOffset(newAxisCoordinate - pointer.Y);
+        }
+
+        e.Handled = true;
+    }
+
+    protected override void OnKeyDown(KeyEventArgs e)
+    {
+        base.OnKeyDown(e);
+        switch (e.Key)
+        {
+            case Key.Add:
+            case Key.OemPlus:
+                ZoomIn();
+                e.Handled = true;
+                break;
+            case Key.Subtract:
+            case Key.OemMinus:
+                ZoomOut();
+                e.Handled = true;
+                break;
+            case Key.Home:
+                ShowWholeProject();
+                e.Handled = true;
+                break;
+        }
+    }
+
+    private static void OnLayoutInputChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        var view = (TimelineView)dependencyObject;
+        view.RebuildLayout();
+    }
+
+    private static object CoerceZoom(DependencyObject dependencyObject, object baseValue)
+    {
+        var value = (double)baseValue;
+        return double.IsFinite(value) ? Math.Clamp(value, 0.25, 8) : 1d;
+    }
+
+    private void RebuildLayout()
+    {
+        if (Project is null || viewportWidth <= 0 || viewportHeight <= 0)
+        {
+            layout = null;
+            UpdateExtent(viewportWidth, viewportHeight);
+            InvalidateVisual();
+            return;
+        }
+
+        layout = layoutEngine.Create(Project, CreateOptions(ZoomFactor));
+        var width = Orientation == TimelineOrientation.Horizontal
+            ? layout.ContentAxisLength
+            : layout.ContentCrossLength;
+        var height = Orientation == TimelineOrientation.Horizontal
+            ? layout.ContentCrossLength
+            : layout.ContentAxisLength;
+        UpdateExtent(width, height);
+        InvalidateVisual();
+    }
+
+    private TimelineLayoutOptions CreateOptions(double zoomFactor)
+    {
+        var axisLength = Orientation == TimelineOrientation.Horizontal ? viewportWidth : viewportHeight;
+        var crossLength = Orientation == TimelineOrientation.Horizontal ? viewportHeight : viewportWidth;
+        return new TimelineLayoutOptions(
+            Orientation,
+            zoomFactor,
+            CompressLargeGaps,
+            Math.Max(1, axisLength),
+            Math.Max(1, crossLength));
+    }
+
+    private void UpdateViewport(double width, double height)
+    {
+        if (Math.Abs(width - viewportWidth) < 0.1 && Math.Abs(height - viewportHeight) < 0.1)
+        {
+            return;
+        }
+
+        viewportWidth = Math.Max(0, width);
+        viewportHeight = Math.Max(0, height);
+        RebuildLayout();
+        ScrollOwner?.InvalidateScrollInfo();
+    }
+
+    private void UpdateExtent(double width, double height)
+    {
+        extentWidth = Math.Max(viewportWidth, width);
+        extentHeight = Math.Max(viewportHeight, height);
+        horizontalOffset = CoerceOffset(horizontalOffset, extentWidth, viewportWidth);
+        verticalOffset = CoerceOffset(verticalOffset, extentHeight, viewportHeight);
+        ScrollOwner?.InvalidateScrollInfo();
+    }
+
+    private void DrawAxis(DrawingContext drawingContext)
+    {
+        var crossCenter = GetCrossCenter();
+        if (Orientation == TimelineOrientation.Horizontal)
+        {
+            drawingContext.DrawLine(AxisPen, new Point(24, crossCenter), new Point(extentWidth - 24, crossCenter));
+        }
+        else
+        {
+            drawingContext.DrawLine(AxisPen, new Point(crossCenter, 24), new Point(crossCenter, extentHeight - 24));
+        }
+
+        var visible = GetVisibleContentRect(80);
+        foreach (var tick in layout!.Ticks)
+        {
+            if (!IsAxisPositionVisible(tick.AxisPosition, visible))
+            {
+                continue;
+            }
+
+            DrawTick(drawingContext, tick, crossCenter);
+        }
+
+        foreach (var axisBreak in layout.Breaks)
+        {
+            if (!IsAxisPositionVisible((axisBreak.AxisStart + axisBreak.AxisEnd) / 2, visible))
+            {
+                continue;
+            }
+
+            DrawBreak(drawingContext, axisBreak, crossCenter);
+        }
+    }
+
+    private void DrawTick(DrawingContext drawingContext, TimelineAxisTick tick, double crossCenter)
+    {
+        var length = tick.IsMajor ? 9 : 6;
+        if (Orientation == TimelineOrientation.Horizontal)
+        {
+            drawingContext.DrawLine(
+                ConnectorPen,
+                new Point(tick.AxisPosition, crossCenter - length),
+                new Point(tick.AxisPosition, crossCenter + length));
+            DrawText(drawingContext, tick.Label, 10, MutedTextBrush,
+                new Point(tick.AxisPosition - 38, crossCenter + 12), 76, 18, TextAlignment.Center, false);
+        }
+        else
+        {
+            drawingContext.DrawLine(
+                ConnectorPen,
+                new Point(crossCenter - length, tick.AxisPosition),
+                new Point(crossCenter + length, tick.AxisPosition));
+            DrawText(drawingContext, tick.Label, 10, MutedTextBrush,
+                new Point(crossCenter + 12, tick.AxisPosition - 9), 82, 18, TextAlignment.Left, false);
+        }
+    }
+
+    private void DrawBreak(DrawingContext drawingContext, TimelineAxisBreak axisBreak, double crossCenter)
+    {
+        var middle = (axisBreak.AxisStart + axisBreak.AxisEnd) / 2;
+        var backgroundPen = CreatePen(BackgroundBrush, 14);
+        if (Orientation == TimelineOrientation.Horizontal)
+        {
+            drawingContext.DrawLine(backgroundPen, new Point(middle - 16, crossCenter), new Point(middle + 16, crossCenter));
+            var points = new StreamGeometry();
+            using (var context = points.Open())
+            {
+                context.BeginFigure(new Point(middle - 14, crossCenter - 8), false, false);
+                context.PolyLineTo(
+                    [
+                        new Point(middle - 7, crossCenter + 8),
+                        new Point(middle, crossCenter - 8),
+                        new Point(middle + 7, crossCenter + 8),
+                        new Point(middle + 14, crossCenter - 8),
+                    ],
+                    true,
+                    false);
+            }
+
+            points.Freeze();
+            drawingContext.DrawGeometry(null, CreatePen(DeadlineBrush, 2), points);
+            DrawText(drawingContext, axisBreak.Label, 10, DeadlineBrush,
+                new Point(middle - 105, crossCenter - 31), 210, 20, TextAlignment.Center, true);
+        }
+        else
+        {
+            drawingContext.DrawLine(backgroundPen, new Point(crossCenter, middle - 16), new Point(crossCenter, middle + 16));
+            var points = new StreamGeometry();
+            using (var context = points.Open())
+            {
+                context.BeginFigure(new Point(crossCenter - 8, middle - 14), false, false);
+                context.PolyLineTo(
+                    [
+                        new Point(crossCenter + 8, middle - 7),
+                        new Point(crossCenter - 8, middle),
+                        new Point(crossCenter + 8, middle + 7),
+                        new Point(crossCenter - 8, middle + 14),
+                    ],
+                    true,
+                    false);
+            }
+
+            points.Freeze();
+            drawingContext.DrawGeometry(null, CreatePen(DeadlineBrush, 2), points);
+            DrawText(drawingContext, axisBreak.Label, 10, DeadlineBrush,
+                new Point(crossCenter + 24, middle - 10), 210, 20, TextAlignment.Left, true);
+        }
+    }
+
+    private void DrawConnectionsAndDeadlines(DrawingContext drawingContext)
+    {
+        var visible = GetVisibleContentRect(160);
+        foreach (var card in layout!.Cards)
+        {
+            var rect = GetCardRect(card);
+            if (!rect.IntersectsWith(visible))
+            {
+                continue;
+            }
+
+            var axisPoint = GetAxisPoint(card.AxisPosition);
+            var cardPoint = GetCardConnectorPoint(card, rect);
+            drawingContext.DrawLine(ConnectorPen, axisPoint, cardPoint);
+        }
+
+        foreach (var deadline in layout.Deadlines)
+        {
+            if (!IsAxisPositionVisible(deadline.AxisPosition, visible) &&
+                !IsAxisPositionVisible(deadline.EventAxisPosition, visible))
+            {
+                continue;
+            }
+
+            drawingContext.DrawLine(
+                DeadlinePen,
+                GetAxisPoint(deadline.EventAxisPosition),
+                GetAxisPoint(deadline.AxisPosition));
+            DrawDeadlineDiamond(drawingContext, deadline);
+        }
+    }
+
+    private void DrawDeadlineDiamond(DrawingContext drawingContext, TimelineDeadlineLayout deadline)
+    {
+        var center = GetAxisPoint(deadline.AxisPosition);
+        var geometry = new StreamGeometry();
+        using (var context = geometry.Open())
+        {
+            context.BeginFigure(new Point(center.X, center.Y - 7), true, true);
+            context.PolyLineTo(
+                [
+                    new Point(center.X + 7, center.Y),
+                    new Point(center.X, center.Y + 7),
+                    new Point(center.X - 7, center.Y),
+                ],
+                true,
+                true);
+        }
+
+        geometry.Freeze();
+        drawingContext.DrawGeometry(DeadlineBrush, CreatePen(CreateBrush("#92400E"), 1), geometry);
+        DrawText(
+            drawingContext,
+            deadline.Label,
+            10,
+            DeadlineBrush,
+            Orientation == TimelineOrientation.Horizontal
+                ? new Point(center.X - 70, center.Y - 31)
+                : new Point(center.X + 14, center.Y - 10),
+            140,
+            20,
+            Orientation == TimelineOrientation.Horizontal ? TextAlignment.Center : TextAlignment.Left,
+            true);
+    }
+
+    private void DrawVisibleCards(DrawingContext drawingContext)
+    {
+        var visible = GetVisibleContentRect(40);
+        var events = Project!.Events.ToDictionary(timelineEvent => timelineEvent.Id);
+        foreach (var card in layout!.Cards)
+        {
+            var rect = GetCardRect(card);
+            if (!rect.IntersectsWith(visible) || !events.TryGetValue(card.EventId, out var timelineEvent))
+            {
+                continue;
+            }
+
+            DrawCard(drawingContext, rect, card, timelineEvent);
+        }
+    }
+
+    private void DrawCard(
+        DrawingContext drawingContext,
+        Rect rect,
+        TimelineCardLayout card,
+        TimelineEvent timelineEvent)
+    {
+        var color = GetEventBrush(timelineEvent.ColorHex);
+        var selected = SelectedEvent?.Id == timelineEvent.Id;
+        var borderPen = CreatePen(selected ? SelectedBrush : color, selected ? 3 : 2);
+        drawingContext.DrawRoundedRectangle(
+            CardBrush,
+            borderPen,
+            rect,
+            CardCornerRadius,
+            CardCornerRadius);
+        var colorBar = Orientation == TimelineOrientation.Horizontal
+            ? new Rect(rect.Left, rect.Top, 7, rect.Height)
+            : new Rect(rect.Left, rect.Top, rect.Width, 7);
+        drawingContext.DrawRoundedRectangle(color, null, colorBar, 3, 3);
+        var left = rect.Left + 14;
+        var top = rect.Top + 12;
+        var width = rect.Width - 28;
+        DrawText(drawingContext, timelineEvent.Date.ToDisplayString(), 11, color,
+            new Point(left, top), width, 18, TextAlignment.Left, true);
+        DrawText(drawingContext, timelineEvent.Title, 14, PrimaryTextBrush,
+            new Point(left, top + 21), width, 40, TextAlignment.Left, true);
+        DrawText(drawingContext, timelineEvent.InfoText ?? string.Empty, 11, MutedTextBrush,
+            new Point(left, top + 63), width, 33, TextAlignment.Left, false);
+        var badges = new List<string> { GetPriorityText(timelineEvent.Priority) };
+        if (timelineEvent.Deadline is not null)
+        {
+            badges.Add("Frist");
+        }
+
+        if (timelineEvent.Attachments.Count > 0)
+        {
+            badges.Add($"{timelineEvent.Attachments.Count} Anhänge");
+        }
+
+        if (card.HasManualPosition)
+        {
+            badges.Add("manuell");
+        }
+
+        DrawText(drawingContext, string.Join("  ·  ", badges), 10, MutedTextBrush,
+            new Point(left, rect.Bottom - 24), width, 16, TextAlignment.Left, false);
+    }
+
+    private TimelineCardLayout? HitTestCard(Point viewportPoint)
+    {
+        if (layout is null)
+        {
+            return null;
+        }
+
+        var contentPoint = new Point(
+            viewportPoint.X + horizontalOffset,
+            viewportPoint.Y + verticalOffset);
+        return layout.Cards
+            .Reverse()
+            .FirstOrDefault(card => GetCardRect(card).Contains(contentPoint));
+    }
+
+    private Rect GetCardRect(TimelineCardLayout card)
+    {
+        var crossCenter = GetCrossCenter();
+        return Orientation == TimelineOrientation.Horizontal
+            ? new Rect(
+                card.AxisPosition - (card.AxisLength / 2),
+                crossCenter + card.CrossPosition - (card.CrossLength / 2),
+                card.AxisLength,
+                card.CrossLength)
+            : new Rect(
+                crossCenter + card.CrossPosition - (card.CrossLength / 2),
+                card.AxisPosition - (card.AxisLength / 2),
+                card.CrossLength,
+                card.AxisLength);
+    }
+
+    private Point GetAxisPoint(double axisPosition)
+    {
+        var crossCenter = GetCrossCenter();
+        return Orientation == TimelineOrientation.Horizontal
+            ? new Point(axisPosition, crossCenter)
+            : new Point(crossCenter, axisPosition);
+    }
+
+    private Point GetCardConnectorPoint(TimelineCardLayout card, Rect rect) =>
+        Orientation == TimelineOrientation.Horizontal
+            ? new Point(card.AxisPosition, card.IsPositiveSide ? rect.Top : rect.Bottom)
+            : new Point(card.IsPositiveSide ? rect.Left : rect.Right, card.AxisPosition);
+
+    private Rect GetVisibleContentRect(double margin) => new(
+        horizontalOffset - margin,
+        verticalOffset - margin,
+        viewportWidth + (margin * 2),
+        viewportHeight + (margin * 2));
+
+    private bool IsAxisPositionVisible(double value, Rect visible) =>
+        Orientation == TimelineOrientation.Horizontal
+            ? value >= visible.Left && value <= visible.Right
+            : value >= visible.Top && value <= visible.Bottom;
+
+    private double GetCrossCenter() => Orientation == TimelineOrientation.Horizontal
+        ? extentHeight / 2
+        : extentWidth / 2;
+
+    private void CenterCrossAxis()
+    {
+        if (Orientation == TimelineOrientation.Horizontal)
+        {
+            SetVerticalOffset(GetCrossCenter() - (viewportHeight / 2));
+        }
+        else
+        {
+            SetHorizontalOffset(GetCrossCenter() - (viewportWidth / 2));
+        }
+    }
+
+    private void SetPrimaryOffset(double value)
+    {
+        if (Orientation == TimelineOrientation.Horizontal)
+        {
+            SetHorizontalOffset(value);
+        }
+        else
+        {
+            SetVerticalOffset(value);
+        }
+    }
+
+    private void BeginPan(Point point)
+    {
+        panStart = point;
+        panStartHorizontalOffset = horizontalOffset;
+        panStartVerticalOffset = verticalOffset;
+        isPanning = true;
+        Cursor = Cursors.Hand;
+        CaptureMouse();
+    }
+
+    private void DrawEmptyState(DrawingContext drawingContext)
+    {
+        DrawText(
+            drawingContext,
+            Project is null
+                ? "Kein Projekt geöffnet"
+                : "Noch keine Ereignisse für den Zeitstrahl vorhanden",
+            15,
+            MutedTextBrush,
+            new Point(20, Math.Max(20, (RenderSize.Height / 2) - 12)),
+            Math.Max(1, RenderSize.Width - 40),
+            28,
+            TextAlignment.Center,
+            false);
+    }
+
+    private void DrawText(
+        DrawingContext drawingContext,
+        string text,
+        double fontSize,
+        Brush brush,
+        Point origin,
+        double maximumWidth,
+        double maximumHeight,
+        TextAlignment alignment,
+        bool semibold)
+    {
+        if (string.IsNullOrWhiteSpace(text) || maximumWidth <= 0 || maximumHeight <= 0)
+        {
+            return;
+        }
+
+        var formatted = new FormattedText(
+            text,
+            CultureInfo.GetCultureInfo("de-DE"),
+            FlowDirection.LeftToRight,
+            new Typeface(
+                new FontFamily("Segoe UI"),
+                FontStyles.Normal,
+                semibold ? FontWeights.SemiBold : FontWeights.Normal,
+                FontStretches.Normal),
+            fontSize,
+            brush,
+            VisualTreeHelper.GetDpi(this).PixelsPerDip)
+        {
+            MaxTextWidth = maximumWidth,
+            MaxTextHeight = maximumHeight,
+            TextAlignment = alignment,
+            Trimming = TextTrimming.CharacterEllipsis,
+        };
+        drawingContext.DrawText(formatted, origin);
+    }
+
+    private Brush GetEventBrush(string colorHex)
+    {
+        if (eventBrushes.TryGetValue(colorHex, out var brush))
+        {
+            return brush;
+        }
+
+        brush = CreateBrush(colorHex);
+        eventBrushes[colorHex] = brush;
+        return brush;
+    }
+
+    private static string GetPriorityText(EventPriority priority) => priority switch
+    {
+        EventPriority.Low => "Niedrig",
+        EventPriority.Normal => "Normal",
+        EventPriority.High => "Hoch",
+        EventPriority.Critical => "Kritisch",
+        _ => "Priorität",
+    };
+
+    private static double CoerceOffset(double value, double extent, double viewport)
+    {
+        if (!double.IsFinite(value))
+        {
+            return 0;
+        }
+
+        return Math.Clamp(value, 0, Math.Max(0, extent - viewport));
+    }
+
+    private static Brush CreateBrush(string color)
+    {
+        var brush = new SolidColorBrush((Color)ColorConverter.ConvertFromString(color));
+        brush.Freeze();
+        return brush;
+    }
+
+    private static Pen CreatePen(Brush brush, double thickness)
+    {
+        var pen = new Pen(brush, thickness);
+        pen.Freeze();
+        return pen;
+    }
+
+    private static Pen CreateDashedPen(Brush brush, double thickness)
+    {
+        var pen = new Pen(brush, thickness)
+        {
+            DashStyle = DashStyles.Dash,
+        };
+        pen.Freeze();
+        return pen;
+    }
+}

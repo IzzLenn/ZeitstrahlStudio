@@ -6,7 +6,7 @@ Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 6A – testbares Zeitachsen- und Kartenlayoutmodell
+Meilenstein 6B – virtualisierte WPF-Zeitstrahlansicht
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -222,6 +222,17 @@ Meilenstein 6A – testbares Zeitachsen- und Kartenlayoutmodell
 - vorhandene horizontale/vertikale `LayoutPosition`-Versätze werden orientierungsrichtig angewendet, ohne Datumswerte zu verändern; extreme gespeicherte Versätze werden für eine stabile Darstellung begrenzt
 - 13 neue Unit-Tests prüfen alle sechs Skalen, Lückenerkennung/-beschriftung, Zeitraumabwehr, Seiten-/Bahnverteilung, beide Versatzrichtungen, Fristprojektion und 5.000 Ereignisse
 
+### Meilenstein 6B – virtualisierte WPF-Zeitstrahlansicht
+
+- ein eigenes `FrameworkElement` mit `IScrollInfo` zeichnet Achse, Ticks, Unterbrechungen, Fristverbindungen und Ereigniskarten unmittelbar in den sichtbaren Viewport; auch bei großen Projekten entstehen keine tausenden WPF-Kartenelemente
+- horizontale und vertikale Ansicht sind über deutlich sichtbare Werkzeugleistenaktionen umschaltbar; die bevorzugte Orientierung wird als Projekteinstellung gespeichert und im Audit protokolliert
+- Karten zeigen Datum beziehungsweise Zeitraum, Titel, Kurzinfo, Priorität, Frist, Anhangsanzahl, Projektfarbe und den Zustand einer manuellen Position; ausgewählte Karten werden hervorgehoben und per Mausklick mit dem ViewModel synchronisiert
+- Zoomen ist über Mausrad, Schaltflächen und Tastatur von 25 bis 800 Prozent möglich; der Mauszeiger bleibt beim Mausradzoom am selben Achseninhalt
+- freie Mausverschiebung, horizontale/vertikale Scrollleisten, Gesamtprojektansicht, Zentrierung des ausgewählten Ereignisses und Zurücksetzen der Ansicht sind bedienbar
+- die Lückenkompression kann in der Ansicht ein- und ausgeschaltet werden; die Einstellung wird im Projekt gespeichert, als ungespeicherte Änderung markiert und im Audit protokolliert
+- die chronologische Ereignisliste bleibt als alternative, tastaturzugängliche Registerkarte erhalten
+- ein neuer STA-WPF-Integrationstest rendert einen realen Zeitstrahl mit 100 Ereignissen und Frist in beiden Orientierungen in Bitmaps und prüft Navigation sowie Zoomgrenzen
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -236,7 +247,7 @@ dotnet test ZeitstrahlStudio.sln -c Release --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 6A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 42 Unit-Tests und 47 Integrationstests bestanden. `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` meldet keine Formatabweichung. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.547.458 Bytes; sie enthält die WinRT-Projektion, aber keine Tesseract-, Sprachmodell- oder fremden Runtime-Assets. Der veröffentlichte EXE-Smoke-Test war zuletzt nach Meilenstein 5D erfolgreich; die neue Layoutlogik besitzt noch keine aktive UI-Verbindung.
+Aktueller Stand nach Meilenstein 6B: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 42 Unit-Tests und 48 Integrationstests bestanden. `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` meldet keine Formatabweichung. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.580.250 Bytes; sie enthält die WinRT-Projektion, aber keine Tesseract-, Sprachmodell- oder fremden Runtime-Assets. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft und blieb über das Prüfintervall stabil.
 
 ## Phasenweiser Implementierungsplan
 
@@ -245,7 +256,7 @@ Aktueller Stand nach Meilenstein 6A: Debug und Release jeweils 0 Warnungen/0 Feh
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
 5. **Anhänge und lokale Dokumentenanalyse – abgeschlossen:** sicherer Import und Undo-fähige Zuordnung, DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bild- und PDF-Vorschau, Integritätsprüfung, Standardprogramm und lokale OCR für Bilder sowie bildbasierte PDF-Seiten sind in 5A bis 5D umgesetzt.
-6. **Zeitstrahldarstellung – in Arbeit:** gemeinsames Layoutmodell, automatische Skala, Lückenkompression, Kollisionsbahnen, Fristprojektion und manuelle Versatzprojektion sind in 6A umgesetzt; virtualisierte WPF-Ansicht, Zoom/Pan und persistente Bedienaktionen folgen.
+6. **Zeitstrahldarstellung – in Arbeit:** gemeinsames Layoutmodell, automatische Skala, Lückenkompression, Kollisionsbahnen und Fristprojektion sind in 6A umgesetzt; die virtualisierte horizontale/vertikale WPF-Ansicht samt Zoom, Mausverschiebung, Scrollleisten und Navigation ist in 6B aktiv. Manuelle Kartenverschiebung und die Auswahl eines sichtbaren Zeitraums folgen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
 8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
 9. **Standalone-HTML-Export:** eine offlinefähige responsive Datei mit eingebetteten Daten, Suche, Filtern, Zoom und Druck-CSS.
@@ -268,4 +279,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 6B umsetzen: das Layoutmodell in eine viewportbezogen zeichnende WPF-Zeitstrahlansicht integrieren und Orientierung, Zoom, Mausrad, Pan, Scrollleisten, Zentrierung und „gesamtes Projekt“ bedienbar machen.
+Meilenstein 6C umsetzen: Ereigniskarten per Drag-and-drop rein visuell verschieben, orientierungsabhängige Positionen mit Undo/Redo und Audit speichern, die automatische Anordnung wiederherstellen und einen ausgewählten Zeitbereich anzeigen.

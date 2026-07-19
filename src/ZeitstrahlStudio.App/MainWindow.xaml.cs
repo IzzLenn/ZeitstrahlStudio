@@ -3,7 +3,7 @@ using System.Windows;
 
 namespace ZeitstrahlStudio.App;
 
-/// <summary>Hauptfenster; Code-behind behandelt ausschließlich den Fensterlebenszyklus.</summary>
+/// <summary>Hauptfenster; Code-behind behandelt ausschließlich Fenster- und Darstellungsinteraktionen.</summary>
 public partial class MainWindow : Window
 {
     private readonly MainWindowViewModel viewModel;
@@ -65,4 +65,15 @@ public partial class MainWindow : Window
 
         await viewModel.ImportDroppedFilesAsync(paths).ConfigureAwait(true);
     }
+
+    private void TimelineZoomOut_Click(object sender, RoutedEventArgs e) => TimelineControl.ZoomOut();
+
+    private void TimelineZoomIn_Click(object sender, RoutedEventArgs e) => TimelineControl.ZoomIn();
+
+    private void TimelineShowAll_Click(object sender, RoutedEventArgs e) => TimelineControl.ShowWholeProject();
+
+    private void TimelineCenterSelection_Click(object sender, RoutedEventArgs e) =>
+        TimelineControl.CenterSelectedEvent();
+
+    private void TimelineResetView_Click(object sender, RoutedEventArgs e) => TimelineControl.ResetView();
 }
