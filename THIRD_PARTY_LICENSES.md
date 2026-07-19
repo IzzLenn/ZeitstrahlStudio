@@ -9,6 +9,7 @@ Stand: 19. Juli 2026. Produktionsabhängigkeiten werden nur eingeführt, wenn si
 | Microsoft.Data.Sqlite / Microsoft.Data.Sqlite.Core | 8.0.29 | lokaler ADO.NET-SQLite-Zugriff | MIT |
 | Microsoft.Extensions.DependencyInjection | 8.0.1 | Composition Root und Lebenszyklusverwaltung der WPF-Anwendung | MIT |
 | Microsoft.Extensions.DependencyInjection.Abstractions | 8.0.2 | DI-Schnittstellen und Registrierungsabstraktionen | MIT |
+| PdfPig | 0.1.15 | vollständig lokale PDF-Textextraktion und Metadatenanalyse | Apache-2.0 |
 | SQLitePCLRaw.bundle_e_sqlite3 | 2.1.6 | Bündelung der lokalen nativen SQLite-Bibliothek | Apache-2.0 |
 | SQLitePCLRaw.core | 2.1.6 | verwaltete SQLite-Bindings | Apache-2.0 |
 | SQLitePCLRaw.provider.e_sqlite3 | 2.1.6 | Provider für die gebündelte SQLite-Bibliothek | Apache-2.0 |

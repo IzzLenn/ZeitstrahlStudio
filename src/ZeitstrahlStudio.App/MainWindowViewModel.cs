@@ -114,7 +114,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             () => !IsBusy && SelectedEvent is not null);
         AnalyzeAttachmentsCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(AnalyzeSelectedAttachmentsAsync),
-            () => !IsBusy && SelectedEvent?.Attachments.Any(IsOfficeAttachment) == true);
+            () => !IsBusy && SelectedEvent?.Attachments.Any(IsAnalyzableAttachment) == true);
         ShowAttachmentAnalysisCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ShowAttachmentAnalysisAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
@@ -638,7 +638,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             }
 
             var failures = results.Where(result => !result.IsSuccess).ToArray();
-            var analysisSummary = successfulAttachments.Any(IsOfficeAttachment)
+            var analysisSummary = successfulAttachments.Any(IsAnalyzableAttachment)
                 ? await AnalyzeAttachmentsForEventAsync(
                     eventId,
                     successfulAttachments,
@@ -683,7 +683,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         }
 
         var eventId = SelectedEvent.Id;
-        var attachments = SelectedEvent.Attachments.Where(IsOfficeAttachment).ToArray();
+        var attachments = SelectedEvent.Attachments.Where(IsAnalyzableAttachment).ToArray();
         using var operationCancellation =
             CancellationTokenSource.CreateLinkedTokenSource(lifetimeCancellation.Token);
         attachmentImportCancellation = operationCancellation;
@@ -719,7 +719,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         bool checkpointBeforeAnalysis,
         CancellationToken cancellationToken)
     {
-        var supported = attachments.Where(IsOfficeAttachment).ToArray();
+        var supported = attachments.Where(IsAnalyzableAttachment).ToArray();
         if (supported.Length == 0 || CurrentWorkspace is null)
         {
             return (0, 0);
@@ -855,8 +855,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         RaiseCommandStates();
     }
 
-    private static bool IsOfficeAttachment(Attachment attachment) =>
+    private static bool IsAnalyzableAttachment(Attachment attachment) =>
         attachment.MediaType is
+            "application/pdf" or
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document" or
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 

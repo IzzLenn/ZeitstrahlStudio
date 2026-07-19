@@ -82,6 +82,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IAttachmentAnalysisStore, SqliteAttachmentAnalysisStore>();
         services.AddSingleton<IDocumentAnalyzer, DocxDocumentAnalyzer>();
         services.AddSingleton<IDocumentAnalyzer, XlsxDocumentAnalyzer>();
+        services.AddSingleton<IDocumentAnalyzer, PdfDocumentAnalyzer>();
         services.AddSingleton<IAttachmentAnalysisQueue>(provider =>
             new BoundedAttachmentAnalysisQueue(
                 provider.GetServices<IDocumentAnalyzer>(),

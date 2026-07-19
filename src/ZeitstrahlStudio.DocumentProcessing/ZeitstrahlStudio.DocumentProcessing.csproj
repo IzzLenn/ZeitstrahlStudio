@@ -10,4 +10,8 @@
     <ProjectReference Include="..\ZeitstrahlStudio.Shared\ZeitstrahlStudio.Shared.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="PdfPig" Version="0.1.15" />
+  </ItemGroup>
+
 </Project>

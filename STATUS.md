@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1 bis 4 sowie Anhangsimport und Office-Analyse 5A bis 5B3 abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1 bis 4 sowie Anhangsimport und Dokumentanalyse 5A bis 5C1 abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 5C1 – lokale PDF-Textextraktion
+Meilenstein 5C2 – lokale Bildvorschau und Öffnen von Projektkopien
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -161,6 +161,17 @@ Meilenstein 5C1 – lokale PDF-Textextraktion
 - ein schreibgeschützter Anhangsdialog zeigt Dateityp, Analysezustand, Dokumenttitel, extrahierten Text, Datumsfundstellen und erkannte Metadaten
 - drei Integrationstests prüfen Parallelitätsgrenze/Ergebnisreihenfolge, Abbruch und nicht unterstützte Typen; ein weiterer Test prüft den Checkpoint ohne Archivexport
 
+### Meilenstein 5C1 – lokale PDF-Textextraktion
+
+- PdfPig 0.1.15 als Apache-2.0-lizenzierte reine .NET-Produktionsabhängigkeit ohne transitive .NET-8-Pakete eingeführt und in der Drittanbieterübersicht dokumentiert
+- eingebetteter PDF-Text wird vollständig lokal in Inhaltsreihenfolge extrahiert; Microsoft Office, Cloud-Dienste oder externe Prozesse sind nicht erforderlich
+- Titel, Autor, Betreff, Schlagwörter, Erzeuger, Erstellungs-/Änderungsdatum, PDF-Version, Verschlüsselungszustand und Seitenzahl werden als Dokumentmetadaten übernommen
+- Datumsfundstellen werden gemeinsam aus Text und Metadaten erkannt und über die bestehende transaktionale Analyseablage sofort durchsuchbar
+- maximal 100.000 Seiten, 10 Millionen extrahierte Zeichen und eine Parser-Stacktiefe von 64 begrenzen die Verarbeitung; fehlende Fonts werden übersprungen
+- die synchrone PDF-Verarbeitung läuft außerhalb des UI-Threads und prüft den CancellationToken vor dem Öffnen sowie vor jeder Seite
+- der PDF-Analyzer ist in die vorhandene begrenzte Warteschlange, automatische Importanalyse, manuelle Neuanalyse und Ergebnisanzeige integriert
+- drei Integrationstests prüfen Text/Metadaten/Datumsfundstelle/Seitenzahl, beschädigte PDFs und einen bereits ausgelösten Abbruch
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -173,7 +184,7 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 5B3: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 30 Integrationstests bestanden. Zusätzlich meldet `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` keine Formatabweichung.
+Aktueller Stand nach Meilenstein 5C1: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 33 Integrationstests bestanden. Zusätzlich meldet `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` keine Formatabweichung.
 
 ## Phasenweiser Implementierungsplan
 
@@ -181,7 +192,7 @@ Aktueller Stand nach Meilenstein 5B3: Debug und Release jeweils 0 Warnungen/0 Fe
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
-5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sicherer Import und Undo-fähige Zuordnung sind in 5A umgesetzt; DOCX-/XLSX-Extraktion, transaktionale Persistenz, begrenzte Warteschlange und Ergebnisanzeige sind in 5B1 bis 5B3 implementiert; PDF/Bild, Dateivorschau und OCR folgen.
+5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sicherer Import und Undo-fähige Zuordnung sind in 5A umgesetzt; DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange und Ergebnisanzeige sind in 5B1 bis 5C1 implementiert; Bild-/PDF-Vorschau, Standardprogramm und OCR folgen.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
 8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
@@ -198,11 +209,11 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
 - Die Ergebnisanzeige für Office-Dokumente bietet noch keine Schaltfläche zum Öffnen im Windows-Standardprogramm.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
-- Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
+- PDF-Rendering und OCR benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
 - Inno Setup ist nicht im `PATH`; der Installer kann aktuell noch nicht gebaut werden.
 - Selbstenthaltende Veröffentlichung wurde für diesen frühen Architekturstand bewusst noch nicht als Release-Gate gewertet.
 
 ## Nächster konkreter Arbeitsschritt
 
-Lokale eingebettete PDF-Textextraktion mit harten Ressourcenlimits implementieren, in die vorhandene Analysewarteschlange einbinden und durch Integrationstests für gültige und beschädigte PDFs absichern.
+Sichere lokale Vorschau für Bild-Projektkopien sowie das explizite Öffnen unterstützter Anhänge im Windows-Standardprogramm implementieren und an die Anhangsauswahl anbinden.

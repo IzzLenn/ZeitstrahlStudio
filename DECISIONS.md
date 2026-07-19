@@ -157,3 +157,11 @@ UI- und Analyzer-Schichten schreiben nicht direkt in Tabellen, sondern verwenden
 Importierte DOCX- und XLSX-Anhänge werden vor der Analyse durch denselben serialisierten Workspace-Dienst in der lokalen SQLite-Arbeitskopie persistiert. Dieser Checkpoint ersetzt ausdrücklich nicht das Benutzerarchiv und behält den Zustand „ungespeichert“ bei. Erst danach führt eine zentrale, abbrechbare Warteschlange höchstens zwei Analysen gleichzeitig aus und speichert jedes erfolgreiche Einzelergebnis über den Analyse-Port.
 
 Die Obergrenze von zwei parallelen Dokumenten verhindert unkontrollierte Speicher- und CPU-Last und lässt SQLite-Schreibtransaktionen kurz genug konkurrieren. Ein unbegrenztes Task-pro-Datei-Modell wurde verworfen. Analysezustände werden nach dem Stapel in das Domainaggregat zurückgeführt und erneut gecheckpointet, damit eine spätere Aggregatspeicherung den Datenbankzustand nicht zurücksetzt. Diese technischen Zustandswechsel erzeugen keinen separaten Undo-Schritt; die vom Benutzer ausgelöste Anhangszuordnung bleibt die rückgängig machbare Operation.
+
+## ADR-022: PdfPig für eingebettete PDF-Texte
+
+**Status:** angenommen am 19.07.2026
+
+Für das lokale Lesen von PDF-Text und Dokumentmetadaten wird PdfPig 0.1.15 unter Apache-2.0 verwendet. Das Paket stellt ein direktes .NET-8-Ziel ohne transitive Paketabhängigkeiten bereit, benötigt keine Office-Installation und startet keinen externen Prozess. Die synchrone Bibliotheksarbeit wird auf einem Worker-Thread ausgeführt; die Anwendung prüft Abbruch vor dem Öffnen und vor jeder Seite.
+
+Die Anwendung begrenzt die eigene Verarbeitung auf 100.000 Seiten, zehn Millionen extrahierte Zeichen und eine Parser-Stacktiefe von 64. Fehlende Fonts dürfen übersprungen werden, damit ein einzelner defekter Font nicht den übrigen eingebetteten Text verliert. PdfPig wird nicht für Rendering oder OCR zweckentfremdet: Bildbasierte Seiten liefern bis zur späteren lokalen OCR einen leeren eingebetteten Text, während PDF-Vorschau und OCR getrennte, vor Einführung erneut lizenz- und paketierungsgeprüfte Komponenten bleiben.
