@@ -173,3 +173,13 @@ Die Anwendung begrenzt die eigene Verarbeitung auf 100.000 Seiten, zehn Millione
 Vorschau und externes Öffnen verwenden ausschließlich die in das Projekt kopierte Datei. Ein zentraler Infrastructure-Dienst löst den normalisierten relativen Pfad unterhalb des Workspace auf, lehnt Reparse Points ab und prüft Länge, Änderungsstabilität sowie SHA-256, bevor er den Pfad an die WPF-Vorschau oder auf ausdrücklichen Benutzerwunsch an Windows ShellExecute übergibt.
 
 Bildvorschauen verwenden die in WPF vorhandenen lokalen Windows-Codecs und benötigen keine weitere Produktionsabhängigkeit. Die integrierte Darstellung dekodiert höchstens 2.400 Pixel Breite und lehnt Dateien über 512 MiB mit einer verständlichen Ausweichmöglichkeit auf das Standardprogramm ab. Eine automatische Ausführung beim Import wurde verworfen: Externe Programme werden nur nach einer sichtbaren Benutzeraktion gestartet.
+
+## ADR-024: PDFium für die integrierte PDF-Seitenvorschau
+
+**Status:** angenommen am 19.07.2026
+
+PDF-Seiten werden mit PDFtoImage 5.2.1 (MIT) und der lokal gebündelten PDFium-Windows-Binärdatei 147.0.7690 (NuGet-Lizenzausdruck Apache-2.0) gerendert. Der Application-Port liefert ausschließlich begrenzte PNG-Seiten an die WPF-App; PDFium und SkiaSharp bleiben Implementierungsdetails der Dokumentverarbeitung. Für `win-x64` werden nur `pdfium.dll`, die passende Skia-Binärdatei und die verwalteten Assemblies veröffentlicht. Es werden weder externe Prozesse noch Netzwerkzugriffe verwendet.
+
+Pro Seite gelten höchstens 24 Millionen Pixel, 8.000 Pixel je Kante und 100 MiB PNG-Daten; Dokumente mit mehr als 100.000 Seiten werden abgelehnt. Die Projektkopie bleibt während Seitenermittlung und Rendering ohne Schreib-/Löschfreigabe geöffnet. Rendering läuft außerhalb des UI-Threads. Ein bereits laufender nativer Einzelseitenaufruf ist durch PDFium nicht unterbrechbar, der Abbruch wird jedoch vor dem Öffnen, vor und unmittelbar nach dem Rendern sowie vor der UI-Übernahme geprüft. PDFtoImage serialisiert seine PDFium-Zugriffe prozessweit, weil die native Bibliothek nicht thread-sicher ist.
+
+PdfPig.Rendering.Skia wurde nach einem reproduzierbaren Integrationstest verworfen: Beim Rendern einer gültigen PDF mit der Standard-14-Schrift Helvetica durchsuchte die Bibliothek installierte Windows-Schriftdateien und ließ eine Parserausnahme einer anderen Schriftdatei ungefangen bis zur Anwendung gelangen. Ein öffentlicher Font-Resolver-Hook ist in der geprüften Version nicht vorhanden. Eine Vorschau, deren Erfolg vom installierten Schriftbestand abhängt, erfüllt die Robustheitsanforderung nicht. Der PDFium-basierte Ersatz rendert genau diesen Standardfont-Testfall erfolgreich.

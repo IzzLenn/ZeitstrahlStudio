@@ -81,6 +81,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IAttachmentImportService, LocalAttachmentImportService>();
         services.AddSingleton<IAttachmentFileService, LocalAttachmentFileService>();
         services.AddSingleton<IAttachmentAnalysisStore, SqliteAttachmentAnalysisStore>();
+        services.AddSingleton<IPdfPreviewService, PdfiumPdfPreviewService>();
         services.AddSingleton<IDocumentAnalyzer, DocxDocumentAnalyzer>();
         services.AddSingleton<IDocumentAnalyzer, XlsxDocumentAnalyzer>();
         services.AddSingleton<IDocumentAnalyzer, PdfDocumentAnalyzer>();

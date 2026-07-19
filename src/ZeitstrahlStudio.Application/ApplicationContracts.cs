@@ -102,6 +102,16 @@ public interface IAttachmentAnalysisQueue
         CancellationToken cancellationToken);
 }
 
+/// <summary>Rendert einzelne PDF-Seiten lokal und ressourcenbegrenzt für die Vorschau.</summary>
+public interface IPdfPreviewService
+{
+    Task<PdfPagePreview> RenderPageAsync(
+        string validatedLocalPath,
+        int pageNumber,
+        double renderScale,
+        CancellationToken cancellationToken);
+}
+
 /// <summary>Durchsucht Projektdaten und extrahierte Dokumenttexte.</summary>
 public interface IProjectSearchService
 {

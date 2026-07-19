@@ -83,6 +83,7 @@
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AnalyzeAttachmentsCommand}" Content="Analysieren" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ShowAttachmentAnalysisCommand}" Content="Analyse anzeigen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding PreviewImageCommand}" Content="Bildvorschau" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding PreviewPdfCommand}" Content="PDF-Vorschau" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding OpenAttachmentCommand}" Content="Öffnen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RemoveAttachmentCommand}" Content="Datei entfernen" />
                 </DockPanel>

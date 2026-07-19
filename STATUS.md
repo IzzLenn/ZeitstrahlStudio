@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1 bis 4 sowie Anhangsimport und Dokumentanalyse 5A bis 5C1 abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1 bis 4 sowie Anhangsimport und Dokumentanalyse 5A bis 5C3 abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 5C3 – integrierte lokale PDF-Vorschau
+Meilenstein 5D – vollständig lokale OCR für Bilder und bildbasierte PDFs
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -183,19 +183,35 @@ Meilenstein 5C3 – integrierte lokale PDF-Vorschau
 - Prozesshandles des über ShellExecute gestarteten Standardprogramms werden unmittelbar freigegeben; die Projektkopie selbst bleibt unverändert
 - drei Integrationstests prüfen unveränderte Projektkopie, gleich lange Prüfsummenmanipulation und Abbruch
 
+### Meilenstein 5C3 – integrierte lokale PDF-Vorschau
+
+- PDFtoImage 5.2.1 (MIT), PDFium 147.0.7690 und SkiaSharp 3.119.2 wurden als lokale, `win-x64`-geeignete Renderingkette eingeführt und vollständig in der Drittanbieterübersicht dokumentiert
+- ein zunächst geprüfter PdfPig-/Skia-Renderer wurde wegen einer reproduzierbaren ungefangenen Systemschrift-Parserausnahme bei einer gültigen Helvetica-Standardfont-PDF verworfen; der PDFium-Ersatz rendert denselben Fall stabil
+- der Application-Port liefert einzelne PNG-Seiten; PDFium bleibt als natives Detail in der Dokumentverarbeitung und startet weder externe Prozesse noch Netzwerkzugriffe
+- Seitenanzahl, Zielseite, Seitengröße und Ausgabe werden validiert; Limits von 100.000 Seiten, 24 Millionen Pixeln, 8.000 Pixeln je Kante und 100 MiB PNG begrenzen die Vorschau
+- die geprüfte Projektkopie bleibt während der nativen Verarbeitung ohne Schreib- oder Löschfreigabe geöffnet; Abbruch wird vor, zwischen und nach den nicht unterbrechbaren nativen Einzelschritten geprüft
+- das MVVM-Vorschaufenster bietet Vor/Zurück, Seitennummer, Zoom hinein/heraus, Fensterbreite, ganze Seite und Scrollen
+- eine optional am Anhang verknüpfte PDF-Seite wird beim Öffnen bevorzugt; bei einer ungültigen Verknüpfung wird verständlich auf Seite 1 zurückgefallen
+- die Schaltfläche „In Windows öffnen“ führt erneut die zentrale Pfad-, Reparse-Point-, Längen-, Stabilitäts- und SHA-256-Prüfung aus
+- Render- und Öffnungsfehler bleiben im Dialog handlungsorientiert sichtbar und werden ohne Dokumentinhalt strukturiert lokal protokolliert
+- sechs Integrationstests prüfen Standardfont-Rendering/Seitenauswahl, Bereichsabwehr, Zoom, kleine Anpassungsskala, defekte PDFs und Abbruch
+- die selbstenthaltende `win-x64`-Veröffentlichung enthält ausschließlich x64-PDFium/Skia; ein transitives 83-MiB-Nativsymbol wird gezielt nicht ausgeliefert
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
 
 ```powershell
 dotnet restore ZeitstrahlStudio.sln
+dotnet restore src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -r win-x64
 dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
-dotnet test ZeitstrahlStudio.sln -c Debug --no-restore --no-build
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore
 dotnet build ZeitstrahlStudio.sln -c Release --no-restore
-dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore
+dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 5C2: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 36 Integrationstests bestanden. Zusätzlich meldet `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` keine Formatabweichung.
+Aktueller Stand nach Meilenstein 5C3: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 42 Integrationstests bestanden. `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` meldet keine Formatabweichung. Die selbstenthaltende Veröffentlichung umfasst 494 Dateien mit 194.076.420 Bytes; Anwendungs-EXE, `pdfium.dll` und `libSkiaSharp.dll` wurden als x64-PE-Dateien geprüft. Ein verborgener Start-/Stopp-Smoke-Test der veröffentlichten EXE war erfolgreich.
 
 ## Phasenweiser Implementierungsplan
 
@@ -203,7 +219,7 @@ Aktueller Stand nach Meilenstein 5C2: Debug und Release jeweils 0 Warnungen/0 Fe
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
-5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sicherer Import und Undo-fähige Zuordnung sind in 5A umgesetzt; DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bildvorschau, Integritätsprüfung und Standardprogramm sind in 5B1 bis 5C2 implementiert; PDF-Vorschau und OCR folgen.
+5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sicherer Import und Undo-fähige Zuordnung sind in 5A umgesetzt; DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bild- und PDF-Vorschau, Integritätsprüfung und Standardprogramm sind in 5B1 bis 5C3 implementiert; lokale OCR folgt.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
 8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
@@ -218,13 +234,13 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 - Die manuelle Ereignisreihenfolge ist über tastaturzugängliche Früher-/Später-Aktionen verfügbar; direktes Drag-and-drop ist noch nicht implementiert.
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
-- PDF-Dateien besitzen noch keine integrierte Seitenvorschau; derzeit stehen Textanalyse und das Öffnen der geprüften Projektkopie im Windows-Standardprogramm bereit.
+- Bildbasierte PDFs und Bildanhänge besitzen noch keine OCR-Texterkennung.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
-- PDF-Rendering und OCR benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
+- Ein bereits laufender nativer PDFium-Einzelseitenaufruf kann nicht hart abgebrochen werden; die Anwendung prüft Cancellation davor und unmittelbar danach und begrenzt die Ausgabe strikt.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
 - Inno Setup ist nicht im `PATH`; der Installer kann aktuell noch nicht gebaut werden.
-- Selbstenthaltende Veröffentlichung wurde für diesen frühen Architekturstand bewusst noch nicht als Release-Gate gewertet.
+- Die selbstenthaltende Veröffentlichung ist technisch erfolgreich; Lizenztext-Bündelung, portable ZIP-Erzeugung und Installer bleiben spätere Release-Gates.
 
 ## Nächster konkreter Arbeitsschritt
 
-Lizenz- und paketierungsgeeignete lokale PDF-Renderingkomponente auswählen und eine integrierte Vorschau mit Seitenwechsel, Seitennummer, Zoom, Fensterbreite, ganzer Seite und Scrollen umsetzen.
+Eine lizenz- und paketierungsgeeignete vollständig lokale OCR-Komponente auswählen, Ressourcen- und Sprachmodellgrenzen dokumentieren und zunächst OCR für Bildanhänge sowie bildbasierte PDF-Seiten in die vorhandene Analysewarteschlange integrieren.

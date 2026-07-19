@@ -89,6 +89,15 @@ public sealed record ExportPreview(
     double PageHeightMillimeters,
     IReadOnlyList<string> Warnings);
 
+/// <summary>Gerenderte lokale PDF-Seite für die integrierte Vorschau.</summary>
+public sealed record PdfPagePreview(
+    int PageNumber,
+    int PageCount,
+    int PixelWidth,
+    int PixelHeight,
+    double EffectiveRenderScale,
+    byte[] PngData);
+
 /// <summary>Ein zuletzt verwendetes lokales Projektarchiv.</summary>
 public sealed record RecentProject(
     string ProjectName,

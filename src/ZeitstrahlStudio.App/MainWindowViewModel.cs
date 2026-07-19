@@ -124,6 +124,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         PreviewImageCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(PreviewImageAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Any(IsImageAttachment) == true);
+        PreviewPdfCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(PreviewPdfAsync),
+            () => !IsBusy && SelectedEvent?.Attachments.Any(IsPdfAttachment) == true);
         OpenAttachmentCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(OpenAttachmentAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
@@ -161,6 +164,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public AsyncRelayCommand AnalyzeAttachmentsCommand { get; }
     public AsyncRelayCommand ShowAttachmentAnalysisCommand { get; }
     public AsyncRelayCommand PreviewImageCommand { get; }
+    public AsyncRelayCommand PreviewPdfCommand { get; }
     public AsyncRelayCommand OpenAttachmentCommand { get; }
     public AsyncRelayCommand RemoveAttachmentCommand { get; }
     public AsyncRelayCommand CancelAttachmentImportCommand { get; }
@@ -213,6 +217,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                 AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();
                 ShowAttachmentAnalysisCommand.RaiseCanExecuteChanged();
                 PreviewImageCommand.RaiseCanExecuteChanged();
+                PreviewPdfCommand.RaiseCanExecuteChanged();
                 OpenAttachmentCommand.RaiseCanExecuteChanged();
                 RemoveAttachmentCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(CanAcceptDroppedFiles));
@@ -838,6 +843,37 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         StatusMessage = $"Bildvorschau von „{attachment.OriginalFileName}“ wurde geschlossen.";
     }
 
+    private async Task PreviewPdfAsync()
+    {
+        if (CurrentWorkspace is null || SelectedEvent is null)
+        {
+            return;
+        }
+
+        var workspace = CurrentWorkspace;
+        var pdfs = SelectedEvent.Attachments.Where(IsPdfAttachment).ToArray();
+        var attachment = dialogs.RequestPdfForPreview(pdfs);
+        if (attachment is null)
+        {
+            return;
+        }
+
+        StatusMessage = $"Projektkopie von „{attachment.OriginalFileName}“ wird geprüft …";
+        var path = await attachmentFileService.GetValidatedLocalPathAsync(
+            workspace,
+            attachment,
+            lifetimeCancellation.Token).ConfigureAwait(true);
+        await dialogs.ShowPdfPreviewAsync(
+            attachment,
+            path,
+            cancellationToken => attachmentFileService.OpenWithDefaultApplicationAsync(
+                workspace,
+                attachment,
+                cancellationToken),
+            lifetimeCancellation.Token).ConfigureAwait(true);
+        StatusMessage = $"PDF-Vorschau von „{attachment.OriginalFileName}“ wurde geschlossen.";
+    }
+
     private async Task OpenAttachmentAsync()
     {
         if (CurrentWorkspace is null || SelectedEvent is null)
@@ -924,6 +960,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             "image/jpeg" or
             "image/tiff" or
             "image/bmp";
+
+    private static bool IsPdfAttachment(Attachment attachment) =>
+        attachment.MediaType == "application/pdf";
 
     private async Task SaveCurrentAsync(string? targetPath)
     {
@@ -1202,6 +1241,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();
         ShowAttachmentAnalysisCommand.RaiseCanExecuteChanged();
         PreviewImageCommand.RaiseCanExecuteChanged();
+        PreviewPdfCommand.RaiseCanExecuteChanged();
         OpenAttachmentCommand.RaiseCanExecuteChanged();
         RemoveAttachmentCommand.RaiseCanExecuteChanged();
         CancelAttachmentImportCommand.RaiseCanExecuteChanged();

@@ -21,6 +21,7 @@ public interface IUserDialogService
     Attachment? RequestAttachmentForAnalysis(TimelineEvent timelineEvent);
     Attachment? RequestAttachmentToOpen(TimelineEvent timelineEvent);
     Attachment? RequestImageForPreview(IReadOnlyCollection<Attachment> attachments);
+    Attachment? RequestPdfForPreview(IReadOnlyCollection<Attachment> attachments);
     string? RequestOpenProjectPath();
     string? RequestSaveProjectPath(string suggestedProjectName);
     SaveChangesDecision AskSaveChanges(string projectName);
@@ -29,5 +30,10 @@ public interface IUserDialogService
     void ShowAuditLog(IReadOnlyList<AuditEntry> entries);
     void ShowAttachmentAnalysis(Attachment attachment, DocumentAnalysisResult? result);
     void ShowImagePreview(Attachment attachment, string validatedLocalPath);
+    Task ShowPdfPreviewAsync(
+        Attachment attachment,
+        string validatedLocalPath,
+        Func<CancellationToken, Task> openExternallyAsync,
+        CancellationToken cancellationToken);
     void ShowError(string message, string? technicalDetails = null);
 }

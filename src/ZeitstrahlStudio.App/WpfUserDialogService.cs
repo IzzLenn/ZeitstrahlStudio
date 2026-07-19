@@ -9,6 +9,17 @@ namespace ZeitstrahlStudio.App;
 /// <summary>WPF-Implementierung der interaktiven Dialoge.</summary>
 public sealed class WpfUserDialogService : IUserDialogService
 {
+    private readonly IPdfPreviewService pdfPreviewService;
+    private readonly ILocalLogService logService;
+
+    public WpfUserDialogService(
+        IPdfPreviewService pdfPreviewService,
+        ILocalLogService logService)
+    {
+        this.pdfPreviewService = pdfPreviewService;
+        this.logService = logService;
+    }
+
     public string? RequestProjectName()
     {
         var dialog = new NewProjectDialog
@@ -93,6 +104,21 @@ public sealed class WpfUserDialogService : IUserDialogService
             "Bildvorschau",
             "Bild lokal anzeigen",
             "Wählen Sie eine geprüfte Bild-Projektkopie aus.",
+            "Anzeigen",
+            isDestructive: false)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        return dialog.ShowDialog() == true ? dialog.Result : null;
+    }
+
+    public Attachment? RequestPdfForPreview(IReadOnlyCollection<Attachment> attachments)
+    {
+        var dialog = new AttachmentSelectionDialog(
+            attachments,
+            "PDF-Vorschau",
+            "PDF lokal anzeigen",
+            "Wählen Sie eine geprüfte PDF-Projektkopie aus.",
             "Anzeigen",
             isDestructive: false)
         {
@@ -191,6 +217,33 @@ public sealed class WpfUserDialogService : IUserDialogService
             Owner = System.Windows.Application.Current.MainWindow,
         };
         dialog.ShowDialog();
+    }
+
+    public async Task ShowPdfPreviewAsync(
+        Attachment attachment,
+        string validatedLocalPath,
+        Func<CancellationToken, Task> openExternallyAsync,
+        CancellationToken cancellationToken)
+    {
+        var viewModel = new PdfPreviewDialogViewModel(
+            pdfPreviewService,
+            logService,
+            attachment,
+            validatedLocalPath,
+            openExternallyAsync);
+        try
+        {
+            await viewModel.InitializeAsync(cancellationToken).ConfigureAwait(true);
+            var dialog = new AttachmentPdfPreviewDialog(viewModel)
+            {
+                Owner = System.Windows.Application.Current.MainWindow,
+            };
+            dialog.ShowDialog();
+        }
+        finally
+        {
+            viewModel.Dispose();
+        }
     }
 
     public void ShowError(string message, string? technicalDetails = null)

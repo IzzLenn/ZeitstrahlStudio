@@ -1,0 +1,186 @@
+<Window x:Class="ZeitstrahlStudio.App.AttachmentPdfPreviewDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="PDF-Vorschau"
+        Width="1100"
+        Height="820"
+        MinWidth="720"
+        MinHeight="520"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#111827">
+    <Window.Resources>
+        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        <Style x:Key="PreviewButtonStyle" TargetType="Button">
+            <Setter Property="MinWidth" Value="38" />
+            <Setter Property="Height" Value="32" />
+            <Setter Property="Margin" Value="0,0,8,0" />
+            <Setter Property="Padding" Value="10,0" />
+            <Setter Property="Foreground" Value="#E2E8F0" />
+            <Setter Property="Background" Value="#334155" />
+            <Setter Property="BorderBrush" Value="#475569" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="Cursor" Value="Hand" />
+            <Style.Triggers>
+                <Trigger Property="IsMouseOver" Value="True">
+                    <Setter Property="Background" Value="#475569" />
+                </Trigger>
+                <Trigger Property="IsEnabled" Value="False">
+                    <Setter Property="Opacity" Value="0.45" />
+                    <Setter Property="Cursor" Value="Arrow" />
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Padding="18,13" Background="#1E293B">
+            <DockPanel LastChildFill="True">
+                <TextBlock DockPanel.Dock="Left"
+                           Foreground="#FFFFFF"
+                           FontSize="17"
+                           FontWeight="SemiBold"
+                           Text="{Binding FileName}"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Margin="18,3,0,0"
+                           HorizontalAlignment="Right"
+                           Foreground="#94A3B8"
+                           Text="{Binding StatusMessage}"
+                           TextTrimming="CharacterEllipsis" />
+            </DockPanel>
+        </Border>
+
+        <Border Grid.Row="1"
+                Padding="14,10"
+                Background="#0F172A"
+                BorderBrush="#334155"
+                BorderThickness="0,1,0,1">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Disabled">
+                <StackPanel Orientation="Horizontal">
+                    <Button Style="{StaticResource PreviewButtonStyle}"
+                            Command="{Binding PreviousPageCommand}"
+                            ToolTip="Vorherige Seite"
+                            Content="◀" />
+                    <TextBlock Width="130"
+                               Margin="4,0,10,0"
+                               VerticalAlignment="Center"
+                               TextAlignment="Center"
+                               Foreground="#E2E8F0"
+                               FontWeight="SemiBold"
+                               Text="{Binding PageDisplay}" />
+                    <Button Style="{StaticResource PreviewButtonStyle}"
+                            Command="{Binding NextPageCommand}"
+                            ToolTip="Nächste Seite"
+                            Content="▶" />
+                    <Border Width="1" Margin="4,2,12,2" Background="#475569" />
+                    <Button Style="{StaticResource PreviewButtonStyle}"
+                            Command="{Binding ZoomOutCommand}"
+                            ToolTip="Herauszoomen"
+                            Content="−" />
+                    <TextBlock Width="90"
+                               Margin="2,0,8,0"
+                               VerticalAlignment="Center"
+                               TextAlignment="Center"
+                               Foreground="#E2E8F0"
+                               Text="{Binding ZoomDisplay}" />
+                    <Button Style="{StaticResource PreviewButtonStyle}"
+                            Command="{Binding ZoomInCommand}"
+                            ToolTip="Hineinzoomen"
+                            Content="+" />
+                    <Button Style="{StaticResource PreviewButtonStyle}"
+                            Command="{Binding FitWidthCommand}"
+                            Content="Fensterbreite" />
+                    <Button Style="{StaticResource PreviewButtonStyle}"
+                            Command="{Binding ShowWholePageCommand}"
+                            Content="Ganze Seite" />
+                    <Border Width="1" Margin="4,2,12,2" Background="#475569" />
+                    <Button Style="{StaticResource PreviewButtonStyle}"
+                            Command="{Binding OpenExternallyCommand}"
+                            Content="In Windows öffnen" />
+                </StackPanel>
+            </ScrollViewer>
+        </Border>
+
+        <Grid Grid.Row="2" Margin="12">
+            <Border Background="#0B1220"
+                    BorderBrush="#334155"
+                    BorderThickness="1">
+                <ScrollViewer x:Name="PreviewViewport"
+                              Padding="16"
+                              HorizontalScrollBarVisibility="Auto"
+                              VerticalScrollBarVisibility="Auto"
+                              SizeChanged="PreviewViewport_OnSizeChanged">
+                    <Border HorizontalAlignment="Center"
+                            VerticalAlignment="Top"
+                            Padding="1"
+                            Background="#FFFFFF"
+                            BorderBrush="#64748B"
+                            BorderThickness="1">
+                        <Image Width="{Binding PreviewWidth}"
+                               Height="{Binding PreviewHeight}"
+                               Source="{Binding PreviewImage}"
+                               Stretch="Fill"
+                               SnapsToDevicePixels="True" />
+                    </Border>
+                </ScrollViewer>
+            </Border>
+
+            <Border MaxWidth="620"
+                    Margin="24"
+                    Padding="22"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="#E61E293B"
+                    BorderBrush="#F87171"
+                    BorderThickness="1"
+                    CornerRadius="6"
+                    Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <TextBlock Foreground="#FCA5A5"
+                               FontSize="16"
+                               FontWeight="SemiBold"
+                               Text="PDF-Vorschau nicht verfügbar" />
+                    <TextBlock Margin="0,9,0,0"
+                               Foreground="#E2E8F0"
+                               Text="{Binding ErrorMessage}"
+                               TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <Border Background="#660F172A"
+                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel Width="300"
+                            HorizontalAlignment="Center"
+                            VerticalAlignment="Center">
+                    <ProgressBar Height="6" IsIndeterminate="True" />
+                    <TextBlock Margin="0,12,0,0"
+                               Foreground="#FFFFFF"
+                               TextAlignment="Center"
+                               Text="{Binding StatusMessage}" />
+                </StackPanel>
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="3" Padding="14,10" Background="#1E293B">
+            <DockPanel>
+                <TextBlock VerticalAlignment="Center"
+                           Foreground="#94A3B8"
+                           Text="{Binding DimensionsText}" />
+                <Button Width="100"
+                        Height="32"
+                        HorizontalAlignment="Right"
+                        IsDefault="True"
+                        IsCancel="True"
+                        Content="Schließen" />
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>
