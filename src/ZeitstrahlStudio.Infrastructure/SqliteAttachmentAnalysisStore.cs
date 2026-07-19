@@ -87,7 +87,11 @@ public sealed class SqliteAttachmentAnalysisStore : IAttachmentAnalysisStore
             command.Parameters.AddWithValue(
                 "$extractedAtUtc",
                 timeProvider.GetUtcNow().ToString("O", CultureInfo.InvariantCulture));
-            command.Parameters.AddWithValue("$state", (int)AttachmentState.Ready);
+            var state = result.ExtractionMethod is
+                TextExtractionMethod.Ocr or TextExtractionMethod.EmbeddedTextAndOcr
+                ? AttachmentState.Warning
+                : AttachmentState.Ready;
+            command.Parameters.AddWithValue("$state", (int)state);
             await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         }
 

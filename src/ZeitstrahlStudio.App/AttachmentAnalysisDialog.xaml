@@ -21,6 +21,10 @@
                        Foreground="#475569"
                        Text="{Binding StatusText}" />
             <TextBlock Foreground="#64748B" Text="{Binding MediaType}" />
+            <TextBlock Margin="0,4,0,0"
+                       Foreground="#92400E"
+                       FontWeight="SemiBold"
+                       Text="{Binding ExtractionMethodText}" />
             <TextBlock Margin="0,6,0,14"
                        FontWeight="SemiBold"
                        Text="{Binding DocumentTitle}" />

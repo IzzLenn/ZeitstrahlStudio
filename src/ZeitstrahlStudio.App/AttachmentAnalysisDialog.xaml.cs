@@ -14,7 +14,8 @@ public partial class AttachmentAnalysisDialog : Window
         DataContext = new AttachmentAnalysisDialogModel(
             attachment.OriginalFileName,
             attachment.MediaType,
-            GetStateText(attachment.State, result is not null),
+            GetStateText(attachment.State, result),
+            GetExtractionMethodText(result?.ExtractionMethod),
             result?.Title ?? string.Empty,
             result?.ExtractedText ??
                 "Für diesen Anhang liegt noch kein extrahierter Text vor.",
@@ -24,9 +25,14 @@ public partial class AttachmentAnalysisDialog : Window
                 .ToArray() ?? []);
     }
 
-    private static string GetStateText(AttachmentState state, bool hasResult)
+    private static string GetStateText(AttachmentState state, DocumentAnalysisResult? result)
     {
-        if (hasResult)
+        if (result?.ExtractionMethod is TextExtractionMethod.Ocr or TextExtractionMethod.EmbeddedTextAndOcr)
+        {
+            return "Status: Analyse bereit – OCR-Ergebnisse können Erkennungsfehler enthalten";
+        }
+
+        if (result is not null)
         {
             return "Status: Analyse bereit";
         }
@@ -42,10 +48,21 @@ public partial class AttachmentAnalysisDialog : Window
         };
     }
 
+    private static string GetExtractionMethodText(TextExtractionMethod? method) => method switch
+    {
+        TextExtractionMethod.EmbeddedText => "Textherkunft: eingebetteter PDF-Text",
+        TextExtractionMethod.OfficeDocument => "Textherkunft: Dokumentinhalt",
+        TextExtractionMethod.Ocr => "Textherkunft: lokale OCR (potenziell fehlerhaft)",
+        TextExtractionMethod.EmbeddedTextAndOcr =>
+            "Textherkunft: eingebetteter PDF-Text und lokale OCR (potenziell fehlerhaft)",
+        _ => string.Empty,
+    };
+
     private sealed record AttachmentAnalysisDialogModel(
         string FileName,
         string MediaType,
         string StatusText,
+        string ExtractionMethodText,
         string DocumentTitle,
         string ExtractedText,
         IReadOnlyList<string> DateSuggestions,

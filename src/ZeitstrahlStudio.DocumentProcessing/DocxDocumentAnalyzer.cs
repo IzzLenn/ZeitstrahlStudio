@@ -18,6 +18,7 @@ public sealed class DocxDocumentAnalyzer : IDocumentAnalyzer
     public async Task<OperationResult<DocumentAnalysisResult>> AnalyzeAsync(
         string localFilePath,
         string workingDirectory,
+        IProgress<DocumentAnalysisProgress>? progress,
         CancellationToken cancellationToken)
     {
         try

@@ -18,6 +18,12 @@ public sealed record FileOperationProgress(
     int SuccessfulItems,
     int FailedItems);
 
+/// <summary>Feingranularer Fortschritt innerhalb einer einzelnen Dokumentanalyse.</summary>
+public sealed record DocumentAnalysisProgress(
+    string CurrentStep,
+    int CompletedSteps,
+    int TotalSteps);
+
 /// <summary>Ergebnis einer Dokumentenanalyse.</summary>
 public sealed record DocumentAnalysisResult(
     string MediaType,

@@ -45,7 +45,7 @@ public sealed class OpenXmlDocumentAnalyzerTests : IDisposable
         }
 
         var analyzer = new DocxDocumentAnalyzer();
-        var result = await analyzer.AnalyzeAsync(path, directory, CancellationToken.None);
+        var result = await analyzer.AnalyzeAsync(path, directory, progress: null, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(TextExtractionMethod.OfficeDocument, result.Value!.ExtractionMethod);
@@ -92,7 +92,7 @@ public sealed class OpenXmlDocumentAnalyzerTests : IDisposable
         }
 
         var analyzer = new XlsxDocumentAnalyzer();
-        var result = await analyzer.AnalyzeAsync(path, directory, CancellationToken.None);
+        var result = await analyzer.AnalyzeAsync(path, directory, progress: null, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.Contains("Meilenstein", result.Value!.ExtractedText);
@@ -109,7 +109,7 @@ public sealed class OpenXmlDocumentAnalyzerTests : IDisposable
         await File.WriteAllTextAsync(path, "kein ZIP");
         var analyzer = new DocxDocumentAnalyzer();
 
-        var result = await analyzer.AnalyzeAsync(path, directory, CancellationToken.None);
+        var result = await analyzer.AnalyzeAsync(path, directory, progress: null, CancellationToken.None);
 
         Assert.False(result.IsSuccess);
         Assert.Equal("DocumentAnalysisFailed", result.Error!.Code);

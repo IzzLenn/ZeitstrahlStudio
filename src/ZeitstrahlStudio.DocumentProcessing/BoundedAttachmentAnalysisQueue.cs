@@ -53,7 +53,20 @@ public sealed class BoundedAttachmentAnalysisQueue : IAttachmentAnalysisQueue
             async (index, token) =>
             {
                 var attachment = items[index];
-                var result = await AnalyzeOneAsync(workspace, attachment, token).ConfigureAwait(false);
+                var analyzerProgress = progress is null
+                    ? null
+                    : new ForwardingProgress<DocumentAnalysisProgress>(report =>
+                        progress.Report(new FileOperationProgress(
+                            $"{attachment.OriginalFileName}: {report.CurrentStep}",
+                            Volatile.Read(ref completed),
+                            items.Length,
+                            Volatile.Read(ref successful),
+                            Volatile.Read(ref failed))));
+                var result = await AnalyzeOneAsync(
+                    workspace,
+                    attachment,
+                    analyzerProgress,
+                    token).ConfigureAwait(false);
                 outcomes[index] = new AttachmentAnalysisOutcome(attachment, result);
                 if (result.IsSuccess)
                 {
@@ -79,6 +92,7 @@ public sealed class BoundedAttachmentAnalysisQueue : IAttachmentAnalysisQueue
     private async Task<OperationResult<DocumentAnalysisResult>> AnalyzeOneAsync(
         ProjectWorkspace workspace,
         Attachment attachment,
+        IProgress<DocumentAnalysisProgress>? progress,
         CancellationToken cancellationToken)
     {
         var analyzer = analyzers.FirstOrDefault(candidate => candidate.CanAnalyze(attachment.MediaType));
@@ -95,6 +109,7 @@ public sealed class BoundedAttachmentAnalysisQueue : IAttachmentAnalysisQueue
             var result = await analyzer.AnalyzeAsync(
                 localFilePath,
                 workspace.WorkingDirectory,
+                progress,
                 cancellationToken).ConfigureAwait(false);
             if (result.IsSuccess && result.Value is not null)
             {
@@ -119,6 +134,11 @@ public sealed class BoundedAttachmentAnalysisQueue : IAttachmentAnalysisQueue
                 $"Das Dokument „{attachment.OriginalFileName}“ konnte nicht lokal analysiert werden.",
                 exception.Message));
         }
+    }
+
+    private sealed class ForwardingProgress<T>(Action<T> report) : IProgress<T>
+    {
+        public void Report(T value) => report(value);
     }
 
     private static string ResolveAttachmentPath(string workingDirectory, Attachment attachment)

@@ -15,7 +15,7 @@ public sealed class SqliteAttachmentAnalysisStoreTests : IDisposable
         Guid.NewGuid().ToString("N"));
 
     [Fact]
-    public async Task SaveAndLoadAsync_PersistsResultAndRefreshesFullTextIndex()
+    public async Task SaveAndLoadAsync_PersistsOcrWarningAndRefreshesFullTextIndex()
     {
         Directory.CreateDirectory(directory);
         var project = TimelineProject.Create(Guid.NewGuid(), "Analyseprojekt", BaseTime);
@@ -26,13 +26,13 @@ public sealed class SqliteAttachmentAnalysisStoreTests : IDisposable
             BaseTime);
         var attachment = new Attachment(
             Guid.NewGuid(),
-            "quelle.docx",
-            "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+            "scan.png",
+            "image/png",
             12,
             new string('c', 64),
             null,
             BaseTime,
-            $"attachments/{Guid.NewGuid():N}/quelle.docx");
+            $"attachments/{Guid.NewGuid():N}/scan.png");
         timelineEvent.AddAttachment(attachment, BaseTime.AddMinutes(1));
         project.AddEvent(timelineEvent, BaseTime.AddMinutes(2));
         var databasePath = Path.Combine(directory, "project.db");
@@ -43,7 +43,7 @@ public sealed class SqliteAttachmentAnalysisStoreTests : IDisposable
             attachment.MediaType,
             "Quellentitel",
             "Ein seltener Findebegriff 19.07.2026",
-            TextExtractionMethod.OfficeDocument,
+            TextExtractionMethod.Ocr,
             new Dictionary<string, string> { ["creator"] = "Autor" },
             ["19.07.2026"],
             "thumbnails/vorschau.png",
@@ -64,7 +64,7 @@ public sealed class SqliteAttachmentAnalysisStoreTests : IDisposable
         Assert.Equal(result.PageCount, loadedResult.PageCount);
         var loadedProject = await repository.LoadAsync(databasePath, CancellationToken.None);
         Assert.Equal(
-            AttachmentState.Ready,
+            AttachmentState.Warning,
             Assert.Single(Assert.Single(loadedProject.Events).Attachments).State);
 
         await using var connection = new SqliteConnection($"Data Source={databasePath}");

@@ -763,7 +763,12 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             cancellationToken).ConfigureAwait(true);
         var states = outcomes.ToDictionary(
             outcome => outcome.Attachment.Id,
-            outcome => outcome.Result.IsSuccess ? AttachmentState.Ready : AttachmentState.Failed);
+            outcome => outcome.Result.Value?.ExtractionMethod is
+                TextExtractionMethod.Ocr or TextExtractionMethod.EmbeddedTextAndOcr
+                ? AttachmentState.Warning
+                : outcome.Result.IsSuccess
+                    ? AttachmentState.Ready
+                    : AttachmentState.Failed);
         eventEditingService.UpdateAttachmentStates(
             workspace.Project,
             eventId,
@@ -951,6 +956,10 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private static bool IsAnalyzableAttachment(Attachment attachment) =>
         attachment.MediaType is
             "application/pdf" or
+            "image/png" or
+            "image/jpeg" or
+            "image/tiff" or
+            "image/bmp" or
             "application/vnd.openxmlformats-officedocument.wordprocessingml.document" or
             "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 

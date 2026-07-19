@@ -101,6 +101,7 @@ public sealed class BoundedAttachmentAnalysisQueueTests
         public async Task<OperationResult<DocumentAnalysisResult>> AnalyzeAsync(
             string localFilePath,
             string workingDirectory,
+            IProgress<DocumentAnalysisProgress>? progress,
             CancellationToken cancellationToken)
         {
             var current = Interlocked.Increment(ref active);
@@ -153,6 +154,7 @@ public sealed class BoundedAttachmentAnalysisQueueTests
         public async Task<OperationResult<DocumentAnalysisResult>> AnalyzeAsync(
             string localFilePath,
             string workingDirectory,
+            IProgress<DocumentAnalysisProgress>? progress,
             CancellationToken cancellationToken)
         {
             Started.TrySetResult();

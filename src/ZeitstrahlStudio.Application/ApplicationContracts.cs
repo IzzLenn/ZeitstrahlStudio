@@ -75,6 +75,7 @@ public interface IDocumentAnalyzer
     Task<OperationResult<DocumentAnalysisResult>> AnalyzeAsync(
         string localFilePath,
         string workingDirectory,
+        IProgress<DocumentAnalysisProgress>? progress,
         CancellationToken cancellationToken);
 }
 

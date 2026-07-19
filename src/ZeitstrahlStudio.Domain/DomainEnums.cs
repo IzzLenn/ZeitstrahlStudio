@@ -77,4 +77,5 @@ public enum TextExtractionMethod
     EmbeddedText,
     Ocr,
     OfficeDocument,
+    EmbeddedTextAndOcr,
 }

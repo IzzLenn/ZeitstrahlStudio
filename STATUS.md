@@ -197,6 +197,19 @@ Meilenstein 5D – vollständig lokale OCR für Bilder und bildbasierte PDFs
 - sechs Integrationstests prüfen Standardfont-Rendering/Seitenauswahl, Bereichsabwehr, Zoom, kleine Anpassungsskala, defekte PDFs und Abbruch
 - die selbstenthaltende `win-x64`-Veröffentlichung enthält ausschließlich x64-PDFium/Skia; ein transitives 83-MiB-Nativsymbol wird gezielt nicht ausgeliefert
 
+### Meilenstein 5D – lokale OCR für Bilder und bildbasierte PDFs
+
+- die lokale Windows-OCR (`Windows.Media.Ocr`) verarbeitet PNG, JPEG, TIFF und BMP ohne Cloud-Dienst, externe Prozesse oder separate OCR-Produktionsbibliothek
+- eine installierte deutsche Windows-Texterkennungsressource wird explizit ausgewählt; fehlt sie, erhält der Benutzer eine verständliche Anleitung statt eines Startfehlers
+- der Windows-SDK-Targeting-Pack 10.0.19041.56 und WinRT.Runtime 2.2.0.48161 sind als ausgelieferte Projektion dokumentiert; Anwendung, Dokumentverarbeitung und Integrationstests zielen auf `net8.0-windows10.0.19041.0` bei Mindestplattform Windows 10 Version 1507
+- Bilddekodierung berücksichtigt EXIF-Ausrichtung und skaliert auf höchstens 24 Millionen Pixel sowie das dynamische Windows-OCR-Kantenlimit; Bilddateien sind auf 512 MiB und Mehrseitenbilder auf 250 Seiten begrenzt
+- PDF-Seiten ohne eingebetteten Text werden bei dreifacher Basisskalierung über die vorhandene PDFium-Kette gerendert und anschließend lokal erkannt; eingebetteter Text bleibt vorrangig
+- vollständig bildbasierte PDFs werden als OCR, gemischte PDFs als kombinierte eingebettete/OCR-Extraktion gekennzeichnet; höchstens 250 OCR-Seiten und zehn Millionen erkannte Zeichen schützen Ressourcen
+- OCR-Ergebnisse tragen dauerhaft einen Warnstatus, verwendete Sprache, betroffene Seiten und einen sichtbaren Hinweis auf mögliche Erkennungsfehler
+- OCR-Texte, Metadaten und Datumsfundstellen werden transaktional gespeichert und in derselben Transaktion in FTS5 aufgenommen; manuelle Neuanalyse steht nun auch für Bildanhänge zur Verfügung
+- die Dokumentanalyse meldet Datei- und OCR-Seitenfortschritt, serialisiert die Windows-OCR zusätzlich zur zweifach begrenzten Analysewarteschlange und reicht Abbruch bis in WinRT-Async-Aufrufe weiter
+- fünf neue Integrationstests prüfen reale deutsche OCR an einer gerenderten Testseite, defekte Bilder, Abbruch, bildbasierte PDFs und gemischte PDF-Extraktion; der bestehende Persistenztest prüft nun OCR-Warnstatus und FTS-Treffer
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -211,7 +224,7 @@ dotnet test ZeitstrahlStudio.sln -c Release --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 5C3: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 42 Integrationstests bestanden. `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` meldet keine Formatabweichung. Die selbstenthaltende Veröffentlichung umfasst 494 Dateien mit 194.076.420 Bytes; Anwendungs-EXE, `pdfium.dll` und `libSkiaSharp.dll` wurden als x64-PE-Dateien geprüft. Ein verborgener Start-/Stopp-Smoke-Test der veröffentlichten EXE war erfolgreich.
+Aktueller Stand nach Meilenstein 5D: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 47 Integrationstests bestanden. `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` meldet keine Formatabweichung. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.513.662 Bytes; sie enthält die WinRT-Projektion, aber keine Tesseract-, Sprachmodell- oder fremden Runtime-Assets. Ein verborgener Start-/Stopp-Smoke-Test der veröffentlichten EXE war erfolgreich.
 
 ## Phasenweiser Implementierungsplan
 
@@ -219,7 +232,7 @@ Aktueller Stand nach Meilenstein 5C3: Debug und Release jeweils 0 Warnungen/0 Fe
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
-5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sicherer Import und Undo-fähige Zuordnung sind in 5A umgesetzt; DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bild- und PDF-Vorschau, Integritätsprüfung und Standardprogramm sind in 5B1 bis 5C3 implementiert; lokale OCR folgt.
+5. **Anhänge und lokale Dokumentenanalyse – abgeschlossen:** sicherer Import und Undo-fähige Zuordnung, DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bild- und PDF-Vorschau, Integritätsprüfung, Standardprogramm und lokale OCR für Bilder sowie bildbasierte PDF-Seiten sind in 5A bis 5D umgesetzt.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
 8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
@@ -234,7 +247,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 - Die manuelle Ereignisreihenfolge ist über tastaturzugängliche Früher-/Später-Aktionen verfügbar; direktes Drag-and-drop ist noch nicht implementiert.
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
-- Bildbasierte PDFs und Bildanhänge besitzen noch keine OCR-Texterkennung.
+- Deutsche OCR setzt die entsprechende lokale Windows-Sprachressource voraus; fehlt sie, bleibt die übrige Anwendung funktionsfähig und die Analyse zeigt eine Installationsanleitung.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
 - Ein bereits laufender nativer PDFium-Einzelseitenaufruf kann nicht hart abgebrochen werden; die Anwendung prüft Cancellation davor und unmittelbar danach und begrenzt die Ausgabe strikt.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
@@ -243,4 +256,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Eine lizenz- und paketierungsgeeignete vollständig lokale OCR-Komponente auswählen, Ressourcen- und Sprachmodellgrenzen dokumentieren und zunächst OCR für Bildanhänge sowie bildbasierte PDF-Seiten in die vorhandene Analysewarteschlange integrieren.
+Meilenstein 6 beginnen: ein skalierbares, virtualisiertes Zeitstrahl-Layoutmodell für horizontale und vertikale Darstellung mit Zoom, Pan, Lückenkompression und Fristmarkern entwerfen und zuerst mit Unit-Tests absichern.

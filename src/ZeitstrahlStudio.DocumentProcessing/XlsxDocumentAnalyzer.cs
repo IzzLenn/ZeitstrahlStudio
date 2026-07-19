@@ -19,6 +19,7 @@ public sealed class XlsxDocumentAnalyzer : IDocumentAnalyzer
     public async Task<OperationResult<DocumentAnalysisResult>> AnalyzeAsync(
         string localFilePath,
         string workingDirectory,
+        IProgress<DocumentAnalysisProgress>? progress,
         CancellationToken cancellationToken)
     {
         try

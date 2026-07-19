@@ -16,6 +16,7 @@ Stand: 19. Juli 2026. Produktionsabhängigkeiten werden nur eingeführt, wenn si
 | SkiaSharp | 3.119.2 | begrenzte Bitmap- und PNG-Verarbeitung der PDF-Vorschau | MIT |
 | SkiaSharp.NativeAssets.Win32 | 3.119.2 | native x64-Skia-Bibliothek für Windows | MIT |
 | SkiaSharp.NativeAssets.Linux.NoDependencies / SkiaSharp.NativeAssets.macOS | 3.119.2 | transitive, bei `win-x64` nicht veröffentlichte Skia-Runtimepakete | MIT |
+| Microsoft.Windows.SDK.NET / WinRT.Runtime | 10.0.19041.56 / 2.2.0.48161 | .NET-Projektion der lokalen Windows-OCR- und Bilddekodierungs-APIs | Microsoft Windows SDK License |
 | SQLitePCLRaw.bundle_e_sqlite3 | 2.1.6 | Bündelung der lokalen nativen SQLite-Bibliothek | Apache-2.0 |
 | SQLitePCLRaw.core | 2.1.6 | verwaltete SQLite-Bindings | Apache-2.0 |
 | SQLitePCLRaw.provider.e_sqlite3 | 2.1.6 | Provider für die gebündelte SQLite-Bibliothek | Apache-2.0 |
@@ -32,4 +33,4 @@ Stand: 19. Juli 2026. Produktionsabhängigkeiten werden nur eingeführt, wenn si
 | xunit.runner.visualstudio | 2.5.3 | Testadapter, nur Entwicklung/Test | Apache-2.0 |
 | coverlet.collector | 6.0.0 | optionale Codeabdeckung, nur Entwicklung/Test | MIT |
 
-Die Paketnamen, Versionen und SPDX-Lizenzangaben wurden aus den lokal wiederhergestellten NuGet-Paketmetadaten übernommen. Lizenztexte der ausgelieferten Produktionskomponenten werden vor dem Release in das Veröffentlichungsverzeichnis kopiert.
+Die Paketnamen, Versionen und Lizenzangaben wurden aus den lokal wiederhergestellten NuGet-Paketmetadaten beziehungsweise den veröffentlichten Assemblyinformationen übernommen. Lizenztexte der ausgelieferten Produktionskomponenten werden vor dem Release in das Veröffentlichungsverzeichnis kopiert.
