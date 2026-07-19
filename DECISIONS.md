@@ -133,3 +133,11 @@ Die Sitzungshistorie wird nicht dauerhaft im Projektarchiv gespeichert und beim 
 Jeder importierte Anhang wird unter attachments/{Ereignis-ID}/{Anhangs-ID}.{Endung} gespeichert. Der ursprüngliche Name bleibt reine Metainformation. Dadurch können beliebig viele gleichnamige Dateien ohne Überschreiben nebeneinander bestehen. Zielpfade werden mit derselben kanonischen Root-Prüfung wie Archivpfade auf den Workspace begrenzt.
 
 Kopie und SHA-256-Berechnung erfolgen in einem asynchronen Streaming-Durchlauf mit gepooltem Puffer. Nach Abschluss werden Quelllänge und Änderungszeit erneut geprüft. Ein Batch liefert für jede Datei ein eigenes OperationResult; erwartbare Einzeldateifehler brechen andere Importe nicht ab, ein CancellationToken dagegen beendet den gesamten laufenden Vorgang und entfernt die aktuelle Teildatei.
+
+## ADR-019: Open-XML-Analyse mit sicheren .NET-Bordmitteln
+
+**Status:** angenommen am 19.07.2026
+
+DOCX und XLSX werden als ZIP-basierte Open-XML-Formate direkt und streamend mit System.IO.Compression und XmlReader analysiert. DTD-Verarbeitung und externe XML-Resolver sind deaktiviert. Harte Grenzen für ZIP-Einträge, entpackte Größen, Kompressionsverhältnis und extrahierte Zeichen schützen vor Ressourcenmissbrauch.
+
+Für diese Formate wurde bewusst keine zusätzliche Office-Bibliothek eingeführt: Haupttext, Zellwerte, Shared Strings und Kerneigenschaften lassen sich mit wenigen klar begrenzten Readern vollständig lokal auslesen. Microsoft Office muss weder installiert noch automatisiert werden.

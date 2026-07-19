@@ -79,6 +79,8 @@ Die Ereignis-Fassade führt pro Projekt eine auf 100 Operationen begrenzte Undo-
 
 Der Anhangsimport verarbeitet jede Quelldatei streamend, berechnet SHA-256 im selben Durchlauf und legt sie unter einer GUID-basierten internen Adresse ab. Batch-Ergebnisse bleiben pro Datei getrennt, sodass Teilfehler erfolgreiche Projektkopien nicht zurückrollen. Die UI akzeptiert Dateiauswahl und Drag-and-drop, zeigt Fortschritt und erlaubt den Abbruch. Erst vollständig kopierte und validierte Anhänge werden als ein Undo-fähiger Ereignis-Snapshot zugeordnet.
 
+DOCX- und XLSX-Analyse verwendet sichere streamende Open-XML-Reader ohne Office-Automation. Gemeinsame ZIP- und XML-Grenzen verhindern DTD-Auflösung, extrem große Einträge und Kompressionsbomben. Analyzer liefern Klartext, Kerneigenschaften und begrenzte Datumsfundstellen über den Application-Port; Warteschlange und Persistenz werden als nachgelagerte Orchestrierung getrennt gehalten.
+
 ViewModels stellen Commands und bindbare Zustände bereit. Der UI-Thread übernimmt nur kleine Zustandsänderungen. Listen werden virtualisiert; große Vorschaubilder und Dokumenttexte werden verzögert geladen. Dokumentanalyse und OCR verwenden eine begrenzte Warteschlange. Autosave serialisiert Speichervorgänge, damit niemals zwei Archivgenerationen konkurrieren.
 
 Helles und dunkles Theme sind Resource Dictionaries. Zeitstrahl-Layouts werden aus einem testbaren Layoutmodell erzeugt; horizontale und vertikale WPF-Ansichten konsumieren dasselbe Modell. Farben werden immer durch Text, Symbole oder Rahmen ergänzt.

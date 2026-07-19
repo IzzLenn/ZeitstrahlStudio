@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1 bis 4 und Anhangsimport 5A abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1 bis 4, Anhangsimport 5A und Office-Analyse 5B1 abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 5B – lokale Dokumentenanalyse und Vorschauen
+Meilenstein 5B2 – Analysewarteschlange und Ergebnispersistenz
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -128,6 +128,17 @@ Meilenstein 5B – lokale Dokumentenanalyse und Vorschauen
 - vier Integrationstests prüfen kollisionsfreie Gleichnamigkeit, Teilfehler, Abbruchbereinigung und Unabhängigkeit von der Quelldatei
 - ein Unit-Test prüft Undo für Hinzufügen und Entfernen einer Anhangszuordnung
 
+### Meilenstein 5B1 – DOCX- und XLSX-Analyse
+
+- DOCX-Haupttext wird lokal und ohne Office-Installation aus WordprocessingML extrahiert
+- Absätze, Zeilenumbrüche und Tabulatoren werden in durchsuchbaren Klartext überführt
+- XLSX-Shared-Strings, Inline-Strings und numerische Zellwerte werden arbeitsblattweise extrahiert
+- Office-Kerneigenschaften wie Titel, Autor, Betreff und Erstellungs-/Änderungszeit werden als Metadaten gelesen
+- deutsche und ISO-Datumsfundstellen werden dedupliziert und auf 200 Vorschläge begrenzt
+- XML-DTDs und externe Resolver sind gesperrt; Zeichenmenge, Eintragszahl, Einzel-/Gesamtgröße und Kompressionsverhältnis sind begrenzt
+- Analyzer liefern erwartbare Format-/Dateifehler als OperationResult statt das Projekt zu beschädigen
+- drei Integrationstests prüfen DOCX-Text/Metadaten/Datum, XLSX-Zellauflösung/Datum und ein defektes Archiv
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -140,7 +151,7 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 5A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 22 Integrationstests bestanden.
+Aktueller Stand nach Meilenstein 5B1: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 25 Integrationstests bestanden.
 
 ## Phasenweiser Implementierungsplan
 
@@ -148,7 +159,7 @@ Aktueller Stand nach Meilenstein 5A: Debug und Release jeweils 0 Warnungen/0 Feh
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
-5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sichere Kopien, Mehrfachauswahl/-Drop, Fortschritt, Abbruch sowie Undo-fähige Zuordnung sind in 5A umgesetzt; Analyse, Vorschau, OCR und begrenzte Warteschlange folgen.
+5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sicherer Import und Undo-fähige Zuordnung sind in 5A umgesetzt; lokale DOCX-/XLSX-Extraktion ist in 5B1 implementiert; Persistenz/Warteschlange, PDF/Bild, Vorschau und OCR folgen.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
 8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
@@ -163,6 +174,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 - Die manuelle Ereignisreihenfolge ist über tastaturzugängliche Früher-/Später-Aktionen verfügbar; direktes Drag-and-drop ist noch nicht implementiert.
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
+- DOCX-/XLSX-Analyzer sind getestet, aber noch nicht an die Importwarteschlange und Ergebnispersistenz der Oberfläche gebunden.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
 - Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
@@ -171,4 +183,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Lokale Text- und Metadatenextraktion für PDF, DOCX und XLSX sowie Bildmetadaten implementieren und über eine begrenzte abbrechbare Warteschlange an importierte Anhänge binden. Danach Bild-/PDF-Vorschau und lokale OCR ergänzen.
+Begrenzte abbrechbare Analysewarteschlange und transaktionale Speicherung von extrahiertem Text/Metadaten implementieren. Danach die vorhandenen DOCX-/XLSX-Analyzer beim Import ausführen und Status/Datumsfundstellen in der Oberfläche anzeigen.
