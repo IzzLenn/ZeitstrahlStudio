@@ -1,0 +1,64 @@
+<Window x:Class="ZeitstrahlStudio.App.AttachmentAnalysisDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Dokumentanalyse"
+        Width="820"
+        Height="650"
+        MinWidth="620"
+        MinHeight="480"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel>
+            <TextBlock FontSize="21" FontWeight="SemiBold" Text="{Binding FileName}" />
+            <TextBlock Margin="0,5,0,2"
+                       Foreground="#475569"
+                       Text="{Binding StatusText}" />
+            <TextBlock Foreground="#64748B" Text="{Binding MediaType}" />
+            <TextBlock Margin="0,6,0,14"
+                       FontWeight="SemiBold"
+                       Text="{Binding DocumentTitle}" />
+        </StackPanel>
+
+        <TabControl Grid.Row="1">
+            <TabItem Header="Extrahierter Text">
+                <TextBox Margin="10"
+                         Padding="10"
+                         IsReadOnly="True"
+                         AcceptsReturn="True"
+                         TextWrapping="Wrap"
+                         VerticalScrollBarVisibility="Auto"
+                         HorizontalScrollBarVisibility="Disabled"
+                         Text="{Binding ExtractedText, Mode=OneWay}" />
+            </TabItem>
+            <TabItem Header="Datumsfundstellen">
+                <ListBox Margin="10" ItemsSource="{Binding DateSuggestions}" />
+            </TabItem>
+            <TabItem Header="Metadaten">
+                <ListView Margin="10" ItemsSource="{Binding Metadata}">
+                    <ListView.View>
+                        <GridView>
+                            <GridViewColumn Width="220" Header="Eigenschaft" DisplayMemberBinding="{Binding Key}" />
+                            <GridViewColumn Width="500" Header="Wert" DisplayMemberBinding="{Binding Value}" />
+                        </GridView>
+                    </ListView.View>
+                </ListView>
+            </TabItem>
+        </TabControl>
+
+        <Button Grid.Row="2"
+                Width="100"
+                Height="32"
+                Margin="0,16,0,0"
+                HorizontalAlignment="Right"
+                IsDefault="True"
+                IsCancel="True"
+                Content="Schließen" />
+    </Grid>
+</Window>

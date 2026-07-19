@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1 bis 4, Anhangsimport 5A und Office-Analyse 5B1 abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1 bis 4 sowie Anhangsimport und Office-Analyse 5A bis 5B3 abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 5B3 – begrenzte Analysewarteschlange und UI-Anbindung
+Meilenstein 5C1 – lokale PDF-Textextraktion
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -148,6 +148,19 @@ Meilenstein 5B3 – begrenzte Analysewarteschlange und UI-Anbindung
 - Projekt-/Anhangszugehörigkeit wird vor jedem Schreiben per Fremdschlüsselbeziehung geprüft
 - ein Integrationstest prüft Roundtrip, Anhangszustand und unmittelbaren Volltexttreffer
 
+### Meilenstein 5B3 – begrenzte Analysewarteschlange und UI-Anbindung
+
+- DOCX- und XLSX-Analyzer sind im Composition Root registriert und werden nach einem erfolgreichen Import automatisch gestartet
+- eine zentrale Warteschlange begrenzt die gleichzeitige lokale Analyse auf zwei Dokumente und bewahrt die Eingabereihenfolge der Einzelergebnisse
+- Abbruch wird durch alle Analyzer und Speicherzugriffe weitergereicht; nicht unterstützte Formate erhalten ein explizites Einzelergebnis statt den Stapel abzubrechen
+- neu zugeordnete Anhänge werden vor der Analyse durch einen serialisierten lokalen Workspace-Checkpoint in SQLite persistiert, ohne das gespeicherte Projektarchiv vorzeitig zu ersetzen
+- erfolgreiche Analyseergebnisse und fehlgeschlagene Zustände werden zurück in das Projektaggregat synchronisiert und erneut als wiederherstellbare Arbeitskopie gesichert
+- technische Analysezustände erzeugen keinen zusätzlichen fachlichen Undo-Schritt; Anhang hinzufügen und entfernen bleiben weiterhin die rückgängig machbaren Benutzeroperationen
+- Statusleiste und Abbruchaktion zeigen Import- und Analysefortschritt, aktuelle Datei sowie Erfolgs-/Fehleranzahl
+- eine manuelle Neuanalyse ist für die DOCX-/XLSX-Anhänge des ausgewählten Ereignisses verfügbar
+- ein schreibgeschützter Anhangsdialog zeigt Dateityp, Analysezustand, Dokumenttitel, extrahierten Text, Datumsfundstellen und erkannte Metadaten
+- drei Integrationstests prüfen Parallelitätsgrenze/Ergebnisreihenfolge, Abbruch und nicht unterstützte Typen; ein weiterer Test prüft den Checkpoint ohne Archivexport
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -160,7 +173,7 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 5B2: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 26 Integrationstests bestanden.
+Aktueller Stand nach Meilenstein 5B3: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 30 Integrationstests bestanden. Zusätzlich meldet `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` keine Formatabweichung.
 
 ## Phasenweiser Implementierungsplan
 
@@ -168,7 +181,7 @@ Aktueller Stand nach Meilenstein 5B2: Debug und Release jeweils 0 Warnungen/0 Fe
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
-5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sicherer Import und Undo-fähige Zuordnung sind in 5A umgesetzt; lokale DOCX-/XLSX-Extraktion ist in 5B1 implementiert; Persistenz/Warteschlange, PDF/Bild, Vorschau und OCR folgen.
+5. **Anhänge und lokale Dokumentenanalyse – in Arbeit:** sicherer Import und Undo-fähige Zuordnung sind in 5A umgesetzt; DOCX-/XLSX-Extraktion, transaktionale Persistenz, begrenzte Warteschlange und Ergebnisanzeige sind in 5B1 bis 5B3 implementiert; PDF/Bild, Dateivorschau und OCR folgen.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
 8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
@@ -183,7 +196,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 - Die manuelle Ereignisreihenfolge ist über tastaturzugängliche Früher-/Später-Aktionen verfügbar; direktes Drag-and-drop ist noch nicht implementiert.
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
-- DOCX-/XLSX-Analyzer und Ergebnispersistenz sind getestet, aber noch nicht durch eine begrenzte Importwarteschlange an die Oberfläche gebunden.
+- Die Ergebnisanzeige für Office-Dokumente bietet noch keine Schaltfläche zum Öffnen im Windows-Standardprogramm.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
 - Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
@@ -192,4 +205,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Begrenzte abbrechbare Analysewarteschlange implementieren und die vorhandenen DOCX-/XLSX-Analyzer nach dem Import ausführen. Status, extrahierten Text und Datumsfundstellen anschließend in der Anhangsoberfläche anzeigen.
+Lokale eingebettete PDF-Textextraktion mit harten Ressourcenlimits implementieren, in die vorhandene Analysewarteschlange einbinden und durch Integrationstests für gültige und beschädigte PDFs absichern.

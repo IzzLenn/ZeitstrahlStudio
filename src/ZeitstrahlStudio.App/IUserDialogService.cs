@@ -18,11 +18,13 @@ public interface IUserDialogService
     EventEditRequest? RequestEvent(TimelineEvent? timelineEvent);
     IReadOnlyList<string> RequestAttachmentPaths();
     Attachment? RequestAttachmentToRemove(TimelineEvent timelineEvent);
+    Attachment? RequestAttachmentForAnalysis(TimelineEvent timelineEvent);
     string? RequestOpenProjectPath();
     string? RequestSaveProjectPath(string suggestedProjectName);
     SaveChangesDecision AskSaveChanges(string projectName);
     bool ConfirmDiscardRecovery(string projectName);
     bool ConfirmDeleteEvent(string eventTitle);
     void ShowAuditLog(IReadOnlyList<AuditEntry> entries);
+    void ShowAttachmentAnalysis(Attachment attachment, DocumentAnalysisResult? result);
     void ShowError(string message, string? technicalDetails = null);
 }

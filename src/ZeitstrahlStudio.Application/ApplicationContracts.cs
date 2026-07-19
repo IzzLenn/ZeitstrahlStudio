@@ -20,6 +20,9 @@ public interface IProjectWorkspaceService
         ProjectWorkspace workspace,
         string? targetArchivePath,
         CancellationToken cancellationToken);
+    Task<ProjectWorkspace> CheckpointAsync(
+        ProjectWorkspace workspace,
+        CancellationToken cancellationToken);
     Task<ProjectWorkspace> DuplicateAsync(ProjectWorkspace workspace, string targetArchivePath, CancellationToken cancellationToken);
     Task CloseAsync(ProjectWorkspace workspace, CancellationToken cancellationToken);
     Task DeleteArchiveAsync(string archivePath, bool deletionConfirmed, CancellationToken cancellationToken);
@@ -73,6 +76,16 @@ public interface IAttachmentAnalysisStore
     Task<DocumentAnalysisResult?> LoadAsync(
         ProjectWorkspace workspace,
         Attachment attachment,
+        CancellationToken cancellationToken);
+}
+
+/// <summary>Analysiert unterstützte Anhänge mit begrenzter Parallelität und speichert die Ergebnisse.</summary>
+public interface IAttachmentAnalysisQueue
+{
+    Task<IReadOnlyList<AttachmentAnalysisOutcome>> AnalyzeAsync(
+        ProjectWorkspace workspace,
+        IReadOnlyCollection<Attachment> attachments,
+        IProgress<FileOperationProgress>? progress,
         CancellationToken cancellationToken);
 }
 

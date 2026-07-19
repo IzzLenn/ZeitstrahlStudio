@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using ZeitstrahlStudio.Application;
+using ZeitstrahlStudio.DocumentProcessing;
 using ZeitstrahlStudio.Infrastructure;
 
 namespace ZeitstrahlStudio.App;
@@ -79,6 +80,13 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IAuditLogService, SqliteAuditLogService>();
         services.AddSingleton<IAttachmentImportService, LocalAttachmentImportService>();
         services.AddSingleton<IAttachmentAnalysisStore, SqliteAttachmentAnalysisStore>();
+        services.AddSingleton<IDocumentAnalyzer, DocxDocumentAnalyzer>();
+        services.AddSingleton<IDocumentAnalyzer, XlsxDocumentAnalyzer>();
+        services.AddSingleton<IAttachmentAnalysisQueue>(provider =>
+            new BoundedAttachmentAnalysisQueue(
+                provider.GetServices<IDocumentAnalyzer>(),
+                provider.GetRequiredService<IAttachmentAnalysisStore>(),
+                maximumConcurrency: 2));
         services.AddSingleton<IProjectAutosaveService, ProjectAutosaveService>();
         services.AddSingleton<ProjectEventEditingService>();
         services.AddSingleton<IUserDialogService, WpfUserDialogService>();

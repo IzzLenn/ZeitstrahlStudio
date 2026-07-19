@@ -149,3 +149,11 @@ Für diese Formate wurde bewusst keine zusätzliche Office-Bibliothek eingeführ
 Text, Extraktionsmethode und Anhangsmetadaten werden gemeinsam mit dem Statuswechsel des Anhangs in einer SQLite-Transaktion ersetzt. Derselbe Commit baut den projektbezogenen FTS5-Inhalt neu auf. Dadurch kann weder ein halbes Analyseergebnis noch ein vom gespeicherten Text abweichender Suchindex sichtbar werden.
 
 UI- und Analyzer-Schichten schreiben nicht direkt in Tabellen, sondern verwenden einen Application-Port. Reservierte interne Metadatenkeys erhalten ein ZeitstrahlStudio-Präfix und werden beim Laden wieder von dokumenteigenen Metadaten getrennt.
+
+## ADR-021: Begrenzte Analysewarteschlange nach lokalem Workspace-Checkpoint
+
+**Status:** angenommen am 19.07.2026
+
+Importierte DOCX- und XLSX-Anhänge werden vor der Analyse durch denselben serialisierten Workspace-Dienst in der lokalen SQLite-Arbeitskopie persistiert. Dieser Checkpoint ersetzt ausdrücklich nicht das Benutzerarchiv und behält den Zustand „ungespeichert“ bei. Erst danach führt eine zentrale, abbrechbare Warteschlange höchstens zwei Analysen gleichzeitig aus und speichert jedes erfolgreiche Einzelergebnis über den Analyse-Port.
+
+Die Obergrenze von zwei parallelen Dokumenten verhindert unkontrollierte Speicher- und CPU-Last und lässt SQLite-Schreibtransaktionen kurz genug konkurrieren. Ein unbegrenztes Task-pro-Datei-Modell wurde verworfen. Analysezustände werden nach dem Stapel in das Domainaggregat zurückgeführt und erneut gecheckpointet, damit eine spätere Aggregatspeicherung den Datenbankzustand nicht zurücksetzt. Diese technischen Zustandswechsel erzeugen keinen separaten Undo-Schritt; die vom Benutzer ausgelöste Anhangszuordnung bleibt die rückgängig machbare Operation.

@@ -43,7 +43,28 @@ public sealed class WpfUserDialogService : IUserDialogService
 
     public Attachment? RequestAttachmentToRemove(TimelineEvent timelineEvent)
     {
-        var dialog = new AttachmentSelectionDialog(timelineEvent.Attachments)
+        var dialog = new AttachmentSelectionDialog(
+            timelineEvent.Attachments,
+            "Anhang entfernen",
+            "Anhangszuordnung entfernen",
+            "Die Projektkopie bleibt für Undo erhalten.",
+            "Entfernen",
+            isDestructive: true)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        return dialog.ShowDialog() == true ? dialog.Result : null;
+    }
+
+    public Attachment? RequestAttachmentForAnalysis(TimelineEvent timelineEvent)
+    {
+        var dialog = new AttachmentSelectionDialog(
+            timelineEvent.Attachments,
+            "Analyse anzeigen",
+            "Dokumentanalyse anzeigen",
+            "Wählen Sie einen Anhang aus, um Status, Text und Datumsfundstellen zu prüfen.",
+            "Anzeigen",
+            isDestructive: false)
         {
             Owner = System.Windows.Application.Current.MainWindow,
         };
@@ -118,6 +139,15 @@ public sealed class WpfUserDialogService : IUserDialogService
     public void ShowAuditLog(IReadOnlyList<AuditEntry> entries)
     {
         var dialog = new AuditLogDialog(entries)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        dialog.ShowDialog();
+    }
+
+    public void ShowAttachmentAnalysis(Attachment attachment, DocumentAnalysisResult? result)
+    {
+        var dialog = new AttachmentAnalysisDialog(attachment, result)
         {
             Owner = System.Windows.Application.Current.MainWindow,
         };

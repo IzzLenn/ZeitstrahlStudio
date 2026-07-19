@@ -74,6 +74,19 @@ public sealed record Attachment
     public AttachmentState State { get; }
     public int? LinkedPdfPage { get; }
 
+    /// <summary>Erzeugt dieselben Anhangsmetadaten mit einem aktualisierten Verarbeitungszustand.</summary>
+    public Attachment WithState(AttachmentState state) => new(
+        Id,
+        OriginalFileName,
+        MediaType,
+        FileSize,
+        Sha256,
+        OriginalSourcePath,
+        ImportedAtUtc,
+        ProjectRelativePath,
+        state,
+        LinkedPdfPage);
+
     private static string NormalizeRelativePath(string path)
     {
         if (string.IsNullOrWhiteSpace(path) || Path.IsPathRooted(path))

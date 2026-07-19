@@ -139,6 +139,39 @@ public sealed class ProjectEventEditingService
         return replacement;
     }
 
+    /// <summary>
+    /// Synchronisiert technische Analysezustände ohne einen fachlichen Undo-Schritt zu erzeugen.
+    /// </summary>
+    public TimelineEvent UpdateAttachmentStates(
+        TimelineProject project,
+        Guid eventId,
+        IReadOnlyDictionary<Guid, AttachmentState> states,
+        DateTimeOffset timestampUtc)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        ArgumentNullException.ThrowIfNull(states);
+        var existing = FindEvent(project, eventId);
+        var changed = false;
+        var attachments = existing.Attachments.Select(attachment =>
+        {
+            if (!states.TryGetValue(attachment.Id, out var state) || state == attachment.State)
+            {
+                return attachment;
+            }
+
+            changed = true;
+            return attachment.WithState(state);
+        }).ToArray();
+        if (!changed)
+        {
+            return existing;
+        }
+
+        var replacement = CloneWithAttachments(existing, attachments, timestampUtc);
+        project.ReplaceEvent(replacement, timestampUtc);
+        return replacement;
+    }
+
     /// <summary>Verschiebt ein Ereignis innerhalb einer Gruppe mit identischem Datum.</summary>
     public bool MoveWithinSameDate(
         TimelineProject project,

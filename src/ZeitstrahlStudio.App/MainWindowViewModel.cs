@@ -15,6 +15,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private readonly ILocalLogService logService;
     private readonly IAuditLogService auditLogService;
     private readonly IAttachmentImportService attachmentImportService;
+    private readonly IAttachmentAnalysisQueue attachmentAnalysisQueue;
+    private readonly IAttachmentAnalysisStore attachmentAnalysisStore;
     private readonly ProjectEventEditingService eventEditingService;
     private readonly IUserDialogService dialogs;
     private readonly CancellationTokenSource lifetimeCancellation = new();
@@ -36,6 +38,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         ILocalLogService logService,
         IAuditLogService auditLogService,
         IAttachmentImportService attachmentImportService,
+        IAttachmentAnalysisQueue attachmentAnalysisQueue,
+        IAttachmentAnalysisStore attachmentAnalysisStore,
         ProjectEventEditingService eventEditingService,
         IUserDialogService dialogs)
     {
@@ -46,6 +50,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         this.logService = logService;
         this.auditLogService = auditLogService;
         this.attachmentImportService = attachmentImportService;
+        this.attachmentAnalysisQueue = attachmentAnalysisQueue;
+        this.attachmentAnalysisStore = attachmentAnalysisStore;
         this.eventEditingService = eventEditingService;
         this.dialogs = dialogs;
 
@@ -106,6 +112,12 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         AddAttachmentsCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ChooseAndImportAttachmentsAsync),
             () => !IsBusy && SelectedEvent is not null);
+        AnalyzeAttachmentsCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(AnalyzeSelectedAttachmentsAsync),
+            () => !IsBusy && SelectedEvent?.Attachments.Any(IsOfficeAttachment) == true);
+        ShowAttachmentAnalysisCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(ShowAttachmentAnalysisAsync),
+            () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
         RemoveAttachmentCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(RemoveAttachmentAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
@@ -137,6 +149,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public AsyncRelayCommand MoveEventLaterCommand { get; }
     public AsyncRelayCommand ShowAuditLogCommand { get; }
     public AsyncRelayCommand AddAttachmentsCommand { get; }
+    public AsyncRelayCommand AnalyzeAttachmentsCommand { get; }
+    public AsyncRelayCommand ShowAttachmentAnalysisCommand { get; }
     public AsyncRelayCommand RemoveAttachmentCommand { get; }
     public AsyncRelayCommand CancelAttachmentImportCommand { get; }
 
@@ -185,6 +199,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                 MoveEventEarlierCommand.RaiseCanExecuteChanged();
                 MoveEventLaterCommand.RaiseCanExecuteChanged();
                 AddAttachmentsCommand.RaiseCanExecuteChanged();
+                AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();
+                ShowAttachmentAnalysisCommand.RaiseCanExecuteChanged();
                 RemoveAttachmentCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(CanAcceptDroppedFiles));
             }
@@ -616,11 +632,22 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
                     eventId,
                     $"{successfulAttachments.Length} Anhang/Anhänge hinzugefügt",
                     timestampUtc).ConfigureAwait(true);
+                await CheckpointCurrentWorkspaceAsync(
+                    eventId,
+                    operationCancellation.Token).ConfigureAwait(true);
             }
 
             var failures = results.Where(result => !result.IsSuccess).ToArray();
+            var analysisSummary = successfulAttachments.Any(IsOfficeAttachment)
+                ? await AnalyzeAttachmentsForEventAsync(
+                    eventId,
+                    successfulAttachments,
+                    checkpointBeforeAnalysis: false,
+                    operationCancellation.Token).ConfigureAwait(true)
+                : (Successful: 0, Failed: 0);
             StatusMessage =
-                $"{successfulAttachments.Length} Anhang/Anhänge importiert, {failures.Length} fehlgeschlagen.";
+                $"{successfulAttachments.Length} Anhang/Anhänge importiert, {failures.Length} fehlgeschlagen; " +
+                $"{analysisSummary.Successful} analysiert, {analysisSummary.Failed} Analysefehler.";
             if (failures.Length > 0)
             {
                 var details = string.Join(
@@ -646,6 +673,133 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
 
             IsAttachmentImporting = false;
         }
+    }
+
+    private async Task AnalyzeSelectedAttachmentsAsync()
+    {
+        if (CurrentWorkspace is null || SelectedEvent is null)
+        {
+            return;
+        }
+
+        var eventId = SelectedEvent.Id;
+        var attachments = SelectedEvent.Attachments.Where(IsOfficeAttachment).ToArray();
+        using var operationCancellation =
+            CancellationTokenSource.CreateLinkedTokenSource(lifetimeCancellation.Token);
+        attachmentImportCancellation = operationCancellation;
+        IsAttachmentImporting = true;
+        try
+        {
+            var summary = await AnalyzeAttachmentsForEventAsync(
+                eventId,
+                attachments,
+                checkpointBeforeAnalysis: true,
+                operationCancellation.Token).ConfigureAwait(true);
+            StatusMessage =
+                $"{summary.Successful} Anhang/Anhänge analysiert, {summary.Failed} fehlgeschlagen.";
+        }
+        catch (OperationCanceledException) when (operationCancellation.IsCancellationRequested)
+        {
+            StatusMessage = "Die Dokumentanalyse wurde abgebrochen.";
+        }
+        finally
+        {
+            if (ReferenceEquals(attachmentImportCancellation, operationCancellation))
+            {
+                attachmentImportCancellation = null;
+            }
+
+            IsAttachmentImporting = false;
+        }
+    }
+
+    private async Task<(int Successful, int Failed)> AnalyzeAttachmentsForEventAsync(
+        Guid eventId,
+        IReadOnlyCollection<Attachment> attachments,
+        bool checkpointBeforeAnalysis,
+        CancellationToken cancellationToken)
+    {
+        var supported = attachments.Where(IsOfficeAttachment).ToArray();
+        if (supported.Length == 0 || CurrentWorkspace is null)
+        {
+            return (0, 0);
+        }
+
+        if (checkpointBeforeAnalysis)
+        {
+            await CheckpointCurrentWorkspaceAsync(eventId, cancellationToken).ConfigureAwait(true);
+        }
+
+        var workspace = CurrentWorkspace
+            ?? throw new InvalidOperationException("Das Projekt wurde während der Analyse geschlossen.");
+        var progress = new Progress<FileOperationProgress>(report =>
+        {
+            StatusMessage =
+                $"Analysiere {report.CurrentItem}: {report.CompletedItems}/{report.TotalItems}, " +
+                $"{report.SuccessfulItems} erfolgreich, {report.FailedItems} fehlgeschlagen";
+        });
+        var outcomes = await attachmentAnalysisQueue.AnalyzeAsync(
+            workspace,
+            supported,
+            progress,
+            cancellationToken).ConfigureAwait(true);
+        var states = outcomes.ToDictionary(
+            outcome => outcome.Attachment.Id,
+            outcome => outcome.Result.IsSuccess ? AttachmentState.Ready : AttachmentState.Failed);
+        eventEditingService.UpdateAttachmentStates(
+            workspace.Project,
+            eventId,
+            states,
+            DateTimeOffset.UtcNow);
+        MarkCurrentProjectChanged(eventId);
+        await CheckpointCurrentWorkspaceAsync(eventId, cancellationToken).ConfigureAwait(true);
+
+        var successful = outcomes.Count(outcome => outcome.Result.IsSuccess);
+        var failed = outcomes.Count - successful;
+        await WriteAuditAsync(
+            "AttachmentAnalysis",
+            eventId,
+            $"{successful} Anhang/Anhänge analysiert, {failed} fehlgeschlagen",
+            DateTimeOffset.UtcNow).ConfigureAwait(true);
+        if (failed > 0)
+        {
+            var details = string.Join(
+                Environment.NewLine,
+                outcomes
+                    .Where(outcome => !outcome.Result.IsSuccess)
+                    .Take(5)
+                    .Select(outcome =>
+                        $"{outcome.Result.Error?.UserMessage} " +
+                        $"{outcome.Result.Error?.TechnicalDetails}".Trim()));
+            dialogs.ShowError(
+                $"{failed} Dokument(e) konnten nicht lokal analysiert werden.",
+                details);
+        }
+
+        return (successful, failed);
+    }
+
+    private async Task ShowAttachmentAnalysisAsync()
+    {
+        if (CurrentWorkspace is null || SelectedEvent is null)
+        {
+            return;
+        }
+
+        var attachment = dialogs.RequestAttachmentForAnalysis(SelectedEvent);
+        if (attachment is null)
+        {
+            return;
+        }
+
+        var result = await attachmentAnalysisStore.LoadAsync(
+            CurrentWorkspace,
+            attachment,
+            lifetimeCancellation.Token).ConfigureAwait(true);
+        dialogs.ShowAttachmentAnalysis(attachment, result);
+        StatusMessage = result is null
+            ? $"Für „{attachment.OriginalFileName}“ liegt noch keine Analyse vor."
+            : $"Analyse von „{attachment.OriginalFileName}“ wurde geladen.";
     }
 
     private async Task RemoveAttachmentAsync()
@@ -680,9 +834,31 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private Task CancelAttachmentImportAsync()
     {
         attachmentImportCancellation?.Cancel();
-        StatusMessage = "Anhangsimport wird abgebrochen …";
+        StatusMessage = "Der laufende Vorgang wird abgebrochen …";
         return Task.CompletedTask;
     }
+
+    private async Task CheckpointCurrentWorkspaceAsync(
+        Guid selectedEventId,
+        CancellationToken cancellationToken)
+    {
+        if (currentWorkspace is null)
+        {
+            return;
+        }
+
+        currentWorkspace = await workspaceService.CheckpointAsync(
+            currentWorkspace,
+            cancellationToken).ConfigureAwait(true);
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+        RefreshEventList(selectedEventId);
+        RaiseCommandStates();
+    }
+
+    private static bool IsOfficeAttachment(Attachment attachment) =>
+        attachment.MediaType is
+            "application/vnd.openxmlformats-officedocument.wordprocessingml.document" or
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 
     private async Task SaveCurrentAsync(string? targetPath)
     {
@@ -958,6 +1134,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         MoveEventLaterCommand.RaiseCanExecuteChanged();
         ShowAuditLogCommand.RaiseCanExecuteChanged();
         AddAttachmentsCommand.RaiseCanExecuteChanged();
+        AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();
+        ShowAttachmentAnalysisCommand.RaiseCanExecuteChanged();
         RemoveAttachmentCommand.RaiseCanExecuteChanged();
         CancelAttachmentImportCommand.RaiseCanExecuteChanged();
         OnPropertyChanged(nameof(CanAcceptDroppedFiles));

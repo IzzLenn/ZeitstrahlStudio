@@ -80,6 +80,8 @@
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RedoCommand}" Content="Wiederholen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ShowAuditLogCommand}" Content="Protokoll" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AddAttachmentsCommand}" Content="Dateien +" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AnalyzeAttachmentsCommand}" Content="Analysieren" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ShowAttachmentAnalysisCommand}" Content="Analyse anzeigen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RemoveAttachmentCommand}" Content="Datei entfernen" />
                 </DockPanel>
             </ScrollViewer>
@@ -338,7 +340,7 @@
                         Padding="10,3"
                         Command="{Binding CancelAttachmentImportCommand}"
                         Visibility="{Binding IsAttachmentImporting, Converter={StaticResource BooleanToVisibilityConverter}}"
-                        Content="Import abbrechen" />
+                        Content="Vorgang abbrechen" />
                 <ProgressBar DockPanel.Dock="Right"
                              Width="110"
                              Height="4"

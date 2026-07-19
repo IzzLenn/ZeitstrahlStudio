@@ -157,6 +157,44 @@ public sealed class ProjectArchiveAndWorkspaceTests
     }
 
     [Fact]
+    public async Task WorkspaceCheckpoint_PersistsRecoveryCopyWithoutExportingArchive()
+    {
+        await using var root = new TemporaryRoot();
+        var workspaces = System.IO.Path.Combine(root.Path, "workspaces");
+        var archives = System.IO.Path.Combine(root.Path, "archives");
+        Directory.CreateDirectory(archives);
+        var repository = new SqliteProjectRepository();
+        var archiveService = new ProjectArchiveService(repository, new FixedTimeProvider(BaseTime));
+        var service = new LocalProjectWorkspaceService(
+            repository,
+            archiveService,
+            workspaces,
+            new FixedTimeProvider(BaseTime));
+        var archivePath = System.IO.Path.Combine(archives, "Checkpoint.zeitprojekt");
+        var workspace = await service.CreateAsync("Checkpoint", archivePath, CancellationToken.None);
+        workspace.Project.AddEvent(
+            TimelineEvent.Create(
+                Guid.NewGuid(),
+                "Nur in der Arbeitskopie",
+                EventDate.Exact(new DateOnly(2026, 7, 19)),
+                BaseTime),
+            BaseTime.AddMinutes(1));
+        workspace = workspace with { HasUnsavedChanges = true };
+
+        workspace = await service.CheckpointAsync(workspace, CancellationToken.None);
+
+        Assert.True(workspace.HasUnsavedChanges);
+        var checkpointProject = await repository.LoadAsync(
+            System.IO.Path.Combine(workspace.WorkingDirectory, "project.db"),
+            CancellationToken.None);
+        Assert.Single(checkpointProject.Events);
+        var archivedWorkspace = await service.OpenAsync(archivePath, CancellationToken.None);
+        Assert.Empty(archivedWorkspace.Project.Events);
+        await service.CloseAsync(archivedWorkspace, CancellationToken.None);
+        await service.CloseAsync(workspace, CancellationToken.None);
+    }
+
+    [Fact]
     public async Task WorkspaceService_CreatesSavesOpensDuplicatesClosesAndDeletes()
     {
         await using var root = new TemporaryRoot();

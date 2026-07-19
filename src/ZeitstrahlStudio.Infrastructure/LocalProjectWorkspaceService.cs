@@ -121,6 +121,30 @@ public sealed partial class LocalProjectWorkspaceService : IProjectWorkspaceServ
     }
 
     /// <inheritdoc />
+    public async Task<ProjectWorkspace> CheckpointAsync(
+        ProjectWorkspace workspace,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(workspace);
+        await saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            EnsureManagedWorkspace(workspace.WorkingDirectory);
+            await repository.SaveAsync(
+                workspace.Project,
+                Path.Combine(workspace.WorkingDirectory, "project.db"),
+                cancellationToken).ConfigureAwait(false);
+            var updatedWorkspace = workspace with { HasUnsavedChanges = true };
+            await WriteRecoveryMarkerAsync(updatedWorkspace, cancellationToken).ConfigureAwait(false);
+            return updatedWorkspace;
+        }
+        finally
+        {
+            saveGate.Release();
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<ProjectWorkspace> DuplicateAsync(
         ProjectWorkspace workspace,
         string targetArchivePath,

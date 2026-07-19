@@ -29,6 +29,11 @@ public sealed record DocumentAnalysisResult(
     string? ThumbnailRelativePath,
     int? PageCount);
 
+/// <summary>Ergebnis einer einzelnen Anhangsanalyse innerhalb eines Stapels.</summary>
+public sealed record AttachmentAnalysisOutcome(
+    Attachment Attachment,
+    OperationResult<DocumentAnalysisResult> Result);
+
 /// <summary>Kombinierbare Such- und Filterkriterien.</summary>
 public sealed record SearchCriteria(
     string? Query = null,
