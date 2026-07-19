@@ -76,6 +76,7 @@ public partial class App : System.Windows.Application
             provider.GetRequiredService<LocalProjectWorkspaceService>());
         services.AddSingleton<IRecentProjectsService>(_ => new JsonRecentProjectsService());
         services.AddSingleton<ILocalLogService>(_ => new JsonLinesLocalLogService());
+        services.AddSingleton<IAuditLogService, SqliteAuditLogService>();
         services.AddSingleton<IProjectAutosaveService, ProjectAutosaveService>();
         services.AddSingleton<ProjectEventEditingService>();
         services.AddSingleton<IUserDialogService, WpfUserDialogService>();

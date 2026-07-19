@@ -75,6 +75,8 @@ Der WPF-Start wird über einen validierten Microsoft.Extensions.DependencyInject
 
 Das Ereignisformular erzeugt einen vollständigen Application-Request. Bei Änderungen wird daraus zunächst ein neues validiertes Domain-Ereignis aufgebaut und anschließend atomar im Projekt ersetzt. Dadurch bleiben IDs und Anhänge erhalten, während Validierungsfehler niemals einen teilweise veränderten Eintrag hinterlassen. Erstellen und Löschen verwenden dieselbe Application-Fassade; die WPF-Dialogklasse beschränkt sich auf Bestätigen und Anzeigen von Validierungsmeldungen.
 
+Die Ereignis-Fassade führt pro Projekt eine auf 100 Operationen begrenzte Undo-/Redo-Historie. Jeder Eintrag enthält eine oder mehrere vollständige Ereignisfassungen; das gruppenweise Umsortieren gleicher Datumswerte bleibt deshalb ein einzelner Undo-Schritt. Erfolgreiche Benutzeroperationen schreibt ein separater Infrastrukturadapter in AuditLog und stellt sie über einen schreibgeschützten WPF-Dialog bereit. Sitzungshistorie und dauerhaftes Audit bleiben bewusst getrennt.
+
 ViewModels stellen Commands und bindbare Zustände bereit. Der UI-Thread übernimmt nur kleine Zustandsänderungen. Listen werden virtualisiert; große Vorschaubilder und Dokumenttexte werden verzögert geladen. Dokumentanalyse und OCR verwenden eine begrenzte Warteschlange. Autosave serialisiert Speichervorgänge, damit niemals zwei Archivgenerationen konkurrieren.
 
 Helles und dunkles Theme sind Resource Dictionaries. Zeitstrahl-Layouts werden aus einem testbaren Layoutmodell erzeugt; horizontale und vertikale WPF-Ansichten konsumieren dasselbe Modell. Farben werden immer durch Text, Symbole oder Rahmen ergänzt.

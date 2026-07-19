@@ -109,8 +109,13 @@ public interface IBackupService
 /// <summary>Schreibt das lokale, projektbezogene Änderungsprotokoll.</summary>
 public interface IAuditLogService
 {
-    Task WriteAsync(AuditEntry entry, CancellationToken cancellationToken);
-    Task<IReadOnlyList<AuditEntry>> ReadAsync(Guid projectId, CancellationToken cancellationToken);
+    Task WriteAsync(
+        ProjectWorkspace workspace,
+        AuditEntry entry,
+        CancellationToken cancellationToken);
+    Task<IReadOnlyList<AuditEntry>> ReadAsync(
+        ProjectWorkspace workspace,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>Persistiert die Liste zuletzt geöffneter Projektarchive lokal.</summary>

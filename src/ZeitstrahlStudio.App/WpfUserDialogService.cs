@@ -92,6 +92,15 @@ public sealed class WpfUserDialogService : IUserDialogService
         MessageBoxImage.Warning,
         MessageBoxResult.No) == MessageBoxResult.Yes;
 
+    public void ShowAuditLog(IReadOnlyList<AuditEntry> entries)
+    {
+        var dialog = new AuditLogDialog(entries)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        dialog.ShowDialog();
+    }
+
     public void ShowError(string message, string? technicalDetails = null)
     {
         var text = string.IsNullOrWhiteSpace(technicalDetails)

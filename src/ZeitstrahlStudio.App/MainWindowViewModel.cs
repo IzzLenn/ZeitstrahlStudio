@@ -13,6 +13,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private readonly IProjectRecoveryService recoveryService;
     private readonly IProjectAutosaveService autosaveService;
     private readonly ILocalLogService logService;
+    private readonly IAuditLogService auditLogService;
     private readonly ProjectEventEditingService eventEditingService;
     private readonly IUserDialogService dialogs;
     private readonly CancellationTokenSource lifetimeCancellation = new();
@@ -30,6 +31,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         IProjectRecoveryService recoveryService,
         IProjectAutosaveService autosaveService,
         ILocalLogService logService,
+        IAuditLogService auditLogService,
         ProjectEventEditingService eventEditingService,
         IUserDialogService dialogs)
     {
@@ -38,6 +40,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         this.recoveryService = recoveryService;
         this.autosaveService = autosaveService;
         this.logService = logService;
+        this.auditLogService = auditLogService;
         this.eventEditingService = eventEditingService;
         this.dialogs = dialogs;
 
@@ -76,6 +79,25 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         DeleteEventCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(DeleteSelectedEventAsync),
             () => !IsBusy && SelectedEvent is not null);
+        UndoCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(UndoAsync),
+            () => !IsBusy &&
+                CurrentWorkspace is { } workspace &&
+                eventEditingService.CanUndo(workspace.Project.Id));
+        RedoCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(RedoAsync),
+            () => !IsBusy &&
+                CurrentWorkspace is { } workspace &&
+                eventEditingService.CanRedo(workspace.Project.Id));
+        MoveEventEarlierCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(() => MoveSelectedEventAsync(moveEarlier: true)),
+            () => CanMoveSelectedEvent(moveEarlier: true));
+        MoveEventLaterCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(() => MoveSelectedEventAsync(moveEarlier: false)),
+            () => CanMoveSelectedEvent(moveEarlier: false));
+        ShowAuditLogCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(ShowAuditLogAsync),
+            () => !IsBusy && HasProject);
     }
 
     public ObservableCollection<RecentProject> RecentProjects { get; } = [];
@@ -95,6 +117,11 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public AsyncRelayCommand AddEventCommand { get; }
     public AsyncRelayCommand EditEventCommand { get; }
     public AsyncRelayCommand DeleteEventCommand { get; }
+    public AsyncRelayCommand UndoCommand { get; }
+    public AsyncRelayCommand RedoCommand { get; }
+    public AsyncRelayCommand MoveEventEarlierCommand { get; }
+    public AsyncRelayCommand MoveEventLaterCommand { get; }
+    public AsyncRelayCommand ShowAuditLogCommand { get; }
 
     public bool IsBusy
     {
@@ -125,6 +152,8 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             {
                 EditEventCommand.RaiseCanExecuteChanged();
                 DeleteEventCommand.RaiseCanExecuteChanged();
+                MoveEventEarlierCommand.RaiseCanExecuteChanged();
+                MoveEventLaterCommand.RaiseCanExecuteChanged();
             }
         }
     }
@@ -330,69 +359,162 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         StatusMessage = "Die Arbeitskopie wurde verworfen.";
     }
 
-    private Task AddEventAsync()
+    private async Task AddEventAsync()
     {
         if (CurrentWorkspace is null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         var request = dialogs.RequestEvent(timelineEvent: null);
         if (request is null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
+        var timestampUtc = DateTimeOffset.UtcNow;
         var created = eventEditingService.Create(
             CurrentWorkspace.Project,
             request,
-            DateTimeOffset.UtcNow);
+            timestampUtc);
         MarkCurrentProjectChanged(created.Id);
+        await WriteAuditAsync(
+            "Create",
+            created.Id,
+            $"Ereignis „{created.Title}“ erstellt",
+            timestampUtc).ConfigureAwait(true);
         StatusMessage = "Ereignis wurde erstellt.";
-        return Task.CompletedTask;
     }
 
-    private Task EditSelectedEventAsync()
+    private async Task EditSelectedEventAsync()
     {
         if (CurrentWorkspace is null || SelectedEvent is null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         var eventId = SelectedEvent.Id;
         var request = dialogs.RequestEvent(SelectedEvent);
         if (request is null)
         {
-            return Task.CompletedTask;
+            return;
         }
 
+        var timestampUtc = DateTimeOffset.UtcNow;
         eventEditingService.Update(
             CurrentWorkspace.Project,
             eventId,
             request,
-            DateTimeOffset.UtcNow);
+            timestampUtc);
         MarkCurrentProjectChanged(eventId);
+        await WriteAuditAsync(
+            "Update",
+            eventId,
+            $"Ereignis „{SelectedEvent?.Title ?? request.Title}“ bearbeitet",
+            timestampUtc).ConfigureAwait(true);
         StatusMessage = "Ereignis wurde aktualisiert.";
-        return Task.CompletedTask;
     }
 
-    private Task DeleteSelectedEventAsync()
+    private async Task DeleteSelectedEventAsync()
     {
         if (CurrentWorkspace is null ||
             SelectedEvent is null ||
             !dialogs.ConfirmDeleteEvent(SelectedEvent.Title))
         {
-            return Task.CompletedTask;
+            return;
         }
 
+        var eventId = SelectedEvent.Id;
         var eventTitle = SelectedEvent.Title;
+        var timestampUtc = DateTimeOffset.UtcNow;
         eventEditingService.Delete(
             CurrentWorkspace.Project,
-            SelectedEvent.Id,
-            DateTimeOffset.UtcNow);
+            eventId,
+            timestampUtc);
         MarkCurrentProjectChanged(selectedEventId: null);
+        await WriteAuditAsync(
+            "Delete",
+            eventId,
+            $"Ereignis „{eventTitle}“ gelöscht",
+            timestampUtc).ConfigureAwait(true);
         StatusMessage = $"Ereignis „{eventTitle}“ wurde gelöscht.";
-        return Task.CompletedTask;
+    }
+
+    private async Task UndoAsync()
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var timestampUtc = DateTimeOffset.UtcNow;
+        var result = eventEditingService.Undo(CurrentWorkspace.Project, timestampUtc);
+        MarkCurrentProjectChanged(result.SelectedEventId);
+        await WriteAuditAsync(
+            result.Operation,
+            result.SelectedEventId,
+            result.Description,
+            timestampUtc).ConfigureAwait(true);
+        StatusMessage = result.Description;
+    }
+
+    private async Task RedoAsync()
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var timestampUtc = DateTimeOffset.UtcNow;
+        var result = eventEditingService.Redo(CurrentWorkspace.Project, timestampUtc);
+        MarkCurrentProjectChanged(result.SelectedEventId);
+        await WriteAuditAsync(
+            result.Operation,
+            result.SelectedEventId,
+            result.Description,
+            timestampUtc).ConfigureAwait(true);
+        StatusMessage = result.Description;
+    }
+
+    private async Task MoveSelectedEventAsync(bool moveEarlier)
+    {
+        if (CurrentWorkspace is null || SelectedEvent is null)
+        {
+            return;
+        }
+
+        var eventId = SelectedEvent.Id;
+        var eventTitle = SelectedEvent.Title;
+        var timestampUtc = DateTimeOffset.UtcNow;
+        if (!eventEditingService.MoveWithinSameDate(
+                CurrentWorkspace.Project,
+                eventId,
+                moveEarlier,
+                timestampUtc))
+        {
+            return;
+        }
+
+        MarkCurrentProjectChanged(eventId);
+        var description = moveEarlier
+            ? $"Ereignis „{eventTitle}“ früher eingeordnet"
+            : $"Ereignis „{eventTitle}“ später eingeordnet";
+        await WriteAuditAsync("Reorder", eventId, description, timestampUtc).ConfigureAwait(true);
+        StatusMessage = description;
+    }
+
+    private async Task ShowAuditLogAsync()
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var entries = await auditLogService.ReadAsync(
+            CurrentWorkspace,
+            lifetimeCancellation.Token).ConfigureAwait(true);
+        dialogs.ShowAuditLog(entries);
+        StatusMessage = $"{entries.Count} Audit-Einträge geladen.";
     }
 
     private async Task SaveCurrentAsync(string? targetPath)
@@ -447,6 +569,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             targetPath,
             lifetimeCancellation.Token).ConfigureAwait(true);
         await workspaceService.CloseAsync(previousWorkspace, lifetimeCancellation.Token).ConfigureAwait(true);
+        eventEditingService.Clear(previousWorkspace.Project.Id);
         CurrentWorkspace = duplicate;
         await recentProjectsService.RecordOpenedAsync(duplicate, lifetimeCancellation.Token).ConfigureAwait(true);
         await RefreshStartDataAsync().ConfigureAwait(true);
@@ -476,6 +599,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
 
         var workspaceToClose = CurrentWorkspace;
         await workspaceService.CloseAsync(workspaceToClose, lifetimeCancellation.Token).ConfigureAwait(true);
+        eventEditingService.Clear(workspaceToClose.Project.Id);
         CurrentWorkspace = null;
         StatusMessage = "Projekt wurde geschlossen.";
         return true;
@@ -530,6 +654,51 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             ? Events.FirstOrDefault(timelineEvent => timelineEvent.Id == selectedEventId.Value)
             : null;
         OnPropertyChanged(nameof(EventCount));
+    }
+
+    private bool CanMoveSelectedEvent(bool moveEarlier) =>
+        !IsBusy &&
+        CurrentWorkspace is { } workspace &&
+        SelectedEvent is { } timelineEvent &&
+        eventEditingService.CanMoveWithinSameDate(
+            workspace.Project,
+            timelineEvent.Id,
+            moveEarlier);
+
+    private async Task WriteAuditAsync(
+        string operation,
+        Guid? entityId,
+        string description,
+        DateTimeOffset timestampUtc)
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await auditLogService.WriteAsync(
+                CurrentWorkspace,
+                new AuditEntry(
+                    Guid.NewGuid(),
+                    timestampUtc,
+                    operation,
+                    nameof(TimelineEvent),
+                    entityId,
+                    description,
+                    Succeeded: true,
+                    TechnicalDetails: null),
+                lifetimeCancellation.Token).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            await TryWriteLogAsync(
+                LocalLogLevel.Warning,
+                "AuditWriteFailed",
+                "Der lokale Audit-Eintrag konnte nicht geschrieben werden.",
+                exception.ToString()).ConfigureAwait(true);
+        }
     }
 
     private async Task ExecuteGuardedAsync(Func<Task> action)
@@ -616,5 +785,10 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         AddEventCommand.RaiseCanExecuteChanged();
         EditEventCommand.RaiseCanExecuteChanged();
         DeleteEventCommand.RaiseCanExecuteChanged();
+        UndoCommand.RaiseCanExecuteChanged();
+        RedoCommand.RaiseCanExecuteChanged();
+        MoveEventEarlierCommand.RaiseCanExecuteChanged();
+        MoveEventLaterCommand.RaiseCanExecuteChanged();
+        ShowAuditLogCommand.RaiseCanExecuteChanged();
     }
 }

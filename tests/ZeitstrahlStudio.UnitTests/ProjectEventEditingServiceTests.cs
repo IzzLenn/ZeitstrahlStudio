@@ -104,6 +104,76 @@ public sealed class ProjectEventEditingServiceTests
         Assert.Empty(project.Events);
     }
 
+    [Fact]
+    public void UndoAndRedo_Create_RestoresBothStates()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
+        var created = service.Create(project, CreateRequest(deadline: null), CreatedAt.AddMinutes(1));
+
+        var undo = service.Undo(project, CreatedAt.AddMinutes(2));
+        Assert.Empty(project.Events);
+        Assert.True(service.CanRedo(project.Id));
+        Assert.Null(undo.SelectedEventId);
+
+        var redo = service.Redo(project, CreatedAt.AddMinutes(3));
+        Assert.Equal(created.Id, Assert.Single(project.Events).Id);
+        Assert.Equal(created.Id, redo.SelectedEventId);
+    }
+
+    [Fact]
+    public void UndoAndRedo_Update_RestoresSnapshots()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
+        var created = service.Create(project, CreateRequest(deadline: null), CreatedAt.AddMinutes(1));
+        var changed = CreateRequest(deadline: null) with { Title = "Geändert" };
+        service.Update(project, created.Id, changed, CreatedAt.AddMinutes(2));
+
+        service.Undo(project, CreatedAt.AddMinutes(3));
+        Assert.Equal("Wichtig", Assert.Single(project.Events).Title);
+
+        service.Redo(project, CreatedAt.AddMinutes(4));
+        Assert.Equal("Geändert", Assert.Single(project.Events).Title);
+    }
+
+    [Fact]
+    public void Undo_Delete_RestoresEvent()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
+        var created = service.Create(project, CreateRequest(deadline: null), CreatedAt.AddMinutes(1));
+        service.Delete(project, created.Id, CreatedAt.AddMinutes(2));
+
+        service.Undo(project, CreatedAt.AddMinutes(3));
+
+        Assert.Equal(created.Id, Assert.Single(project.Events).Id);
+    }
+
+    [Fact]
+    public void MoveWithinSameDate_ChangesOnlyEqualDateGroupAndSupportsUndo()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
+        var sharedDate = EventDate.Exact(new DateOnly(2020, 1, 2));
+        var first = TimelineEvent.Create(Guid.NewGuid(), "A", sharedDate, CreatedAt);
+        var second = TimelineEvent.Create(Guid.NewGuid(), "B", sharedDate, CreatedAt.AddSeconds(1));
+        var later = TimelineEvent.Create(
+            Guid.NewGuid(),
+            "C",
+            EventDate.Exact(new DateOnly(2020, 1, 3)),
+            CreatedAt.AddSeconds(2));
+        project.AddEvent(first, CreatedAt.AddMinutes(1));
+        project.AddEvent(second, CreatedAt.AddMinutes(1));
+        project.AddEvent(later, CreatedAt.AddMinutes(1));
+
+        Assert.True(service.MoveWithinSameDate(
+            project,
+            second.Id,
+            moveEarlier: true,
+            CreatedAt.AddMinutes(2)));
+        Assert.Equal([second.Id, first.Id, later.Id], project.GetChronologicalEvents().Select(item => item.Id));
+
+        service.Undo(project, CreatedAt.AddMinutes(3));
+        Assert.Equal([first.Id, second.Id, later.Id], project.GetChronologicalEvents().Select(item => item.Id));
+    }
+
     private static EventEditRequest CreateRequest(Deadline? deadline) => new(
         EventDate.Range(new DateOnly(2020, 1, 2), new DateOnly(2020, 3, 4)),
         "Wichtig",

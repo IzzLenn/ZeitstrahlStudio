@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1, 2, Projektverwaltung 3A–3C und Ereignisbearbeitung 4A abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1 bis 4 abgeschlossen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 4B – Undo/Redo, Audit und manuelle Reihenfolge
+Meilenstein 5 – Anhänge und lokale Dokumentenanalyse
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -98,6 +98,20 @@ Meilenstein 4B – Undo/Redo, Audit und manuelle Reihenfolge
 - Projekt wird nach jeder erfolgreichen Änderung als ungespeichert markiert und in chronologischer Reihenfolge neu dargestellt
 - vier zusätzliche Unit-Tests decken vollständiges Erstellen, ID-/Anhangserhalt, atomare Fehlerabwehr und Löschen ab
 
+### Meilenstein 4B – Undo/Redo, Audit und manuelle Reihenfolge
+
+- projektbezogene Undo-/Redo-Historie mit maximal 100 vollständigen Vorher-/Nachher-Schritten implementiert
+- Erstellen, Bearbeiten, Löschen und die gemeinsame Umsortierung mehrerer Ereignisse sind vollständig rückgängig machbar und wiederholbar
+- neue Änderungen nach einem Undo verwerfen den nicht mehr gültigen Redo-Zweig; beim Schließen wird die Sitzungshistorie freigegeben
+- Strg+Z/Strg+Y sowie gebundene Schaltflächen mit korrektem CanExecute-Zustand angebunden
+- Ereignisse mit identischer fachlicher Datumsangabe können über zugängliche Früher-/Später-Aktionen manuell geordnet werden; andere Datumsgruppen bleiben unverändert
+- produktiven SQLite-Auditdienst für Schreiben und chronologisch absteigendes Lesen der vorhandenen AuditLog-Tabelle implementiert
+- erfolgreiche Create/Update/Delete/Undo/Redo/Reorder-Operationen werden lokal mit UTC-Zeitpunkt, Entität und Beschreibung protokolliert
+- Auditfehler verändern eine bereits erfolgreiche Benutzeroperation nicht, sondern werden im rotierenden technischen Lokalprotokoll festgehalten
+- Änderungsprotokoll über einen schreibgeschützten WPF-Dialog erreichbar
+- vier zusätzliche Unit-Tests prüfen Undo/Redo für Anlage, Änderung und Löschung sowie gruppenbegrenzte Sortierung
+- zwei zusätzliche Integrationstests prüfen Audit-Roundtrip, Sortierung und Erhaltung bei nachfolgenden Repository-Speicherungen
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -110,14 +124,14 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 4A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 24 Unit-Tests und 16 Integrationstests bestanden.
+Aktueller Stand nach Meilenstein 4B: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 28 Unit-Tests und 18 Integrationstests bestanden.
 
 ## Phasenweiser Implementierungsplan
 
 1. **Solution und Architektur – abgeschlossen:** Schichten, Fachmodellbasis, Ports, Architektur- und Formatdokumentation.
 2. **Datenmodell und SQLite – abgeschlossen:** vollständiges normalisiertes Schema, Migration 1, Repository, Transaktionen, FTS5 und Integrationstests.
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
-4. **Ereignisse und Fristen – in Arbeit:** vollständige MVVM-Bearbeitung, alle Datumsgenauigkeiten, Fristen, Tags und Links sind in 4A umgesetzt; Undo/Redo, Drag-Sortierung und Audit folgen in 4B.
+4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
 5. **Anhänge und lokale Dokumentenanalyse:** sichere Kopien, Mehrfach-Drop, PDF/Bild/DOCX/XLSX, Vorschau, lokale OCR, Warteschlange.
 6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
@@ -131,7 +145,8 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Bekannte Probleme und Risiken
 
-- Erstellen, Bearbeiten und Löschen von Ereignissen sind angebunden; Undo/Redo, Audit und Drag-Sortierung fehlen noch.
+- Die manuelle Ereignisreihenfolge ist über tastaturzugängliche Früher-/Später-Aktionen verfügbar; direktes Drag-and-drop ist noch nicht implementiert.
+- Beim Löschen eines Ereignisses verbleiben dessen physische Anhangsdateien bis zum geplanten projektinternen Papierkorb aus Meilenstein 5 im Arbeitsarchiv.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
 - Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
@@ -140,4 +155,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Begrenzte Undo-/Redo-Historie für Ereignisoperationen sowie den SQLite-basierten Auditdienst implementieren. Danach die manuelle Reihenfolge identischer Datumswerte über eine zugängliche Listenaktion anbinden.
+Sicheren Mehrfachimport von Anhängen mit kollisionsfreien internen Pfaden, Hashprüfung, Fortschritt und Abbruch implementieren. Danach PDF-, Bild-, DOCX- und XLSX-Text-/Metadatenanalyse über eine begrenzte lokale Warteschlange anbinden.

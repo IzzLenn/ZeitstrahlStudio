@@ -21,5 +21,6 @@ public interface IUserDialogService
     SaveChangesDecision AskSaveChanges(string projectName);
     bool ConfirmDiscardRecovery(string projectName);
     bool ConfirmDeleteEvent(string eventTitle);
+    void ShowAuditLog(IReadOnlyList<AuditEntry> entries);
     void ShowError(string message, string? technicalDetails = null);
 }

@@ -1,0 +1,57 @@
+<Window x:Class="ZeitstrahlStudio.App.AuditLogDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Änderungsprotokoll"
+        Width="960"
+        Height="560"
+        MinWidth="720"
+        MinHeight="420"
+        ShowInTaskbar="False"
+        WindowStartupLocation="CenterOwner"
+        Background="#F8FAFC">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <StackPanel Margin="20,16,20,12">
+            <TextBlock FontSize="23" FontWeight="SemiBold" Text="Änderungsprotokoll" />
+            <TextBlock Margin="0,4,0,0"
+                       Foreground="#64748B"
+                       Text="Lokal in der Projektdatenbank gespeicherte Ereignisoperationen." />
+        </StackPanel>
+        <DataGrid Grid.Row="1"
+                  Margin="20,0"
+                  ItemsSource="{Binding}"
+                  AutoGenerateColumns="False"
+                  IsReadOnly="True"
+                  CanUserAddRows="False"
+                  CanUserDeleteRows="False"
+                  HeadersVisibility="Column"
+                  GridLinesVisibility="Horizontal"
+                  AlternatingRowBackground="#F1F5F9">
+            <DataGrid.Columns>
+                <DataGridTextColumn Width="155"
+                                    Header="Zeitpunkt (UTC)"
+                                    Binding="{Binding TimestampUtc, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" />
+                <DataGridTextColumn Width="100" Header="Vorgang" Binding="{Binding Operation}" />
+                <DataGridTextColumn Width="135" Header="Datensatz" Binding="{Binding EntityType}" />
+                <DataGridTextColumn Width="*" Header="Beschreibung" Binding="{Binding Description}" />
+                <DataGridCheckBoxColumn Width="75" Header="Erfolg" Binding="{Binding Succeeded}" />
+            </DataGrid.Columns>
+        </DataGrid>
+        <Border Grid.Row="2"
+                Margin="0,14,0,0"
+                Padding="20,12"
+                Background="#E2E8F0"
+                BorderBrush="#CBD5E1"
+                BorderThickness="0,1,0,0">
+            <Button Width="100"
+                    Height="32"
+                    HorizontalAlignment="Right"
+                    IsCancel="True"
+                    Content="Schließen" />
+        </Border>
+    </Grid>
+</Window>

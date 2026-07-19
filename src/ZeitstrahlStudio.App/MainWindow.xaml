@@ -10,6 +10,10 @@
         Closing="Window_Closing"
         FontFamily="Segoe UI"
         Background="#F1F5F9">
+    <Window.InputBindings>
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}" />
+        <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}" />
+    </Window.InputBindings>
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <Style x:Key="ToolbarButtonStyle" TargetType="Button">
@@ -30,6 +34,13 @@
             <Setter Property="Background" Value="#2563EB" />
             <Setter Property="BorderBrush" Value="#1D4ED8" />
         </Style>
+        <Style x:Key="CompactButtonStyle"
+               TargetType="Button"
+               BasedOn="{StaticResource ToolbarButtonStyle}">
+            <Setter Property="MinWidth" Value="70" />
+            <Setter Property="Margin" Value="0,0,5,0" />
+            <Setter Property="Padding" Value="8,0" />
+        </Style>
         <Style x:Key="LinkButtonStyle" TargetType="Button">
             <Setter Property="Padding" Value="0" />
             <Setter Property="Background" Value="Transparent" />
@@ -48,7 +59,8 @@
         </Grid.RowDefinitions>
 
         <Border Grid.Row="0" Padding="18,12" Background="#0F172A">
-            <DockPanel LastChildFill="False">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
+                <DockPanel LastChildFill="False">
                 <StackPanel DockPanel.Dock="Left" Margin="0,0,28,0" VerticalAlignment="Center">
                     <TextBlock Foreground="#FFFFFF" FontSize="20" FontWeight="Bold" Text="Zeitstrahl Studio" />
                     <TextBlock Foreground="#94A3B8" FontSize="11" Text="Lokale Projektchroniken" />
@@ -60,7 +72,12 @@
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SaveAsCommand}" Content="Speichern unter" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding DuplicateCommand}" Content="Duplizieren" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding CloseProjectCommand}" Content="Schließen" />
-            </DockPanel>
+                <Border DockPanel.Dock="Left" Width="1" Margin="4,2,12,2" Background="#475569" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding UndoCommand}" Content="Rückgängig" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RedoCommand}" Content="Wiederholen" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ShowAuditLogCommand}" Content="Protokoll" />
+                </DockPanel>
+            </ScrollViewer>
         </Border>
 
         <Grid Grid.Row="1">
@@ -222,13 +239,23 @@
                                    FontWeight="SemiBold"
                                    Text="{Binding EventCount, StringFormat={}{0} Ereignisse}" />
                         <Button DockPanel.Dock="Right"
-                                Style="{StaticResource ToolbarButtonStyle}"
+                                Style="{StaticResource CompactButtonStyle}"
                                 Command="{Binding DeleteEventCommand}"
                                 Content="Löschen" />
                         <Button DockPanel.Dock="Right"
-                                Style="{StaticResource ToolbarButtonStyle}"
+                                Style="{StaticResource CompactButtonStyle}"
                                 Command="{Binding EditEventCommand}"
                                 Content="Bearbeiten" />
+                        <Button DockPanel.Dock="Right"
+                                Style="{StaticResource CompactButtonStyle}"
+                                Command="{Binding MoveEventLaterCommand}"
+                                ToolTip="Nur innerhalb identischer Datumsangaben"
+                                Content="Später" />
+                        <Button DockPanel.Dock="Right"
+                                Style="{StaticResource CompactButtonStyle}"
+                                Command="{Binding MoveEventEarlierCommand}"
+                                ToolTip="Nur innerhalb identischer Datumsangaben"
+                                Content="Früher" />
                         <Button DockPanel.Dock="Right"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding AddEventCommand}"

@@ -117,3 +117,11 @@ StartupUri wird nicht verwendet, weil das Hauptfenster erst nach erfolgreichem A
 Eine Ereignisbearbeitung verändert nicht schrittweise das bereits im Projekt befindliche Objekt. Die Application-Schicht konstruiert aus der vollständigen Eingabe zuerst ein neues, durch die Domain validiertes Ereignis und ersetzt erst danach den bisherigen Eintrag mit derselben ID. Anhänge, Erstellungszeitpunkt, manuelle Sortierposition und bestehende Link-IDs werden dabei erhalten.
 
 Damit bleibt das Aggregat bei einem ungültigen späteren Feld – beispielsweise einem fehlerhaften Link – vollständig unverändert. Schrittweise Setter-Aufrufe mit manueller Rückabwicklung wurden verworfen, weil jede neue Eigenschaft eine weitere unvollständige Fehlerkombination erzeugen könnte. Der atomare Ersatz bildet zugleich eine klare Basis für Undo/Redo-Snapshots.
+
+## ADR-017: Begrenzte Snapshot-Historie und projektinternes SQLite-Audit
+
+**Status:** angenommen am 19.07.2026
+
+Undo/Redo hält pro geöffnetem Projekt höchstens 100 validierte Vorher-/Nachher-Snapshot-Operationen im Arbeitsspeicher. Ein Schritt kann mehrere Ereignisse enthalten, sodass die manuelle Reihenfolge einer Gruppe mit identischem Datum geschlossen rückgängig gemacht wird. Snapshots teilen ausschließlich unveränderliche Anhänge und Wertobjekte; das Ereignis selbst wird bei jeder Bearbeitung ersetzt.
+
+Die Sitzungshistorie wird nicht dauerhaft im Projektarchiv gespeichert und beim Schließen freigegeben. Das fachliche Änderungsprotokoll ist davon getrennt: erfolgreiche Operationen werden dauerhaft in der bereits migrierten AuditLog-Tabelle der lokalen Projekt-SQLite-Datenbank gespeichert. Ein nicht schreibbarer Audit-Eintrag darf eine bereits erfolgreiche fachliche Änderung nicht zurückrollen; der Fehler wird stattdessen im technischen Lokalprotokoll erfasst.
