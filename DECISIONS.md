@@ -195,3 +195,13 @@ Deutsch ist die verbindliche OCR-Sprache. Die Anwendung verwendet nur eine berei
 Die OCR wird prozessweit serialisiert und zusätzlich von der bestehenden Analysewarteschlange begrenzt. Pro Bildseite gelten höchstens 24 Millionen dekodierte Pixel, dynamisch zusätzlich `OcrEngine.MaxImageDimension`; komprimierte Bilddateien sind auf 512 MiB, Mehrseitenbilder und OCR-bedürftige PDFs auf 250 Seiten und erkannter Text auf zehn Millionen Zeichen begrenzt. PDF-Seiten werden mit PDFium bei dreifacher Basisskalierung gerendert. Eingebetteter Text bleibt vorrangig; nur textleere Seiten erhalten OCR. Gemischte PDFs werden mit einer eigenen Extraktionsmethode gekennzeichnet.
 
 OCR-Ergebnisse erhalten dauerhaft den Anhangsstatus „Warnung“, einen sichtbaren Fehlerhinweis, die verwendete Sprache und die betroffenen PDF-Seiten. Sie werden wie direkter Dokumenttext transaktional gespeichert und in derselben Transaktion in FTS5 aufgenommen. Einzelbild-/Seitenschritte werden an die vorhandene Fortschrittsanzeige weitergereicht; CancellationToken wird vor, zwischen und in den WinRT-Async-Aufrufen geprüft.
+
+## ADR-026: Gemeinsames deterministisches Zeitstrahl-Layoutmodell
+
+**Status:** angenommen am 19.07.2026
+
+Horizontale und vertikale Zeitstrahlen verwenden denselben UI-unabhängigen `TimelineLayoutEngine` in der Application-Schicht. Das Ergebnis enthält reine Achsen-/Kartenkoordinaten, Bahnen, Skalenticks, eindeutig beschriftete Unterbrechungen und Fristverbindungen. WPF, PDF-Export und Standalone-HTML können dadurch später dieselben fachlichen Projektionsregeln verwenden, ohne Darstellungslogik aus einer konkreten Oberfläche zu kopieren.
+
+Die Zeiteinheit wird aus der gesamten belegten Projektspanne inklusive Ereigniszeiträumen, Projektgrenzen und Fristen gewählt. Die Projektion ist stückweise linear. Große leere Intervalle werden nur oberhalb skalenabhängiger Schwellen komprimiert; ein von einem Ereigniszeitraum belegtes Intervall ist ausdrücklich keine leere Lücke. Die feste sichtbare Restlänge einer Unterbrechung wächst moderat mit dem Zoom, sodass eine Unterbrechung stets als reale Zeitspanne erkennbar bleibt.
+
+Karten wechseln zunächst die Achsenseite. Überlappende Karten derselben Seite werden der ersten freien Bahn zugeordnet. Persistierte `LayoutPosition`-Werte werden danach als rein visuelle orientierungsabhängige Versätze angewendet und ändern niemals das Datum. Tickzahl und manuelle Darstellungsversätze sind begrenzt, alle Eingaben müssen endlich sein. Diese deterministische Stufe bleibt schnell genug für mindestens 5.000 Ereignisse und wird vor der WPF-Integration vollständig durch Unit-Tests abgesichert.

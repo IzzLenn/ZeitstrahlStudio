@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilensteine 1 bis 4 sowie Anhangsimport und Dokumentanalyse 5A bis 5C3 abgeschlossen, noch kein Release
+Status: In Entwicklung – Meilensteine 1 bis 5 abgeschlossen, Zeitstrahldarstellung in Arbeit, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 5D – vollständig lokale OCR für Bilder und bildbasierte PDFs
+Meilenstein 6A – testbares Zeitachsen- und Kartenlayoutmodell
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -210,6 +210,18 @@ Meilenstein 5D – vollständig lokale OCR für Bilder und bildbasierte PDFs
 - die Dokumentanalyse meldet Datei- und OCR-Seitenfortschritt, serialisiert die Windows-OCR zusätzlich zur zweifach begrenzten Analysewarteschlange und reicht Abbruch bis in WinRT-Async-Aufrufe weiter
 - fünf neue Integrationstests prüfen reale deutsche OCR an einer gerenderten Testseite, defekte Bilder, Abbruch, bildbasierte PDFs und gemischte PDF-Extraktion; der bestehende Persistenztest prüft nun OCR-Warnstatus und FTS-Treffer
 
+### Meilenstein 6A – Zeitachsen- und Kartenlayoutmodell
+
+- ein UI-unabhängiger `TimelineLayoutEngine` projiziert Ereignisse, Zeiträume und Fristen deterministisch auf dieselbe Achse für horizontale und vertikale Ansichten
+- die automatische Skala wählt abhängig vom Projektzeitraum Stunden, Tage, Wochen, Monate, Jahre oder Jahrzehnte; Zoomfaktoren von 25 bis 800 Prozent fließen direkt in die Projektion ein
+- Ereigniskarten wechseln automatisch die Achsenseite und erhalten bei Kollisionen weitere Bahnen; gleiche Datumswerte bleiben in ihrer fachlich/manuell festgelegten Reihenfolge
+- sehr große tatsächlich leere Zeitlücken werden auf eine feste sichtbare Länge komprimiert und mit einer exakten Jahre-/Monate-/Tage-Beschriftung ausgegeben
+- Zeiträume eines Ereignisses gelten nicht als leer und werden daher niemals als Achsenunterbrechung komprimiert
+- Achsenticks werden passend zur Skala erzeugt, innerhalb komprimierter Lücken ausgelassen und auf 2.000 Einträge begrenzt
+- unabhängige Fristen erhalten eigene Achsenpositionen, Status und Verbindungskoordinaten zum zugehörigen Ereignis
+- vorhandene horizontale/vertikale `LayoutPosition`-Versätze werden orientierungsrichtig angewendet, ohne Datumswerte zu verändern; extreme gespeicherte Versätze werden für eine stabile Darstellung begrenzt
+- 13 neue Unit-Tests prüfen alle sechs Skalen, Lückenerkennung/-beschriftung, Zeitraumabwehr, Seiten-/Bahnverteilung, beide Versatzrichtungen, Fristprojektion und 5.000 Ereignisse
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -224,7 +236,7 @@ dotnet test ZeitstrahlStudio.sln -c Release --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 5D: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 47 Integrationstests bestanden. `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` meldet keine Formatabweichung. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.513.662 Bytes; sie enthält die WinRT-Projektion, aber keine Tesseract-, Sprachmodell- oder fremden Runtime-Assets. Ein verborgener Start-/Stopp-Smoke-Test der veröffentlichten EXE war erfolgreich.
+Aktueller Stand nach Meilenstein 6A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 42 Unit-Tests und 47 Integrationstests bestanden. `dotnet format ZeitstrahlStudio.sln --no-restore --verify-no-changes` meldet keine Formatabweichung. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.547.458 Bytes; sie enthält die WinRT-Projektion, aber keine Tesseract-, Sprachmodell- oder fremden Runtime-Assets. Der veröffentlichte EXE-Smoke-Test war zuletzt nach Meilenstein 5D erfolgreich; die neue Layoutlogik besitzt noch keine aktive UI-Verbindung.
 
 ## Phasenweiser Implementierungsplan
 
@@ -233,7 +245,7 @@ Aktueller Stand nach Meilenstein 5D: Debug und Release jeweils 0 Warnungen/0 Feh
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
 5. **Anhänge und lokale Dokumentenanalyse – abgeschlossen:** sicherer Import und Undo-fähige Zuordnung, DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bild- und PDF-Vorschau, Integritätsprüfung, Standardprogramm und lokale OCR für Bilder sowie bildbasierte PDF-Seiten sind in 5A bis 5D umgesetzt.
-6. **Zeitstrahldarstellung:** horizontale/vertikale virtualisierte Ansichten, Skala, Zoom/Pan, Lückenkompression, Fristmarker, manuelle Positionen.
+6. **Zeitstrahldarstellung – in Arbeit:** gemeinsames Layoutmodell, automatische Skala, Lückenkompression, Kollisionsbahnen, Fristprojektion und manuelle Versatzprojektion sind in 6A umgesetzt; virtualisierte WPF-Ansicht, Zoom/Pan und persistente Bedienaktionen folgen.
 7. **Suche und Filter:** inkrementeller Volltextindex, kombinierbare Filter, Trefferhervorhebung und Navigation.
 8. **PDF-Export:** Vorschau, A4/A3/benutzerdefiniert, mehrseitig, große Einzelseite, Zeitraum, drucktaugliche Kennzeichnungen.
 9. **Standalone-HTML-Export:** eine offlinefähige responsive Datei mit eingebetteten Daten, Suche, Filtern, Zoom und Druck-CSS.
@@ -256,4 +268,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 6 beginnen: ein skalierbares, virtualisiertes Zeitstrahl-Layoutmodell für horizontale und vertikale Darstellung mit Zoom, Pan, Lückenkompression und Fristmarkern entwerfen und zuerst mit Unit-Tests absichern.
+Meilenstein 6B umsetzen: das Layoutmodell in eine viewportbezogen zeichnende WPF-Zeitstrahlansicht integrieren und Orientierung, Zoom, Mausrad, Pan, Scrollleisten, Zentrierung und „gesamtes Projekt“ bedienbar machen.
