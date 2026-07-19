@@ -2,6 +2,71 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Application.Resources>
+        <SolidColorBrush x:Key="WindowBackgroundBrush" Color="#F1F5F9" />
+        <SolidColorBrush x:Key="SurfaceBrush" Color="#F8FAFC" />
+        <SolidColorBrush x:Key="RaisedSurfaceBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="SurfaceAltBrush" Color="#E2E8F0" />
+        <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="PrimaryTextBrush" Color="#0F172A" />
+        <SolidColorBrush x:Key="SecondaryTextBrush" Color="#334155" />
+        <SolidColorBrush x:Key="MutedTextBrush" Color="#64748B" />
+        <SolidColorBrush x:Key="SubtleTextBrush" Color="#475569" />
+        <SolidColorBrush x:Key="BorderBrush" Color="#CBD5E1" />
+        <SolidColorBrush x:Key="StrongBorderBrush" Color="#94A3B8" />
+        <SolidColorBrush x:Key="HeaderBackgroundBrush" Color="#0F172A" />
+        <SolidColorBrush x:Key="HeaderForegroundBrush" Color="#FFFFFF" />
+        <SolidColorBrush x:Key="HeaderMutedBrush" Color="#94A3B8" />
+        <SolidColorBrush x:Key="AccentBrush" Color="#2563EB" />
+        <SolidColorBrush x:Key="AccentDarkBrush" Color="#1D4ED8" />
+        <SolidColorBrush x:Key="AccentTextBrush" Color="#1D4ED8" />
+        <SolidColorBrush x:Key="ToolbarSeparatorBrush" Color="#475569" />
 
+        <Style TargetType="Window">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource WindowBackgroundBrush}" />
+        </Style>
+        <Style TargetType="TextBox">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style TargetType="ComboBox">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style TargetType="DatePicker">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource InputBackgroundBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
+        <Style TargetType="ListBox">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style TargetType="ListView">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style TargetType="DataGrid">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+            <Setter Property="RowBackground" Value="{DynamicResource RaisedSurfaceBrush}" />
+            <Setter Property="AlternatingRowBackground" Value="{DynamicResource SurfaceAltBrush}" />
+        </Style>
+        <Style TargetType="TabControl">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+            <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+        </Style>
+        <Style TargetType="Expander">
+            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
+        </Style>
     </Application.Resources>
 </Application>

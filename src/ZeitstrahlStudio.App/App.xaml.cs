@@ -90,6 +90,7 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IAttachmentFileService, LocalAttachmentFileService>();
         services.AddSingleton<IAttachmentAnalysisStore, SqliteAttachmentAnalysisStore>();
         services.AddSingleton<IPdfPreviewService, PdfiumPdfPreviewService>();
+        services.AddSingleton<ITimelineThumbnailService, SkiaTimelineThumbnailService>();
         services.AddSingleton<PdfExportPlanner>();
         services.AddSingleton<IPdfExportService, SkiaPdfExportService>();
         services.AddSingleton<IHtmlExportService, StandaloneHtmlExportService>();
@@ -107,6 +108,7 @@ public partial class App : System.Windows.Application
             provider.GetRequiredService<IProjectWorkspaceService>(),
             provider.GetRequiredService<IBackupService>()));
         services.AddSingleton<ProjectEventEditingService>();
+        services.AddSingleton<IApplicationThemeService, ApplicationThemeService>();
         services.AddSingleton<IUserDialogService, WpfUserDialogService>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();

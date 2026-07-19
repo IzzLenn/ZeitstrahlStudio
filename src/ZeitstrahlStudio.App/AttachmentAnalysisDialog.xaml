@@ -8,7 +8,7 @@
         MinHeight="480"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC">
+        Background="{DynamicResource SurfaceBrush}">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -18,9 +18,9 @@
         <StackPanel>
             <TextBlock FontSize="21" FontWeight="SemiBold" Text="{Binding FileName}" />
             <TextBlock Margin="0,5,0,2"
-                       Foreground="#475569"
+                       Foreground="{DynamicResource SubtleTextBrush}"
                        Text="{Binding StatusText}" />
-            <TextBlock Foreground="#64748B" Text="{Binding MediaType}" />
+            <TextBlock Foreground="{DynamicResource MutedTextBrush}" Text="{Binding MediaType}" />
             <TextBlock Margin="0,4,0,0"
                        Foreground="#92400E"
                        FontWeight="SemiBold"

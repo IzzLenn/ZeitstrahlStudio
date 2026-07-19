@@ -9,9 +9,11 @@ public partial class EventEditorDialog : Window
 {
     private readonly EventEditorDialogViewModel viewModel;
 
-    public EventEditorDialog(TimelineEvent? timelineEvent)
+    public EventEditorDialog(
+        TimelineEvent? timelineEvent,
+        string defaultEventColorHex = "#3B82F6")
     {
-        viewModel = new EventEditorDialogViewModel(timelineEvent);
+        viewModel = new EventEditorDialogViewModel(timelineEvent, defaultEventColorHex);
         InitializeComponent();
         DataContext = viewModel;
     }

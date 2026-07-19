@@ -4,6 +4,7 @@ using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
 using ZeitstrahlStudio.App;
+using ZeitstrahlStudio.Application;
 using ZeitstrahlStudio.Domain;
 
 namespace ZeitstrahlStudio.IntegrationTests;
@@ -23,19 +24,32 @@ public sealed class TimelineViewTests
             {
                 var project = CreateProject();
                 TimelineCardMoveRequest? moveRequest = null;
+                var thumbnailService = new RecordingThumbnailService();
                 var view = new TimelineView
                 {
                     Project = project,
+                    Workspace = new ProjectWorkspace(project, Path.GetTempPath(), null, true),
+                    ThumbnailService = thumbnailService,
                     SelectedEvent = project.Events[25],
                     Orientation = TimelineOrientation.Horizontal,
                     ZoomFactor = 1.25,
                     CompressLargeGaps = true,
+                    CardFontSize = 16,
+                    AxisFontSize = 13,
                     MoveCardCommand = new RecordingCommand(parameter =>
                         moveRequest = Assert.IsType<TimelineCardMoveRequest>(parameter)),
                 };
 
+                _ = Render(view, 900, 560);
+                view.ShowWholeProject();
                 var horizontalPixels = Render(view, 900, 560);
+                Dispatcher.CurrentDispatcher.Invoke(
+                    () => { },
+                    DispatcherPriority.ApplicationIdle);
                 Assert.Contains(horizontalPixels, value => value < 80);
+                Assert.Contains(
+                    project.Events[0].Attachments.First().Id,
+                    thumbnailService.RequestedAttachmentIds);
                 view.RequestCardMove(project.Events[25].Id, 24.5, -13.25);
                 Assert.NotNull(moveRequest);
                 Assert.Equal(project.Events[25].Id, moveRequest.EventId);
@@ -55,6 +69,7 @@ public sealed class TimelineViewTests
                 Assert.InRange(view.ZoomFactor, 0.25, 8);
 
                 view.Orientation = TimelineOrientation.Vertical;
+                view.IsDarkTheme = true;
                 view.LayoutRevision++;
                 var verticalPixels = Render(view, 900, 560);
                 Assert.Contains(verticalPixels, value => value < 80);
@@ -124,6 +139,21 @@ public sealed class TimelineViewTests
                     Timestamp);
             }
 
+            if (index == 0)
+            {
+                timelineEvent.AddAttachment(
+                    new Attachment(
+                        Guid.NewGuid(),
+                        "miniatur.png",
+                        "image/png",
+                        1,
+                        new string('a', 64),
+                        null,
+                        Timestamp,
+                        $"attachments/{Guid.NewGuid():N}/miniatur.png"),
+                    Timestamp);
+            }
+
             project.AddEvent(timelineEvent, Timestamp);
         }
 
@@ -141,5 +171,28 @@ public sealed class TimelineViewTests
         public bool CanExecute(object? parameter) => true;
 
         public void Execute(object? parameter) => execute(parameter);
+    }
+
+    private sealed class RecordingThumbnailService : ITimelineThumbnailService
+    {
+        private static readonly byte[] ThumbnailData = Convert.FromBase64String(
+            "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=");
+
+        public List<Guid> RequestedAttachmentIds { get; } = [];
+
+        public Task<TimelineThumbnail?> GetOrCreateAsync(
+            ProjectWorkspace workspace,
+            Attachment attachment,
+            CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            RequestedAttachmentIds.Add(attachment.Id);
+            return Task.FromResult<TimelineThumbnail?>(new TimelineThumbnail(
+                attachment.Id,
+                1,
+                1,
+                "thumbnails/timeline/test.png",
+                ThumbnailData));
+        }
     }
 }

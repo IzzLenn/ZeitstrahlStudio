@@ -20,7 +20,8 @@ public sealed record TimelineLayoutOptions(
     double ZoomFactor = 1,
     bool CompressLargeGaps = true,
     double ViewportAxisLength = 1000,
-    double ViewportCrossLength = 600);
+    double ViewportCrossLength = 600,
+    double CardFontSize = 14);
 
 /// <summary>Position einer Ereigniskarte relativ zur Zeitachse.</summary>
 public sealed record TimelineCardLayout(
@@ -108,7 +109,9 @@ public sealed class TimelineLayoutEngine
             ? DetectLargeGaps(anchors, events, scaleUnit, pixelsPerDay, options.ZoomFactor)
             : [];
         var projection = new AxisProjection(start, pixelsPerDay, gaps);
-        var (cardAxisLength, cardCrossLength) = GetCardSize(options.Orientation);
+        var (cardAxisLength, cardCrossLength) = GetCardSize(
+            options.Orientation,
+            options.CardFontSize);
         var positions = project.LayoutPositions
             .Where(position => position.Orientation == options.Orientation)
             .ToDictionary(position => position.EventId);
@@ -409,9 +412,15 @@ public sealed class TimelineLayoutEngine
     };
 
     private static (double AxisLength, double CrossLength) GetCardSize(
-        TimelineOrientation orientation) => orientation == TimelineOrientation.Horizontal
-            ? (260, 132)
-            : (140, 280);
+        TimelineOrientation orientation,
+        double cardFontSize)
+    {
+        var width = 260 * Math.Sqrt(Math.Max(1, cardFontSize / 14));
+        var height = Math.Max(132, 24 + (cardFontSize * 8));
+        return orientation == TimelineOrientation.Horizontal
+            ? (width, height)
+            : (height, width);
+    }
 
     private static DateTime GetEventEnd(EventDate date) => date.EndYear is null
         ? date.SortStart
@@ -517,6 +526,13 @@ public sealed class TimelineLayoutEngine
             throw new ArgumentOutOfRangeException(
                 nameof(options),
                 "Der Zeitstrahlzoom muss zwischen 25 und 800 Prozent liegen.");
+        }
+
+        if (!double.IsFinite(options.CardFontSize) || options.CardFontSize is < 8 or > 48)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(options),
+                "Die Kartenschriftgröße muss zwischen 8 und 48 Punkt liegen.");
         }
 
         if (!double.IsFinite(options.ViewportAxisLength) || options.ViewportAxisLength <= 0 ||

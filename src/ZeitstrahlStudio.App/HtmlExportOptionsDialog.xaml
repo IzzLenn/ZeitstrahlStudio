@@ -7,7 +7,7 @@
         ResizeMode="NoResize"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC">
+        Background="{DynamicResource SurfaceBrush}">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -15,20 +15,20 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="20,15" Background="#0F172A">
+        <Border Grid.Row="0" Padding="20,15" Background="{DynamicResource HeaderBackgroundBrush}">
             <StackPanel>
-                <TextBlock Foreground="#FFFFFF"
+                <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
                            FontSize="18"
                            FontWeight="SemiBold"
                            Text="Standalone-HTML exportieren" />
                 <TextBlock Margin="0,5,0,0"
-                           Foreground="#CBD5E1"
+                           Foreground="{DynamicResource HeaderMutedBrush}"
                            Text="Eine einzelne responsive Datei ohne Server oder externe Ressourcen." />
             </StackPanel>
         </Border>
 
         <StackPanel Grid.Row="1" Margin="24,18">
-            <TextBlock Foreground="#334155"
+            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"
                        FontWeight="SemiBold"
                        Text="Anfangsdarstellung" />
             <ComboBox x:Name="OrientationBox"
@@ -44,7 +44,7 @@
                       IsChecked="True"
                       Content="Kleine Dokumentvorschauen einbetten" />
             <TextBlock Margin="22,4,0,0"
-                       Foreground="#64748B"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        FontSize="11"
                        Text="Primäre PDF-Seiten und Bilder werden verkleinert direkt in die HTML-Datei aufgenommen."
                        TextWrapping="Wrap" />
@@ -65,7 +65,7 @@
             </Border>
         </StackPanel>
 
-        <Border Grid.Row="2" Padding="16,12" Background="#E2E8F0">
+        <Border Grid.Row="2" Padding="16,12" Background="{DynamicResource SurfaceAltBrush}">
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                 <Button Width="96"
                         Height="32"
@@ -76,9 +76,9 @@
                         Height="32"
                         IsDefault="True"
                         Click="Confirm_Click"
-                        Foreground="#FFFFFF"
-                        Background="#2563EB"
-                        BorderBrush="#1D4ED8"
+                        Foreground="{DynamicResource HeaderForegroundBrush}"
+                        Background="{DynamicResource AccentBrush}"
+                        BorderBrush="{DynamicResource AccentDarkBrush}"
                         FontWeight="SemiBold"
                         Content="Weiter …" />
             </StackPanel>

@@ -121,6 +121,15 @@ public interface IPdfPreviewService
         CancellationToken cancellationToken);
 }
 
+/// <summary>Erzeugt und cached kleine Vorschauen geprüfter PDF- und Bild-Projektkopien.</summary>
+public interface ITimelineThumbnailService
+{
+    Task<TimelineThumbnail?> GetOrCreateAsync(
+        ProjectWorkspace workspace,
+        Attachment attachment,
+        CancellationToken cancellationToken);
+}
+
 /// <summary>Durchsucht Projektdaten und extrahierte Dokumenttexte.</summary>
 public interface IProjectSearchService
 {

@@ -35,9 +35,14 @@ public sealed partial class EventEditorDialogViewModel : ObservableObject
     private DeadlineStatus selectedDeadlineStatus = DeadlineStatus.Open;
     private string? reminderNote;
 
-    public EventEditorDialogViewModel(TimelineEvent? timelineEvent)
+    public EventEditorDialogViewModel(
+        TimelineEvent? timelineEvent,
+        string defaultEventColorHex = "#3B82F6")
     {
         existingEvent = timelineEvent;
+        var defaultSettings = new ProjectSettings { DefaultEventColorHex = defaultEventColorHex };
+        defaultSettings.Validate();
+        colorHex = defaultSettings.DefaultEventColorHex;
         DatePrecisionOptions =
         [
             new(DatePrecision.ExactDate, "Exaktes Datum"),

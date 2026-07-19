@@ -104,6 +104,14 @@ public sealed record PdfPagePreview(
     double EffectiveRenderScale,
     byte[] PngData);
 
+/// <summary>Kleine lokal erzeugte Dokumentvorschau für eine sichtbare Zeitstrahlkarte.</summary>
+public sealed record TimelineThumbnail(
+    Guid AttachmentId,
+    int PixelWidth,
+    int PixelHeight,
+    string CacheRelativePath,
+    byte[] EncodedImageData);
+
 /// <summary>Ein zuletzt verwendetes lokales Projektarchiv.</summary>
 public sealed record RecentProject(
     string ProjectName,

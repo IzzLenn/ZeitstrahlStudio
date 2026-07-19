@@ -38,13 +38,24 @@ public sealed class WpfUserDialogService : IUserDialogService
         return dialog.ShowDialog() == true ? dialog.ProjectName : null;
     }
 
-    public EventEditRequest? RequestEvent(TimelineEvent? timelineEvent)
+    public EventEditRequest? RequestEvent(TimelineEvent? timelineEvent, string defaultEventColorHex)
     {
-        var dialog = new EventEditorDialog(timelineEvent)
+        var dialog = new EventEditorDialog(timelineEvent, defaultEventColorHex)
         {
             Owner = System.Windows.Application.Current.MainWindow,
         };
         return dialog.ShowDialog() == true ? dialog.Result : null;
+    }
+
+    public ProjectSettings? RequestProjectSettings(ProjectSettings settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        var viewModel = new ProjectSettingsDialogViewModel(settings);
+        var dialog = new ProjectSettingsDialog(viewModel)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        return dialog.ShowDialog() == true ? viewModel.Result : null;
     }
 
     public IReadOnlyList<string> RequestAttachmentPaths()

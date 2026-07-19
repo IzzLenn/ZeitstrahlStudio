@@ -145,10 +145,7 @@ public sealed class SkiaPdfExportService : IPdfExportService
             async (eventId, token) =>
             {
                 var timelineEvent = workspace.Project.Events.Single(item => item.Id == eventId);
-                var primary = timelineEvent.Attachments.FirstOrDefault(attachment =>
-                    attachment.MediaType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
-                    ?? timelineEvent.Attachments.FirstOrDefault(attachment =>
-                        attachment.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase));
+                var primary = TimelineThumbnailSelection.SelectPrimary(timelineEvent);
                 if (primary is null)
                 {
                     return;

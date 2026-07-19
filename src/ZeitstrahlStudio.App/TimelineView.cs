@@ -1,9 +1,12 @@
 using System.Globalization;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Threading;
 using ZeitstrahlStudio.Application;
 using ZeitstrahlStudio.Domain;
 
@@ -27,18 +30,26 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
 {
     private const double LineScrollAmount = 48;
     private const double CardCornerRadius = 8;
-    private static readonly Brush BackgroundBrush = CreateBrush("#F8FAFC");
-    private static readonly Brush AxisBrush = CreateBrush("#64748B");
-    private static readonly Brush MutedTextBrush = CreateBrush("#64748B");
-    private static readonly Brush PrimaryTextBrush = CreateBrush("#0F172A");
-    private static readonly Brush SelectedBrush = CreateBrush("#2563EB");
-    private static readonly Brush DeadlineBrush = CreateBrush("#D97706");
-    private static readonly Brush CardBrush = CreateBrush("#FFFFFF");
-    private static readonly Pen AxisPen = CreatePen(AxisBrush, 2);
-    private static readonly Pen ConnectorPen = CreatePen(CreateBrush("#94A3B8"), 1);
-    private static readonly Pen DeadlinePen = CreateDashedPen(DeadlineBrush, 1.5);
+    private const int MaximumDecodedThumbnailCount = 128;
+    private Brush BackgroundBrush = null!;
+    private Brush AxisBrush = null!;
+    private Brush MutedTextBrush = null!;
+    private Brush PrimaryTextBrush = null!;
+    private Brush SelectedBrush = null!;
+    private Brush DeadlineBrush = null!;
+    private Brush CardBrush = null!;
+    private Brush ThumbnailPlaceholderBrush = null!;
+    private Pen AxisPen = null!;
+    private Pen ConnectorPen = null!;
+    private Pen DeadlinePen = null!;
     private readonly TimelineLayoutEngine layoutEngine = new();
     private readonly Dictionary<string, Brush> eventBrushes = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<ThumbnailCacheKey, CachedThumbnail> thumbnailCache = [];
+    private readonly HashSet<ThumbnailCacheKey> loadingThumbnails = [];
+    private readonly HashSet<ThumbnailCacheKey> failedThumbnails = [];
+    private CancellationTokenSource thumbnailCancellation = new();
+    private long thumbnailAccessSequence;
+    private int thumbnailGeneration;
     private TimelineLayoutResult? layout;
     private double horizontalOffset;
     private double verticalOffset;
@@ -60,13 +71,28 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     {
         Focusable = true;
         ClipToBounds = true;
+        ApplyPalette(isDark: false);
+        Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     public static readonly DependencyProperty ProjectProperty = DependencyProperty.Register(
         nameof(Project),
         typeof(TimelineProject),
         typeof(TimelineView),
-        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnLayoutInputChanged));
+        new FrameworkPropertyMetadata(null, FrameworkPropertyMetadataOptions.AffectsRender, OnProjectChanged));
+
+    public static readonly DependencyProperty WorkspaceProperty = DependencyProperty.Register(
+        nameof(Workspace),
+        typeof(ProjectWorkspace),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(null, OnWorkspaceChanged));
+
+    public static readonly DependencyProperty ThumbnailServiceProperty = DependencyProperty.Register(
+        nameof(ThumbnailService),
+        typeof(ITimelineThumbnailService),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(null, OnThumbnailServiceChanged));
 
     public static readonly DependencyProperty SelectedEventProperty = DependencyProperty.Register(
         nameof(SelectedEvent),
@@ -108,7 +134,33 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         nameof(LayoutRevision),
         typeof(int),
         typeof(TimelineView),
-        new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.AffectsRender, OnLayoutInputChanged));
+        new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.AffectsRender, OnContentRevisionChanged));
+
+    public static readonly DependencyProperty CardFontSizeProperty = DependencyProperty.Register(
+        nameof(CardFontSize),
+        typeof(double),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(
+            14d,
+            FrameworkPropertyMetadataOptions.AffectsRender,
+            OnLayoutInputChanged,
+            CoerceFontSize));
+
+    public static readonly DependencyProperty AxisFontSizeProperty = DependencyProperty.Register(
+        nameof(AxisFontSize),
+        typeof(double),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(
+            12d,
+            FrameworkPropertyMetadataOptions.AffectsRender,
+            null,
+            CoerceFontSize));
+
+    public static readonly DependencyProperty IsDarkThemeProperty = DependencyProperty.Register(
+        nameof(IsDarkTheme),
+        typeof(bool),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(false, FrameworkPropertyMetadataOptions.AffectsRender, OnThemeChanged));
 
     public static readonly DependencyProperty MoveCardCommandProperty = DependencyProperty.Register(
         nameof(MoveCardCommand),
@@ -140,6 +192,18 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         set => SetValue(ProjectProperty, value);
     }
 
+    public ProjectWorkspace? Workspace
+    {
+        get => (ProjectWorkspace?)GetValue(WorkspaceProperty);
+        set => SetValue(WorkspaceProperty, value);
+    }
+
+    public ITimelineThumbnailService? ThumbnailService
+    {
+        get => (ITimelineThumbnailService?)GetValue(ThumbnailServiceProperty);
+        set => SetValue(ThumbnailServiceProperty, value);
+    }
+
     public TimelineEvent? SelectedEvent
     {
         get => (TimelineEvent?)GetValue(SelectedEventProperty);
@@ -168,6 +232,24 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     {
         get => (int)GetValue(LayoutRevisionProperty);
         set => SetValue(LayoutRevisionProperty, value);
+    }
+
+    public double CardFontSize
+    {
+        get => (double)GetValue(CardFontSizeProperty);
+        set => SetValue(CardFontSizeProperty, value);
+    }
+
+    public double AxisFontSize
+    {
+        get => (double)GetValue(AxisFontSizeProperty);
+        set => SetValue(AxisFontSizeProperty, value);
+    }
+
+    public bool IsDarkTheme
+    {
+        get => (bool)GetValue(IsDarkThemeProperty);
+        set => SetValue(IsDarkThemeProperty, value);
     }
 
     public ICommand? MoveCardCommand
@@ -552,6 +634,51 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         view.RebuildLayout();
     }
 
+    private static void OnProjectChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        var view = (TimelineView)dependencyObject;
+        var previousId = (e.OldValue as TimelineProject)?.Id;
+        var currentId = (e.NewValue as TimelineProject)?.Id;
+        if (previousId != currentId)
+        {
+            view.ResetThumbnailState(clearCache: true);
+        }
+
+        view.RebuildLayout();
+    }
+
+    private static void OnWorkspaceChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        var view = (TimelineView)dependencyObject;
+        view.ResetThumbnailState(clearCache: true);
+        view.InvalidateVisual();
+    }
+
+    private static void OnThumbnailServiceChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs e)
+    {
+        var view = (TimelineView)dependencyObject;
+        view.ResetThumbnailState(clearCache: true);
+        view.InvalidateVisual();
+    }
+
+    private static void OnContentRevisionChanged(
+        DependencyObject dependencyObject,
+        DependencyPropertyChangedEventArgs e)
+    {
+        var view = (TimelineView)dependencyObject;
+        view.failedThumbnails.Clear();
+        view.RebuildLayout();
+    }
+
+    private static void OnThemeChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        var view = (TimelineView)dependencyObject;
+        view.ApplyPalette((bool)e.NewValue);
+        view.InvalidateVisual();
+    }
+
     private static void OnRangeRequestChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         var view = (TimelineView)dependencyObject;
@@ -570,6 +697,12 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     {
         var value = (double)baseValue;
         return double.IsFinite(value) ? Math.Clamp(value, 0.25, 8) : 1d;
+    }
+
+    private static object CoerceFontSize(DependencyObject dependencyObject, object baseValue)
+    {
+        var value = (double)baseValue;
+        return double.IsFinite(value) ? Math.Clamp(value, 8, 48) : 14d;
     }
 
     private void RebuildLayout()
@@ -605,7 +738,8 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
             zoomFactor,
             CompressLargeGaps,
             Math.Max(1, axisLength),
-            Math.Max(1, crossLength));
+            Math.Max(1, crossLength),
+            CardFontSize);
     }
 
     private void UpdateViewport(double width, double height)
@@ -674,8 +808,8 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
                 ConnectorPen,
                 new Point(tick.AxisPosition, crossCenter - length),
                 new Point(tick.AxisPosition, crossCenter + length));
-            DrawText(drawingContext, tick.Label, 10, MutedTextBrush,
-                new Point(tick.AxisPosition - 38, crossCenter + 12), 76, 18, TextAlignment.Center, false);
+            DrawText(drawingContext, tick.Label, AxisFontSize, MutedTextBrush,
+                new Point(tick.AxisPosition - 48, crossCenter + 12), 96, AxisFontSize * 1.8, TextAlignment.Center, false);
         }
         else
         {
@@ -683,8 +817,8 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
                 ConnectorPen,
                 new Point(crossCenter - length, tick.AxisPosition),
                 new Point(crossCenter + length, tick.AxisPosition));
-            DrawText(drawingContext, tick.Label, 10, MutedTextBrush,
-                new Point(crossCenter + 12, tick.AxisPosition - 9), 82, 18, TextAlignment.Left, false);
+            DrawText(drawingContext, tick.Label, AxisFontSize, MutedTextBrush,
+                new Point(crossCenter + 12, tick.AxisPosition - (AxisFontSize * 0.9)), 104, AxisFontSize * 1.8, TextAlignment.Left, false);
         }
     }
 
@@ -712,8 +846,8 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
 
             points.Freeze();
             drawingContext.DrawGeometry(null, CreatePen(DeadlineBrush, 2), points);
-            DrawText(drawingContext, axisBreak.Label, 10, DeadlineBrush,
-                new Point(middle - 105, crossCenter - 31), 210, 20, TextAlignment.Center, true);
+            DrawText(drawingContext, axisBreak.Label, Math.Max(8, AxisFontSize * 0.9), DeadlineBrush,
+                new Point(middle - 105, crossCenter - 31), 210, AxisFontSize * 1.8, TextAlignment.Center, true);
         }
         else
         {
@@ -735,8 +869,8 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
 
             points.Freeze();
             drawingContext.DrawGeometry(null, CreatePen(DeadlineBrush, 2), points);
-            DrawText(drawingContext, axisBreak.Label, 10, DeadlineBrush,
-                new Point(crossCenter + 24, middle - 10), 210, 20, TextAlignment.Left, true);
+            DrawText(drawingContext, axisBreak.Label, Math.Max(8, AxisFontSize * 0.9), DeadlineBrush,
+                new Point(crossCenter + 24, middle - 10), 210, AxisFontSize * 1.8, TextAlignment.Left, true);
         }
     }
 
@@ -840,15 +974,49 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
             ? new Rect(rect.Left, rect.Top, 7, rect.Height)
             : new Rect(rect.Left, rect.Top, rect.Width, 7);
         drawingContext.DrawRoundedRectangle(color, null, colorBar, 3, 3);
-        var left = rect.Left + 14;
-        var top = rect.Top + 12;
-        var width = rect.Width - 28;
-        DrawText(drawingContext, timelineEvent.Date.ToDisplayString(), 11, color,
-            new Point(left, top), width, 18, TextAlignment.Left, true);
-        DrawText(drawingContext, timelineEvent.Title, 14, PrimaryTextBrush,
-            new Point(left, top + 21), width, 40, TextAlignment.Left, true);
-        DrawText(drawingContext, timelineEvent.InfoText ?? string.Empty, 11, MutedTextBrush,
-            new Point(left, top + 63), width, 33, TextAlignment.Left, false);
+        var padding = Math.Max(10, CardFontSize * 0.85);
+        var left = rect.Left + padding;
+        var top = rect.Top + padding;
+        var right = rect.Right - padding;
+        var dateFontSize = Math.Max(8, CardFontSize * 0.78);
+        var bodyFontSize = Math.Max(8, CardFontSize * 0.78);
+        var badgeFontSize = Math.Max(8, CardFontSize * 0.7);
+        var dateHeight = dateFontSize * 1.45;
+        var titleTop = top + dateHeight + 3;
+        var titleHeight = CardFontSize * 2.5;
+        var badgeHeight = badgeFontSize * 1.5;
+        var badgeTop = rect.Bottom - padding - badgeHeight;
+        var bodyTop = titleTop + titleHeight + 3;
+        var bodyHeight = Math.Max(0, badgeTop - bodyTop - 3);
+        var primaryAttachment = TimelineThumbnailSelection.SelectPrimary(timelineEvent);
+        var thumbnailWidth = Math.Min(96, Math.Max(58, rect.Width * 0.3));
+        var thumbnailHeight = Math.Min(72, Math.Max(44, rect.Height * 0.42));
+        var thumbnailRect = new Rect(
+            right - thumbnailWidth,
+            titleTop,
+            thumbnailWidth,
+            thumbnailHeight);
+        var textRight = primaryAttachment is null
+            ? right
+            : thumbnailRect.Left - Math.Max(8, padding * 0.55);
+        var textWidth = Math.Max(1, textRight - left);
+
+        DrawText(drawingContext, timelineEvent.Date.ToDisplayString(), dateFontSize, color,
+            new Point(left, top), right - left, dateHeight, TextAlignment.Left, true);
+        DrawText(drawingContext, timelineEvent.Title, CardFontSize, PrimaryTextBrush,
+            new Point(left, titleTop), textWidth, titleHeight, TextAlignment.Left, true);
+        DrawText(drawingContext, timelineEvent.InfoText ?? string.Empty, bodyFontSize, MutedTextBrush,
+            new Point(left, bodyTop), textWidth, bodyHeight, TextAlignment.Left, false);
+
+        if (primaryAttachment is not null)
+        {
+            DrawOrQueueThumbnail(
+                drawingContext,
+                thumbnailRect,
+                timelineEvent,
+                primaryAttachment);
+        }
+
         var badges = new List<string> { GetPriorityText(timelineEvent.Priority) };
         if (timelineEvent.Deadline is not null)
         {
@@ -865,8 +1033,182 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
             badges.Add("manuell");
         }
 
-        DrawText(drawingContext, string.Join("  ·  ", badges), 10, MutedTextBrush,
-            new Point(left, rect.Bottom - 24), width, 16, TextAlignment.Left, false);
+        DrawText(drawingContext, string.Join("  ·  ", badges), badgeFontSize, MutedTextBrush,
+            new Point(left, badgeTop), right - left, badgeHeight, TextAlignment.Left, false);
+    }
+
+    private void DrawOrQueueThumbnail(
+        DrawingContext drawingContext,
+        Rect destination,
+        TimelineEvent timelineEvent,
+        Attachment attachment)
+    {
+        var project = Project;
+        if (project is null)
+        {
+            return;
+        }
+
+        var key = ThumbnailCacheKey.Create(project.Id, attachment);
+        drawingContext.DrawRoundedRectangle(
+            ThumbnailPlaceholderBrush,
+            CreatePen(AxisBrush, 1),
+            destination,
+            4,
+            4);
+        if (TryGetCachedThumbnail(key, out var thumbnail))
+        {
+            var scale = Math.Min(
+                destination.Width / thumbnail.PixelWidth,
+                destination.Height / thumbnail.PixelHeight);
+            var width = thumbnail.PixelWidth * scale;
+            var height = thumbnail.PixelHeight * scale;
+            var fitted = new Rect(
+                destination.Left + ((destination.Width - width) / 2),
+                destination.Top + ((destination.Height - height) / 2),
+                width,
+                height);
+            drawingContext.DrawImage(thumbnail.Image, fitted);
+            return;
+        }
+
+        DrawText(
+            drawingContext,
+            failedThumbnails.Contains(key) ? "Keine Vorschau" : "Vorschau …",
+            8,
+            MutedTextBrush,
+            new Point(destination.Left + 3, destination.Top + ((destination.Height - 16) / 2)),
+            Math.Max(1, destination.Width - 6),
+            16,
+            TextAlignment.Center,
+            false);
+        QueueThumbnailLoad(key, timelineEvent, attachment);
+    }
+
+    private bool TryGetCachedThumbnail(
+        ThumbnailCacheKey key,
+        out CachedThumbnail thumbnail)
+    {
+        if (!thumbnailCache.TryGetValue(key, out thumbnail!))
+        {
+            return false;
+        }
+
+        thumbnail = thumbnail with { LastAccess = ++thumbnailAccessSequence };
+        thumbnailCache[key] = thumbnail;
+        return true;
+    }
+
+    private void QueueThumbnailLoad(
+        ThumbnailCacheKey key,
+        TimelineEvent timelineEvent,
+        Attachment attachment)
+    {
+        if (ThumbnailService is null || Workspace is null ||
+            Workspace.Project.Id != Project?.Id ||
+            failedThumbnails.Contains(key) ||
+            !loadingThumbnails.Add(key))
+        {
+            return;
+        }
+
+        var generation = thumbnailGeneration;
+        var workspace = Workspace;
+        var service = ThumbnailService;
+        var token = thumbnailCancellation.Token;
+        _ = Dispatcher.BeginInvoke(
+            DispatcherPriority.Background,
+            new Action(() => _ = LoadThumbnailAsync(
+                generation,
+                key,
+                workspace,
+                timelineEvent,
+                attachment,
+                service,
+                token)));
+    }
+
+    private async Task LoadThumbnailAsync(
+        int generation,
+        ThumbnailCacheKey key,
+        ProjectWorkspace workspace,
+        TimelineEvent timelineEvent,
+        Attachment attachment,
+        ITimelineThumbnailService service,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (TimelineThumbnailSelection.SelectPrimary(timelineEvent)?.Id != attachment.Id)
+            {
+                return;
+            }
+
+            var result = await service.GetOrCreateAsync(
+                workspace,
+                attachment,
+                cancellationToken).ConfigureAwait(true);
+            if (generation != thumbnailGeneration || cancellationToken.IsCancellationRequested)
+            {
+                return;
+            }
+
+            if (result is null)
+            {
+                failedThumbnails.Add(key);
+                return;
+            }
+
+            var image = DecodeThumbnail(result.EncodedImageData);
+            thumbnailCache[key] = new CachedThumbnail(
+                image,
+                result.PixelWidth,
+                result.PixelHeight,
+                ++thumbnailAccessSequence);
+            TrimThumbnailCache();
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException or InvalidDataException or
+            InvalidOperationException or ArgumentException)
+        {
+            if (generation == thumbnailGeneration)
+            {
+                failedThumbnails.Add(key);
+            }
+        }
+        finally
+        {
+            if (generation == thumbnailGeneration)
+            {
+                loadingThumbnails.Remove(key);
+                InvalidateVisual();
+            }
+        }
+    }
+
+    private void TrimThumbnailCache()
+    {
+        while (thumbnailCache.Count > MaximumDecodedThumbnailCount)
+        {
+            var oldest = thumbnailCache.MinBy(item => item.Value.LastAccess);
+            thumbnailCache.Remove(oldest.Key);
+        }
+    }
+
+    private static BitmapImage DecodeThumbnail(byte[] data)
+    {
+        using var stream = new MemoryStream(data, writable: false);
+        var image = new BitmapImage();
+        image.BeginInit();
+        image.CacheOption = BitmapCacheOption.OnLoad;
+        image.CreateOptions = BitmapCreateOptions.PreservePixelFormat;
+        image.StreamSource = stream;
+        image.EndInit();
+        image.Freeze();
+        return image;
     }
 
     private TimelineCardLayout? HitTestCard(Point viewportPoint)
@@ -1068,6 +1410,56 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         return true;
     }
 
+    private void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        if (thumbnailCancellation.IsCancellationRequested)
+        {
+            thumbnailCancellation.Dispose();
+            thumbnailCancellation = new CancellationTokenSource();
+            thumbnailGeneration++;
+            loadingThumbnails.Clear();
+        }
+
+        InvalidateVisual();
+    }
+
+    private void OnUnloaded(object sender, RoutedEventArgs e)
+    {
+        thumbnailCancellation.Cancel();
+        thumbnailGeneration++;
+        loadingThumbnails.Clear();
+    }
+
+    private void ResetThumbnailState(bool clearCache)
+    {
+        thumbnailCancellation.Cancel();
+        thumbnailCancellation.Dispose();
+        thumbnailCancellation = new CancellationTokenSource();
+        thumbnailGeneration++;
+        loadingThumbnails.Clear();
+        failedThumbnails.Clear();
+        if (clearCache)
+        {
+            thumbnailCache.Clear();
+            thumbnailAccessSequence = 0;
+        }
+    }
+
+    private void ApplyPalette(bool isDark)
+    {
+        BackgroundBrush = CreateBrush(isDark ? "#0F172A" : "#F8FAFC");
+        AxisBrush = CreateBrush(isDark ? "#64748B" : "#94A3B8");
+        MutedTextBrush = CreateBrush(isDark ? "#CBD5E1" : "#64748B");
+        PrimaryTextBrush = CreateBrush(isDark ? "#F8FAFC" : "#0F172A");
+        SelectedBrush = CreateBrush(isDark ? "#60A5FA" : "#2563EB");
+        DeadlineBrush = CreateBrush(isDark ? "#F87171" : "#DC2626");
+        CardBrush = CreateBrush(isDark ? "#1E293B" : "#FFFFFF");
+        ThumbnailPlaceholderBrush = CreateBrush(isDark ? "#334155" : "#E2E8F0");
+        AxisPen = CreatePen(AxisBrush, 2);
+        ConnectorPen = CreatePen(AxisBrush, 1);
+        DeadlinePen = CreateDashedPen(DeadlineBrush, 1.5);
+    }
+
     private void DrawEmptyState(DrawingContext drawingContext)
     {
         DrawText(
@@ -1077,7 +1469,7 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
                 : VisibleEventIds is not null
                     ? "Keine Ereignisse entsprechen den aktiven Filtern"
                     : "Noch keine Ereignisse für den Zeitstrahl vorhanden",
-            15,
+            CardFontSize,
             MutedTextBrush,
             new Point(20, Math.Max(20, (RenderSize.Height / 2) - 12)),
             Math.Max(1, RenderSize.Width - 40),
@@ -1177,4 +1569,25 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         pen.Freeze();
         return pen;
     }
+
+    private sealed record ThumbnailCacheKey(
+        Guid ProjectId,
+        Guid AttachmentId,
+        string Sha256,
+        int LinkedPage)
+    {
+        public static ThumbnailCacheKey Create(Guid projectId, Attachment attachment) => new(
+            projectId,
+            attachment.Id,
+            attachment.Sha256,
+            attachment.MediaType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase)
+                ? attachment.LinkedPdfPage ?? 1
+                : 0);
+    }
+
+    private sealed record CachedThumbnail(
+        BitmapSource Image,
+        int PixelWidth,
+        int PixelHeight,
+        long LastAccess);
 }

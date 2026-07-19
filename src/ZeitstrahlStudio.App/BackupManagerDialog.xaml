@@ -8,7 +8,7 @@
         MinHeight="560"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC"
+        Background="{DynamicResource SurfaceBrush}"
         Closing="Window_Closing">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
@@ -17,22 +17,22 @@
             <Setter Property="Height" Value="34" />
             <Setter Property="Margin" Value="0,0,8,0" />
             <Setter Property="Padding" Value="12,0" />
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#94A3B8" />
+            <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource StrongBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style x:Key="PrimaryButtonStyle"
                TargetType="Button"
                BasedOn="{StaticResource ActionButtonStyle}">
-            <Setter Property="Foreground" Value="#FFFFFF" />
-            <Setter Property="Background" Value="#2563EB" />
-            <Setter Property="BorderBrush" Value="#1D4ED8" />
+            <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
         <Style x:Key="LabelStyle" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,13,0,4" />
-            <Setter Property="Foreground" Value="#334155" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
     </Window.Resources>
@@ -44,20 +44,20 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="20,14" Background="#0F172A">
+        <Border Grid.Row="0" Padding="20,14" Background="{DynamicResource HeaderBackgroundBrush}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left">
-                    <TextBlock Foreground="#FFFFFF"
+                    <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
                                FontSize="20"
                                FontWeight="SemiBold"
                                Text="Lokale Projektsicherungen" />
                     <TextBlock Margin="0,3,0,0"
-                               Foreground="#94A3B8"
+                               Foreground="{DynamicResource HeaderMutedBrush}"
                                Text="Manuelle und automatisch rotierende, geprüfte Projektarchive." />
                 </StackPanel>
                 <TextBlock Margin="24,5,0,0"
                            HorizontalAlignment="Right"
-                           Foreground="#CBD5E1"
+                           Foreground="{DynamicResource HeaderMutedBrush}"
                            Text="{Binding StatusMessage}" />
             </DockPanel>
         </Border>
@@ -70,17 +70,17 @@
 
             <Border Grid.Column="0"
                     Padding="20,16"
-                    Background="#F1F5F9"
-                    BorderBrush="#CBD5E1"
+                    Background="{DynamicResource SurfaceAltBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <TextBlock Foreground="#0F172A"
+                        <TextBlock Foreground="{DynamicResource PrimaryTextBrush}"
                                    FontSize="15"
                                    FontWeight="Bold"
                                    Text="Aufbewahrung" />
                         <TextBlock Margin="0,5,0,0"
-                                   Foreground="#64748B"
+                                   Foreground="{DynamicResource MutedTextBrush}"
                                    Text="Manuelle Sicherungen werden niemals automatisch gelöscht."
                                    TextWrapping="Wrap" />
 
@@ -168,7 +168,7 @@
                           CanUserDeleteRows="False"
                           HeadersVisibility="Column"
                           GridLinesVisibility="Horizontal"
-                          AlternatingRowBackground="#F1F5F9">
+                          AlternatingRowBackground="{DynamicResource SurfaceAltBrush}">
                     <DataGrid.Columns>
                         <DataGridTextColumn Width="190"
                                             Header="Zeitpunkt"
@@ -187,7 +187,7 @@
 
                 <DockPanel Grid.Row="2" Margin="0,12,0,0">
                     <TextBlock VerticalAlignment="Center"
-                               Foreground="#64748B"
+                               Foreground="{DynamicResource MutedTextBrush}"
                                Text="Die Wiederherstellung ersetzt nicht sofort die gespeicherte Projektdatei." />
                     <Button DockPanel.Dock="Right"
                             Style="{StaticResource PrimaryButtonStyle}"
@@ -199,8 +199,8 @@
 
         <Border Grid.Row="2"
                 Padding="16,11"
-                Background="#E2E8F0"
-                BorderBrush="#CBD5E1"
+                Background="{DynamicResource SurfaceAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0">
             <Button Width="105"
                     Height="34"
@@ -217,7 +217,7 @@
                         VerticalAlignment="Center">
                 <ProgressBar Height="7" IsIndeterminate="True" />
                 <TextBlock Margin="0,12,0,0"
-                           Foreground="#FFFFFF"
+                           Foreground="{DynamicResource HeaderForegroundBrush}"
                            TextAlignment="Center"
                            Text="{Binding StatusMessage}"
                            TextWrapping="Wrap" />

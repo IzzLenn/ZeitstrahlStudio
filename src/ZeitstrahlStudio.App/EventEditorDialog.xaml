@@ -8,17 +8,17 @@
         MinHeight="620"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC">
+        Background="{DynamicResource SurfaceBrush}">
     <Window.Resources>
         <Style x:Key="FormLabelStyle" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,0,0,5" />
-            <Setter Property="Foreground" Value="#334155" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
         <Style TargetType="TextBox">
             <Setter Property="MinHeight" Value="30" />
             <Setter Property="Padding" Value="7,4" />
-            <Setter Property="BorderBrush" Value="#CBD5E1" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         </Style>
         <Style TargetType="ComboBox">
             <Setter Property="MinHeight" Value="30" />
@@ -109,7 +109,7 @@
                                     </StackPanel>
                                     <TextBlock Grid.Column="3"
                                                Margin="8,22,0,0"
-                                               Foreground="#64748B"
+                                               Foreground="{DynamicResource MutedTextBrush}"
                                                Text="Nur bei der Genauigkeit „Zeitraum“ erforderlich." />
                                 </Grid>
                             </StackPanel>
@@ -149,7 +149,7 @@
 
                         <TextBlock Grid.Row="6"
                                    Margin="0,14,0,0"
-                                   Foreground="#64748B"
+                                   Foreground="{DynamicResource MutedTextBrush}"
                                    Text="* Pflichtfeld"
                                    FontSize="11" />
                     </Grid>
@@ -246,7 +246,7 @@
                             <TextBlock Style="{StaticResource FormLabelStyle}" Text="Schlagwörter" />
                             <TextBox Text="{Binding TagsText}" />
                             <TextBlock Margin="0,4,0,0"
-                                       Foreground="#64748B"
+                                       Foreground="{DynamicResource MutedTextBrush}"
                                        FontSize="11"
                                        Text="Mehrere Schlagwörter mit Komma oder Semikolon trennen." />
                         </StackPanel>
@@ -260,7 +260,7 @@
                                      HorizontalScrollBarVisibility="Auto"
                                      Text="{Binding WebLinksText}" />
                             <TextBlock Margin="0,4,0,0"
-                                       Foreground="#64748B"
+                                       Foreground="{DynamicResource MutedTextBrush}"
                                        FontSize="11"
                                        Text="Ein Link pro Zeile: Bezeichnung | https://adresse.example – die Bezeichnung ist optional." />
                         </StackPanel>
@@ -271,8 +271,8 @@
 
         <Border Grid.Row="1"
                 Padding="18,12"
-                Background="#E2E8F0"
-                BorderBrush="#CBD5E1"
+                Background="{DynamicResource SurfaceAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0">
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                 <Button Width="100"
@@ -284,9 +284,9 @@
                         Height="34"
                         IsDefault="True"
                         Click="Confirm_Click"
-                        Background="#2563EB"
-                        BorderBrush="#1D4ED8"
-                        Foreground="#FFFFFF"
+                        Background="{DynamicResource AccentBrush}"
+                        BorderBrush="{DynamicResource AccentDarkBrush}"
+                        Foreground="{DynamicResource HeaderForegroundBrush}"
                         FontWeight="SemiBold"
                         Content="Übernehmen" />
             </StackPanel>

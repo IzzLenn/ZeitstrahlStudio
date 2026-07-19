@@ -8,7 +8,7 @@
         MinHeight="420"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="#F8FAFC">
+        Background="{DynamicResource SurfaceBrush}">
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -18,7 +18,7 @@
         <StackPanel Margin="20,16,20,12">
             <TextBlock FontSize="23" FontWeight="SemiBold" Text="Änderungsprotokoll" />
             <TextBlock Margin="0,4,0,0"
-                       Foreground="#64748B"
+                       Foreground="{DynamicResource MutedTextBrush}"
                        Text="Lokal in der Projektdatenbank gespeicherte Ereignisoperationen." />
         </StackPanel>
         <DataGrid Grid.Row="1"
@@ -30,7 +30,7 @@
                   CanUserDeleteRows="False"
                   HeadersVisibility="Column"
                   GridLinesVisibility="Horizontal"
-                  AlternatingRowBackground="#F1F5F9">
+                  AlternatingRowBackground="{DynamicResource SurfaceAltBrush}">
             <DataGrid.Columns>
                 <DataGridTextColumn Width="155"
                                     Header="Zeitpunkt (UTC)"
@@ -44,8 +44,8 @@
         <Border Grid.Row="2"
                 Margin="0,14,0,0"
                 Padding="20,12"
-                Background="#E2E8F0"
-                BorderBrush="#CBD5E1"
+                Background="{DynamicResource SurfaceAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0">
             <Button Width="100"
                     Height="32"

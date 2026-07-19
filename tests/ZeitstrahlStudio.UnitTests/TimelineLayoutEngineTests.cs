@@ -227,6 +227,25 @@ public sealed class TimelineLayoutEngineTests
         Assert.Equal(visibleId, Assert.Single(result.Cards).EventId);
     }
 
+    [Fact]
+    public void Create_ExpandsCardsForConfiguredCardFontSize()
+    {
+        var project = CreateProject(EventDate.Year(2026));
+        var normal = Assert.Single(engine.Create(
+            project,
+            new TimelineLayoutOptions(
+                TimelineOrientation.Horizontal,
+                CardFontSize: 14)).Cards);
+        var large = Assert.Single(engine.Create(
+            project,
+            new TimelineLayoutOptions(
+                TimelineOrientation.Horizontal,
+                CardFontSize: 28)).Cards);
+
+        Assert.True(large.AxisLength > normal.AxisLength);
+        Assert.True(large.CrossLength > normal.CrossLength);
+    }
+
     private static TimelineProject CreateProject(params EventDate[] dates)
     {
         var project = TimelineProject.Create(Guid.NewGuid(), "Layouttest", Timestamp);

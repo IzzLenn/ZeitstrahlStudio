@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Kernfunktionen einschließlich lokaler Sicherung und Wiederherstellung umgesetzt, noch kein Release
+Status: In Entwicklung – Kernfunktionen einschließlich interaktiver Dokumentminiaturen und Projekteinstellungen umgesetzt, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Übergabestand nach Meilenstein 10A – kein neuer Meilenstein begonnen
+Übergabestand nach Meilenstein 6D – kein neuer Meilenstein begonnen
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -245,6 +245,17 @@ Letzte Aktualisierung: 19.07.2026
 - vier neue Unit-Tests prüfen orientierungsbezogenes Layout-Undo/Redo, gemeinsames Zurücksetzen, Positionswiederherstellung nach Löschen und die Datumsprojektion; der WPF-Integrationstest prüft zusätzlich Move-Command und Zeitraumauftrag
 - die Integrationsklassen laufen seriell, weil mehrere dateibasierte Tests prozessweite SQLite-Verbindungspools bereinigen; dadurch kann eine Klassenbereinigung nicht mehr mit dem Datenbanklebenszyklus einer anderen Klasse kollidieren
 
+### Meilenstein 6D – Dokumentminiaturen und projektbezogene Darstellung
+
+- sichtbare Ereigniskarten zeigen verzögert eine kleine Vorschau des ersten PDF-Anhangs oder, falls kein PDF vorhanden ist, des ersten unterstützten Bildanhangs; PDF-/HTML-Export und WPF verwenden dieselbe zentrale Primärauswahl
+- der neue Thumbnail-Dienst lädt ausschließlich zentral geprüfte Projektkopien, begrenzt Bildquellen auf 50 MiB, 8.000 Pixel je Kante und 24 Millionen Pixel und übernimmt PDF-Seiten über den vorhandenen begrenzten PDFium-Dienst
+- Miniaturen werden mit dem bereits vorhandenen SkiaSharp auf höchstens 360 × 240 Pixel reduziert, als JPEG atomar unter `thumbnails/timeline` abgelegt und über Anhangs-ID, verknüpfte Seite und vollständige SHA-256 eindeutig adressiert; es wurde keine neue Produktionsabhängigkeit eingeführt
+- höchstens zwei Miniaturen werden gleichzeitig erzeugt; die WPF-Ansicht fordert nur tatsächlich gezeichnete Karten an, bricht überholte oder entladene Aufträge ab und hält höchstens 128 dekodierte Vorschaubilder nach LRU-Nutzung im Speicher
+- ein MVVM-Dialog bearbeitet Farbschema, bevorzugte Orientierung, Lückenkompression, Standardfarbe neuer Ereignisse sowie Karten-, Achsen- und Exportschriftgröße; Änderungen werden validiert, im Projekt checkpointed und im Audit protokolliert
+- Hell, Dunkel und die lokale Windows-App-Einstellung werden ohne Neustart über dynamische WPF-Ressourcen auf Hauptfenster und Standarddialoge angewendet; die direkt gezeichnete Zeitachse besitzt eine eigene kontrastgeprüfte Palette
+- die Kartengröße wächst bei größeren Kartenschriften mit, Achsenbeschriftung und neue Ereignisse übernehmen unmittelbar die gespeicherten Vorgaben; der PDF-Export verwendet weiterhin denselben persistierten Exportfont
+- drei neue Unit-Tests prüfen Primärauswahl und schriftgrößenabhängiges Layout; fünf neue Integrationstests prüfen Einstellungsvalidierung/Standardfarbe, sicheren lokalen Thumbnail-Cache und Abbruch, der erweiterte STA-WPF-Test prüft verzögertes Laden und beide Paletten
+
 ### Meilenstein 7A – lokale Volltextsuche und kombinierbare Filter
 
 - die Schema-Migration 2 ergänzt einen getrennten FTS5-Index ausschließlich für extrahierte PDF-, OCR-, DOCX- und XLSX-Inhalte; vorhandene Datenbanken der Version 1 werden transaktional aktualisiert und vorhandene Dokumenttexte übernommen
@@ -312,7 +323,7 @@ dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 10A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 57 Unit-Tests und 67 Integrationstests bestanden. Die Sicherungstests decken zusätzlich zum reinen Aufbewahrungsmodell reale Archive, SQLite-Metadaten, SHA-256-Manipulationsabwehr, Wiederherstellung mit Sicherheitssicherung und Audit, Autosave sowie den WPF-Dialog ab. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.989.375 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft und blieb über das Prüfintervall stabil.
+Aktueller Stand nach Meilenstein 6D: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 60 Unit-Tests und 72 Integrationstests bestanden. Die neuen Tests decken zusätzlich Primärauswahl, Schriftgrößenlayout, Einstellungsvalidierung, Standardfarbe, sicheren JPEG-Dateicache, Abbruch und verzögertes Laden im realen WPF-Renderer ab. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 220.047.663 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft, antwortete und blieb über das Prüfintervall stabil.
 
 ## Phasenweiser Implementierungsplan
 
@@ -321,7 +332,7 @@ Aktueller Stand nach Meilenstein 10A: Debug und Release jeweils 0 Warnungen/0 Fe
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
 5. **Anhänge und lokale Dokumentenanalyse – abgeschlossen:** sicherer Import und Undo-fähige Zuordnung, DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bild- und PDF-Vorschau, Integritätsprüfung, Standardprogramm und lokale OCR für Bilder sowie bildbasierte PDF-Seiten sind in 5A bis 5D umgesetzt.
-6. **Zeitstrahldarstellung – in Arbeit:** gemeinsames Layoutmodell, automatische Skala, Lückenkompression, Kollisionsbahnen und Fristprojektion sind in 6A umgesetzt; die virtualisierte horizontale/vertikale WPF-Ansicht samt Zoom, Mausverschiebung, Scrollleisten und Navigation ist in 6B aktiv. Manuelle, persistente und Undo-fähige Kartenpositionen sowie ausgewählte Zeiträume sind in 6C umgesetzt. Kleine Dokumentvorschaubilder und projektbezogene Darstellungsoptionen bleiben offen.
+6. **Zeitstrahldarstellung – abgeschlossen:** gemeinsames Layoutmodell, automatische Skala, Lückenkompression, Kollisionsbahnen und Fristprojektion sind in 6A umgesetzt; die virtualisierte horizontale/vertikale WPF-Ansicht samt Zoom, Mausverschiebung, Scrollleisten und Navigation ist in 6B aktiv. Manuelle, persistente und Undo-fähige Kartenpositionen sowie ausgewählte Zeiträume sind in 6C umgesetzt. Kleine verzögert geladene Dokumentvorschaubilder, lokale Caches und projektbezogene Darstellungs-/Exportvorgaben sind in 6D umgesetzt.
 7. **Suche und Filter – abgeschlossen:** getrennte lokale Dokument-FTS, Suche in aktuellen Aggregatfeldern, kombinierbare Filter, Eingabedebounce/Abbruch, Relevanz-/Datumssortierung, hervorgehobene Fundstellen, direkte Navigation und gefilterte Zeitstrahldarstellung sind in 7A umgesetzt.
 8. **PDF-Export – abgeschlossen:** tatsächliche PDF-Vorschau, A4/A3/Letter/benutzerdefiniert, Hoch-/Querformat, mehrseitig, große Einzelseite, Zeitraum, Fortsetzungen, Miniaturen und drucktaugliche Kennzeichnungen sind in 8A umgesetzt.
 9. **Standalone-HTML-Export – abgeschlossen:** eine einzelne responsive Offlinedatei mit eingebetteten Daten und Miniaturen, horizontaler/vertikaler Darstellung, Zoom, Verschieben, Suche, kombinierten Filtern, Detailkarten, externen Linkwarnungen und Druck-CSS ist in 8B umgesetzt.
@@ -333,7 +344,6 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Noch offene Anforderungen
 
-- kleine Dokumentvorschaubilder direkt in der interaktiven WPF-Zeitstrahlansicht und noch fehlende projektbezogene Darstellungs-/Exporteinstellungen ergänzen
 - das in `SPEC.md` geforderte Drag-and-drop-Umsortieren von Ereignissen sowie das Ablegen von Dateien gezielt auf Ereignis und Anhangsbereich vervollständigen
 - vollständige UI-/Abnahmeprüfung einschließlich 100/125/150/200 Prozent Skalierung, Tastaturbedienung sowie HTML-Offlinetest und Druckvorschau in üblichen Windows-Browsern durchführen
 - freies Beispielprojekt mit mindestens zehn Ereignissen und den geforderten Testdokumenten erstellen und die noch fehlenden End-to-End- und großen Lastszenarien abdecken
@@ -345,6 +355,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
 - Deutsche OCR setzt die entsprechende lokale Windows-Sprachressource voraus; fehlt sie, bleibt die übrige Anwendung funktionsfähig und die Analyse zeigt eine Installationsanleitung.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
+- Die neuen Hell-/Dunkel-Paletten und variablen Schriftgrößen sind automatisiert kompiliert und gerendert, benötigen aber noch die geplante visuelle DPI-/Kontrastabnahme auf realen Windows-10-/11-Systemen.
 - Die in dieser Umgebung verfügbare Browsersteuerung meldet kein startbares Browser-Backend. Daher sind der automatisierte Offline-/Druckvorschau-Abnahmelauf des Standalone-HTML-Exports in einem üblichen Windows-Browser noch offen; Exportvertrag, Sicherheitsencoding und JavaScript-Syntax sind automatisiert geprüft.
 - Ein bereits laufender nativer PDFium-Einzelseitenaufruf kann nicht hart abgebrochen werden; die Anwendung prüft Cancellation davor und unmittelbar danach und begrenzt die Ausgabe strikt.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
@@ -353,4 +364,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 6D beginnen: kleine, verzögert geladene und lokal gecachte Vorschaubilder des primären PDF- oder Bildanhangs in den virtualisierten Ereigniskarten ergänzen und die noch fehlenden projektbezogenen Darstellungsoptionen über eine MVVM-Einstellungsoberfläche zugänglich machen.
+Meilenstein 6E beginnen: das fachliche Drag-and-drop-Umsortieren von Ereignissen sowie das gezielte Ablegen lokaler Dateien auf Ereigniskarten und den Anhangsbereich mit Tastaturalternative, Undo/Redo, Audit und sicheren Importgrenzen vervollständigen.

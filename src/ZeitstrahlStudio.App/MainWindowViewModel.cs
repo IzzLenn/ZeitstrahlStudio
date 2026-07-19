@@ -13,6 +13,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     private readonly IProjectRecoveryService recoveryService;
     private readonly IProjectAutosaveService autosaveService;
     private readonly IBackupService backupService;
+    private readonly ITimelineThumbnailService timelineThumbnailService;
+    private readonly IApplicationThemeService themeService;
     private readonly ILocalLogService logService;
     private readonly IAuditLogService auditLogService;
     private readonly IProjectSearchService searchService;
@@ -46,6 +48,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         IProjectRecoveryService recoveryService,
         IProjectAutosaveService autosaveService,
         IBackupService backupService,
+        ITimelineThumbnailService timelineThumbnailService,
+        IApplicationThemeService themeService,
         ILocalLogService logService,
         IAuditLogService auditLogService,
         IProjectSearchService searchService,
@@ -62,6 +66,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         this.recoveryService = recoveryService;
         this.autosaveService = autosaveService;
         this.backupService = backupService;
+        this.timelineThumbnailService = timelineThumbnailService;
+        this.themeService = themeService;
         this.logService = logService;
         this.auditLogService = auditLogService;
         this.searchService = searchService;
@@ -72,7 +78,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         this.attachmentAnalysisStore = attachmentAnalysisStore;
         this.eventEditingService = eventEditingService;
         this.dialogs = dialogs;
-
         NewProjectCommand = new AsyncRelayCommand(() => ExecuteGuardedAsync(CreateProjectAsync), () => !IsBusy);
         OpenProjectCommand = new AsyncRelayCommand(() => ExecuteGuardedAsync(ChooseAndOpenProjectAsync), () => !IsBusy);
         OpenRecentCommand = new AsyncRelayCommand<RecentProject>(
@@ -148,6 +153,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         ManageBackupsCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ManageBackupsAsync),
             () => !IsBusy && HasProject);
+        SettingsCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(EditProjectSettingsAsync),
+            () => !IsBusy && HasProject);
         AddAttachmentsCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ChooseAndImportAttachmentsAsync),
             () => !IsBusy && SelectedEvent is not null);
@@ -179,6 +187,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             CancelAttachmentImportAsync,
             () => IsAttachmentImporting);
         InitializeSearchPresentation();
+        themeService.ThemeChanged += OnApplicationThemeChanged;
+        themeService.Apply(ApplicationTheme.FollowWindows);
     }
 
     public ObservableCollection<RecentProject> RecentProjects { get; } = [];
@@ -210,6 +220,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     public AsyncRelayCommand ShowTimelineRangeCommand { get; }
     public AsyncRelayCommand ShowAuditLogCommand { get; }
     public AsyncRelayCommand ManageBackupsCommand { get; }
+    public AsyncRelayCommand SettingsCommand { get; }
     public AsyncRelayCommand AddAttachmentsCommand { get; }
     public AsyncRelayCommand AnalyzeAttachmentsCommand { get; }
     public AsyncRelayCommand ShowAttachmentAnalysisCommand { get; }
@@ -235,6 +246,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
 
     public bool HasProject => CurrentWorkspace is not null;
     public bool HasNoProject => !HasProject;
+    public ProjectWorkspace? ActiveWorkspace => CurrentWorkspace;
+    public ITimelineThumbnailService TimelineThumbnailService => timelineThumbnailService;
     public string ProjectName => CurrentWorkspace?.Project.Name ?? "Kein Projekt geöffnet";
     public string ProjectDescription => CurrentWorkspace?.Project.Description ?? string.Empty;
     public string ProjectArchivePath => CurrentWorkspace?.ArchivePath ?? string.Empty;
@@ -245,6 +258,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     public TimelineOrientation TimelineViewOrientation =>
         CurrentProject?.Settings.PreferredOrientation ?? TimelineOrientation.Horizontal;
     public bool CompressLargeGaps => CurrentProject?.Settings.CompressLargeGaps ?? true;
+    public double TimelineCardFontSize => CurrentProject?.Settings.TimelineCardFontSize ?? 14;
+    public double TimelineAxisFontSize => CurrentProject?.Settings.TimelineAxisFontSize ?? 12;
+    public bool IsDarkTheme => themeService.IsDark;
     public string GapCompressionText => CompressLargeGaps
         ? "Zeitlücken: komprimiert"
         : "Zeitlücken: vollständig";
@@ -353,9 +369,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             RefreshEventList(selectedEventId: null);
             InitializeTimelineRange();
             ResetSearchForWorkspace();
+            themeService.Apply(value?.Project.Settings.Theme ?? ApplicationTheme.FollowWindows);
 
             OnPropertyChanged(nameof(HasProject));
             OnPropertyChanged(nameof(HasNoProject));
+            OnPropertyChanged(nameof(ActiveWorkspace));
             OnPropertyChanged(nameof(ProjectName));
             OnPropertyChanged(nameof(ProjectDescription));
             OnPropertyChanged(nameof(ProjectArchivePath));
@@ -436,6 +454,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     {
         attachmentImportCancellation?.Cancel();
         DisposeSearchPresentation();
+        themeService.ThemeChanged -= OnApplicationThemeChanged;
         lifetimeCancellation.Cancel();
         if (autosaveTask is not null)
         {
@@ -559,7 +578,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             return;
         }
 
-        var request = dialogs.RequestEvent(timelineEvent: null);
+        var request = dialogs.RequestEvent(
+            timelineEvent: null,
+            CurrentWorkspace.Project.Settings.DefaultEventColorHex);
         if (request is null)
         {
             return;
@@ -587,7 +608,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         }
 
         var eventId = SelectedEvent.Id;
-        var request = dialogs.RequestEvent(SelectedEvent);
+        var request = dialogs.RequestEvent(
+            SelectedEvent,
+            CurrentWorkspace.Project.Settings.DefaultEventColorHex);
         if (request is null)
         {
             return;
@@ -883,6 +906,69 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             StatusMessage = "Die Sicherungseinstellungen wurden gespeichert.";
         }
     }
+
+    private async Task EditProjectSettingsAsync()
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var settings = dialogs.RequestProjectSettings(CurrentWorkspace.Project.Settings);
+        if (settings is null || settings == CurrentWorkspace.Project.Settings)
+        {
+            return;
+        }
+
+        var timestampUtc = DateTimeOffset.UtcNow;
+        var selectedEventId = SelectedEvent?.Id;
+        CurrentWorkspace.Project.ChangeSettings(settings, timestampUtc);
+        themeService.Apply(settings.Theme);
+        MarkCurrentProjectChanged(selectedEventId);
+        await WriteProjectSettingsAuditAsync(timestampUtc).ConfigureAwait(true);
+        await CheckpointCurrentWorkspaceAsync(
+            selectedEventId,
+            lifetimeCancellation.Token).ConfigureAwait(true);
+        StatusMessage = "Die Projekteinstellungen wurden übernommen.";
+    }
+
+    private async Task WriteProjectSettingsAuditAsync(DateTimeOffset timestampUtc)
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await auditLogService.WriteAsync(
+                CurrentWorkspace,
+                new AuditEntry(
+                    Guid.NewGuid(),
+                    timestampUtc,
+                    "SettingsUpdate",
+                    nameof(ProjectSettings),
+                    CurrentWorkspace.Project.Id,
+                    "Projektbezogene Darstellungs- und Exporteinstellungen geändert",
+                    Succeeded: true,
+                    TechnicalDetails: null),
+                lifetimeCancellation.Token).ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            await TryWriteLogAsync(
+                LocalLogLevel.Warning,
+                "SettingsAuditWriteFailed",
+                "Die Einstellungsänderung konnte nicht im Audit protokolliert werden.",
+                exception.ToString()).ConfigureAwait(true);
+        }
+    }
+
+    private void OnApplicationThemeChanged(object? sender, EventArgs e) => PostToUi(() =>
+    {
+        OnPropertyChanged(nameof(IsDarkTheme));
+        RefreshTimelinePresentation();
+    });
 
     private async Task ChooseAndImportAttachmentsAsync()
     {
@@ -1505,6 +1591,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         OnPropertyChanged(nameof(TimelineViewOrientation));
         OnPropertyChanged(nameof(CompressLargeGaps));
         OnPropertyChanged(nameof(GapCompressionText));
+        OnPropertyChanged(nameof(TimelineCardFontSize));
+        OnPropertyChanged(nameof(TimelineAxisFontSize));
+        OnPropertyChanged(nameof(IsDarkTheme));
         OnPropertyChanged(nameof(TimelineRangeText));
         ResetTimelineLayoutCommand.RaiseCanExecuteChanged();
     }
@@ -1694,6 +1783,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         ShowTimelineRangeCommand.RaiseCanExecuteChanged();
         ShowAuditLogCommand.RaiseCanExecuteChanged();
         ManageBackupsCommand.RaiseCanExecuteChanged();
+        SettingsCommand.RaiseCanExecuteChanged();
         AddAttachmentsCommand.RaiseCanExecuteChanged();
         AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();
         ShowAttachmentAnalysisCommand.RaiseCanExecuteChanged();

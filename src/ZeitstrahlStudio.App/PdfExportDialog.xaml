@@ -8,7 +8,7 @@
         MinHeight="640"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="#E2E8F0">
+        Background="{DynamicResource SurfaceAltBrush}">
     <Window.Resources>
         <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
         <Style x:Key="ActionButtonStyle" TargetType="Button">
@@ -16,22 +16,22 @@
             <Setter Property="Height" Value="32" />
             <Setter Property="Margin" Value="0,0,8,0" />
             <Setter Property="Padding" Value="10,0" />
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#94A3B8" />
+            <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource StrongBorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
         </Style>
         <Style x:Key="PrimaryButtonStyle"
                TargetType="Button"
                BasedOn="{StaticResource ActionButtonStyle}">
-            <Setter Property="Foreground" Value="#FFFFFF" />
-            <Setter Property="Background" Value="#2563EB" />
-            <Setter Property="BorderBrush" Value="#1D4ED8" />
+            <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
         <Style x:Key="LabelStyle" TargetType="TextBlock">
             <Setter Property="Margin" Value="0,10,0,4" />
-            <Setter Property="Foreground" Value="#334155" />
+            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
             <Setter Property="FontWeight" Value="SemiBold" />
         </Style>
     </Window.Resources>
@@ -43,20 +43,20 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="18,13" Background="#0F172A">
+        <Border Grid.Row="0" Padding="18,13" Background="{DynamicResource HeaderBackgroundBrush}">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left">
-                    <TextBlock Foreground="#FFFFFF"
+                    <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
                                FontSize="18"
                                FontWeight="SemiBold"
                                Text="PDF-Exportvorschau" />
                     <TextBlock Margin="0,3,0,0"
-                               Foreground="#94A3B8"
+                               Foreground="{DynamicResource HeaderMutedBrush}"
                                Text="Die Vorschau zeigt die tatsächlich erzeugte lokale PDF-Datei." />
                 </StackPanel>
                 <TextBlock Margin="20,5,0,0"
                            HorizontalAlignment="Right"
-                           Foreground="#CBD5E1"
+                           Foreground="{DynamicResource HeaderMutedBrush}"
                            Text="{Binding StatusMessage}" />
             </DockPanel>
         </Border>
@@ -69,12 +69,12 @@
 
             <Border Grid.Column="0"
                     Padding="18,14"
-                    Background="#F8FAFC"
-                    BorderBrush="#CBD5E1"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <TextBlock Foreground="#0F172A"
+                        <TextBlock Foreground="{DynamicResource PrimaryTextBrush}"
                                    FontSize="15"
                                    FontWeight="Bold"
                                    Text="Druckeinstellungen" />
@@ -240,7 +240,7 @@
                                     VerticalAlignment="Center">
                             <ProgressBar Height="7" IsIndeterminate="True" />
                             <TextBlock Margin="0,12,0,0"
-                                       Foreground="#FFFFFF"
+                                       Foreground="{DynamicResource HeaderForegroundBrush}"
                                        TextAlignment="Center"
                                        Text="{Binding StatusMessage}" />
                         </StackPanel>
@@ -249,10 +249,10 @@
             </Grid>
         </Grid>
 
-        <Border Grid.Row="2" Padding="14,10" Background="#E2E8F0">
+        <Border Grid.Row="2" Padding="14,10" Background="{DynamicResource SurfaceAltBrush}">
             <DockPanel>
                 <TextBlock VerticalAlignment="Center"
-                           Foreground="#475569"
+                           Foreground="{DynamicResource SubtleTextBrush}"
                            Text="{Binding PageSummary}" />
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                     <Button Style="{StaticResource ActionButtonStyle}"

@@ -241,10 +241,7 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
         TimelineEvent timelineEvent,
         CancellationToken cancellationToken)
     {
-        var primary = timelineEvent.Attachments.FirstOrDefault(attachment =>
-            attachment.MediaType.Equals("application/pdf", StringComparison.OrdinalIgnoreCase))
-            ?? timelineEvent.Attachments.FirstOrDefault(attachment =>
-                attachment.MediaType.StartsWith("image/", StringComparison.OrdinalIgnoreCase));
+        var primary = TimelineThumbnailSelection.SelectPrimary(timelineEvent);
         if (primary is null)
         {
             return null;

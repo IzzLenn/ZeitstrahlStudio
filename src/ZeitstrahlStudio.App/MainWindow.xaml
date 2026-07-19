@@ -14,7 +14,7 @@
         PreviewDragOver="Window_PreviewDragOver"
         Drop="Window_Drop"
         FontFamily="Segoe UI"
-        Background="#F1F5F9">
+        Background="{DynamicResource WindowBackgroundBrush}">
     <Window.InputBindings>
         <KeyBinding Key="Z" Modifiers="Control" Command="{Binding UndoCommand}" />
         <KeyBinding Key="Y" Modifiers="Control" Command="{Binding RedoCommand}" />
@@ -26,8 +26,8 @@
             <Setter Property="Height" Value="34" />
             <Setter Property="Margin" Value="0,0,8,0" />
             <Setter Property="Padding" Value="12,0" />
-            <Setter Property="Background" Value="#FFFFFF" />
-            <Setter Property="BorderBrush" Value="#CBD5E1" />
+            <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
             <Setter Property="BorderThickness" Value="1" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -35,9 +35,9 @@
         <Style x:Key="PrimaryButtonStyle"
                TargetType="Button"
                BasedOn="{StaticResource ToolbarButtonStyle}">
-            <Setter Property="Foreground" Value="#FFFFFF" />
-            <Setter Property="Background" Value="#2563EB" />
-            <Setter Property="BorderBrush" Value="#1D4ED8" />
+            <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}" />
+            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}" />
         </Style>
         <Style x:Key="CompactButtonStyle"
                TargetType="Button"
@@ -50,7 +50,7 @@
             <Setter Property="Padding" Value="0" />
             <Setter Property="Background" Value="Transparent" />
             <Setter Property="BorderThickness" Value="0" />
-            <Setter Property="Foreground" Value="#1D4ED8" />
+            <Setter Property="Foreground" Value="{DynamicResource AccentTextBrush}" />
             <Setter Property="Cursor" Value="Hand" />
             <Setter Property="HorizontalContentAlignment" Value="Left" />
         </Style>
@@ -63,26 +63,27 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="18,12" Background="#0F172A">
+        <Border Grid.Row="0" Padding="18,12" Background="{DynamicResource HeaderBackgroundBrush}">
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                 <DockPanel LastChildFill="False">
                 <StackPanel DockPanel.Dock="Left" Margin="0,0,28,0" VerticalAlignment="Center">
-                    <TextBlock Foreground="#FFFFFF" FontSize="20" FontWeight="Bold" Text="Zeitstrahl Studio" />
-                    <TextBlock Foreground="#94A3B8" FontSize="11" Text="Lokale Projektchroniken" />
+                    <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}" FontSize="20" FontWeight="Bold" Text="Zeitstrahl Studio" />
+                    <TextBlock Foreground="{DynamicResource HeaderMutedBrush}" FontSize="11" Text="Lokale Projektchroniken" />
                 </StackPanel>
                 <Button DockPanel.Dock="Left" Style="{StaticResource PrimaryButtonStyle}" Command="{Binding NewProjectCommand}" Content="Neu" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding OpenProjectCommand}" Content="Öffnen" />
-                <Border DockPanel.Dock="Left" Width="1" Margin="4,2,12,2" Background="#475569" />
+                <Border DockPanel.Dock="Left" Width="1" Margin="4,2,12,2" Background="{DynamicResource ToolbarSeparatorBrush}" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SaveCommand}" Content="Speichern" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SaveAsCommand}" Content="Speichern unter" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding DuplicateCommand}" Content="Duplizieren" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding CloseProjectCommand}" Content="Schließen" />
-                <Border DockPanel.Dock="Left" Width="1" Margin="4,2,12,2" Background="#475569" />
+                <Border DockPanel.Dock="Left" Width="1" Margin="4,2,12,2" Background="{DynamicResource ToolbarSeparatorBrush}" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding UndoCommand}" Content="Rückgängig" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RedoCommand}" Content="Wiederholen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Click="SearchFocus_Click" Content="Suchen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ShowAuditLogCommand}" Content="Protokoll" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ManageBackupsCommand}" Content="Sicherungen" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SettingsCommand}" Content="Einstellungen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SetHorizontalTimelineCommand}" Content="Horizontal" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SetVerticalTimelineCommand}" Content="Vertikal" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AddAttachmentsCommand}" Content="Dateien +" />
@@ -106,23 +107,23 @@
 
             <Border Grid.Column="0"
                     Padding="20"
-                    Background="#F8FAFC"
-                    BorderBrush="#CBD5E1"
+                    Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
-                        <TextBlock Foreground="#64748B" FontSize="11" FontWeight="Bold" Text="AKTUELLES PROJEKT" />
+                        <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="11" FontWeight="Bold" Text="AKTUELLES PROJEKT" />
                         <TextBlock Margin="0,7,0,0"
                                    FontSize="18"
                                    FontWeight="SemiBold"
                                    Text="{Binding ProjectName}"
                                    TextWrapping="Wrap" />
                         <TextBlock Margin="0,4,0,0"
-                                   Foreground="#475569"
+                                   Foreground="{DynamicResource SubtleTextBrush}"
                                    Text="{Binding ProjectDescription}"
                                    TextWrapping="Wrap" />
                         <TextBlock Margin="0,5,0,0"
-                                   Foreground="#64748B"
+                                   Foreground="{DynamicResource MutedTextBrush}"
                                    FontSize="11"
                                    Text="{Binding ProjectArchivePath}"
                                    TextWrapping="Wrap" />
@@ -134,12 +135,12 @@
                             <Expander.Header>
                                 <DockPanel Width="270">
                                     <TextBlock DockPanel.Dock="Left"
-                                               Foreground="#1D4ED8"
+                                               Foreground="{DynamicResource AccentTextBrush}"
                                                FontSize="11"
                                                FontWeight="Bold"
                                                Text="SUCHE UND FILTER" />
                                     <TextBlock DockPanel.Dock="Right"
-                                               Foreground="#64748B"
+                                               Foreground="{DynamicResource MutedTextBrush}"
                                                FontSize="11"
                                                Text="{Binding ActiveFilterText}" />
                                 </DockPanel>
@@ -248,14 +249,14 @@
                                               SelectedValue="{Binding SearchSortMode}" />
                                     <TextBlock Margin="8,0,0,0"
                                                VerticalAlignment="Center"
-                                               Foreground="#64748B"
+                                               Foreground="{DynamicResource MutedTextBrush}"
                                                FontSize="11"
                                                Text="{Binding SearchSummaryText}" />
                                 </DockPanel>
                                 <ListBox Height="330"
                                          ItemsSource="{Binding SearchResults}"
-                                         Background="#FFFFFF"
-                                         BorderBrush="#E2E8F0"
+                                         Background="{DynamicResource RaisedSurfaceBrush}"
+                                         BorderBrush="{DynamicResource BorderBrush}"
                                          BorderThickness="1"
                                          ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                          VirtualizingPanel.IsVirtualizing="True"
@@ -278,7 +279,7 @@
                                                     <DockPanel>
                                                         <TextBlock DockPanel.Dock="Right"
                                                                    Margin="8,0,0,0"
-                                                                   Foreground="#64748B"
+                                                                   Foreground="{DynamicResource MutedTextBrush}"
                                                                    FontSize="10"
                                                                    Text="{Binding Date}" />
                                                         <TextBlock FontWeight="SemiBold"
@@ -289,7 +290,7 @@
                                                         <ItemsControl.ItemTemplate>
                                                             <DataTemplate>
                                                                 <local:HighlightedTextBlock Margin="0,2,0,0"
-                                                                                            Foreground="#475569"
+                                                                                            Foreground="{DynamicResource SubtleTextBrush}"
                                                                                             FontSize="10"
                                                                                             HighlightedText="{Binding}" />
                                                             </DataTemplate>
@@ -305,7 +306,7 @@
 
                         <Grid Margin="0,28,0,10">
                             <TextBlock VerticalAlignment="Center"
-                                       Foreground="#64748B"
+                                       Foreground="{DynamicResource MutedTextBrush}"
                                        FontSize="11"
                                        FontWeight="Bold"
                                        Text="ZULETZT VERWENDET" />
@@ -319,8 +320,8 @@
                                 <DataTemplate>
                                     <Border Margin="0,0,0,8"
                                             Padding="11"
-                                            Background="#FFFFFF"
-                                            BorderBrush="#E2E8F0"
+                                            Background="{DynamicResource RaisedSurfaceBrush}"
+                                            BorderBrush="{DynamicResource BorderBrush}"
                                             BorderThickness="1"
                                             CornerRadius="4">
                                         <StackPanel>
@@ -330,7 +331,7 @@
                                                     ToolTip="{Binding ArchivePath}"
                                                     Content="{Binding ProjectName}" />
                                             <TextBlock Margin="0,4,0,0"
-                                                       Foreground="#64748B"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
                                                        FontSize="11"
                                                        Text="{Binding LastOpenedAtUtc, StringFormat='Zuletzt geöffnet: {0:g}'}" />
                                         </StackPanel>
@@ -382,14 +383,14 @@
                 </ScrollViewer>
             </Border>
 
-            <Grid Grid.Column="1" Background="#FFFFFF">
+            <Grid Grid.Column="1" Background="{DynamicResource RaisedSurfaceBrush}">
                 <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Visibility="{Binding HasNoProject, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <Border Width="72" Height="72" HorizontalAlignment="Center" Background="#DBEAFE" CornerRadius="36">
                         <TextBlock HorizontalAlignment="Center"
                                    VerticalAlignment="Center"
-                                   Foreground="#1D4ED8"
+                                   Foreground="{DynamicResource AccentTextBrush}"
                                    FontSize="30"
                                    FontWeight="Light"
                                    Text="＋" />
@@ -401,7 +402,7 @@
                                Text="Eine Chronik beginnen" />
                     <TextBlock Width="470"
                                Margin="0,8,0,20"
-                               Foreground="#64748B"
+                               Foreground="{DynamicResource MutedTextBrush}"
                                FontSize="14"
                                TextAlignment="Center"
                                TextWrapping="Wrap"
@@ -424,12 +425,12 @@
                         <TextBlock DockPanel.Dock="Left"
                                    Margin="0,0,18,0"
                                    VerticalAlignment="Center"
-                                   Foreground="#64748B"
+                                   Foreground="{DynamicResource MutedTextBrush}"
                                    Text="Chronologische Ereignisübersicht" />
                         <TextBlock DockPanel.Dock="Right"
                                    Margin="12,0,0,0"
                                    VerticalAlignment="Center"
-                                   Foreground="#475569"
+                                   Foreground="{DynamicResource SubtleTextBrush}"
                                    FontWeight="SemiBold"
                                    Text="{Binding EventCount, StringFormat={}{0} Ereignisse}" />
                         <Button DockPanel.Dock="Right"
@@ -456,8 +457,8 @@
                                 Content="Hinzufügen" />
                     </DockPanel>
                     <TabControl Grid.Row="2"
-                                Background="#F8FAFC"
-                                BorderBrush="#E2E8F0"
+                                Background="{DynamicResource SurfaceBrush}"
+                                BorderBrush="{DynamicResource BorderBrush}"
                                 BorderThickness="1">
                         <TabItem Header="Zeitstrahl">
                             <Grid>
@@ -467,8 +468,8 @@
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
                                 <Border Padding="9"
-                                        Background="#FFFFFF"
-                                        BorderBrush="#E2E8F0"
+                                        Background="{DynamicResource RaisedSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1">
                                     <DockPanel LastChildFill="False">
                                         <Button DockPanel.Dock="Left"
@@ -484,7 +485,7 @@
                                                 Command="{Binding ToggleGapCompressionCommand}"
                                                 ToolTip="Große leere Zeiträume komprimieren oder vollständig darstellen"
                                                 Content="{Binding GapCompressionText}" />
-                                        <Border DockPanel.Dock="Left" Width="1" Margin="6,3,11,3" Background="#CBD5E1" />
+                                        <Border DockPanel.Dock="Left" Width="1" Margin="6,3,11,3" Background="{DynamicResource BorderBrush}" />
                                         <Button DockPanel.Dock="Left"
                                                 Style="{StaticResource CompactButtonStyle}"
                                                 Click="TimelineZoomOut_Click"
@@ -525,15 +526,15 @@
                                         <TextBlock DockPanel.Dock="Right"
                                                    Margin="14,0,0,0"
                                                    VerticalAlignment="Center"
-                                                   Foreground="#64748B"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
                                                    FontSize="11"
                                                    Text="Mausrad: Zoom · Hintergrund ziehen: Verschieben" />
                                     </DockPanel>
                                 </Border>
                                 <Border Grid.Row="1"
                                         Padding="9,6"
-                                        Background="#F8FAFC"
-                                        BorderBrush="#E2E8F0"
+                                        Background="{DynamicResource SurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1">
                                     <StackPanel Orientation="Horizontal">
                                         <TextBlock Margin="0,0,8,0"
@@ -554,7 +555,7 @@
                                                 Content="Anzeigen" />
                                         <TextBlock Margin="14,0,0,0"
                                                    VerticalAlignment="Center"
-                                                   Foreground="#64748B"
+                                                   Foreground="{DynamicResource MutedTextBrush}"
                                                    FontSize="11"
                                                    Text="Karte ziehen: nur Layout ändern · Datum bleibt unverändert" />
                                     </StackPanel>
@@ -566,11 +567,16 @@
                                               Focusable="False">
                                     <local:TimelineView x:Name="TimelineControl"
                                                         Project="{Binding CurrentProject}"
+                                                        Workspace="{Binding ActiveWorkspace}"
+                                                        ThumbnailService="{Binding TimelineThumbnailService}"
                                                         SelectedEvent="{Binding SelectedEvent, Mode=TwoWay}"
                                                         Orientation="{Binding TimelineViewOrientation}"
                                                         ZoomFactor="{Binding TimelineZoom, Mode=TwoWay}"
                                                         CompressLargeGaps="{Binding CompressLargeGaps}"
                                                         LayoutRevision="{Binding TimelineLayoutRevision}"
+                                                        CardFontSize="{Binding TimelineCardFontSize}"
+                                                        AxisFontSize="{Binding TimelineAxisFontSize}"
+                                                        IsDarkTheme="{Binding IsDarkTheme}"
                                                         MoveCardCommand="{Binding MoveTimelineCardCommand}"
                                                         RangeRequest="{Binding TimelineRangeRequest}"
                                                         VisibleEventIds="{Binding TimelineVisibleEventIds}"
@@ -580,7 +586,7 @@
                             </Grid>
                         </TabItem>
                         <TabItem Header="Ereignisliste">
-                            <Border Background="#F8FAFC"
+                            <Border Background="{DynamicResource SurfaceBrush}"
                                     CornerRadius="6">
                         <ListBox Margin="12"
                                  ItemsSource="{Binding Events}"
@@ -604,7 +610,7 @@
                                                 <ColumnDefinition Width="*" />
                                             </Grid.ColumnDefinitions>
                                             <TextBlock VerticalAlignment="Top"
-                                                       Foreground="#1D4ED8"
+                                                       Foreground="{DynamicResource AccentTextBrush}"
                                                        FontSize="14"
                                                        FontWeight="Bold"
                                                        Text="{Binding Date}" />
@@ -613,7 +619,7 @@
                                                     Height="10"
                                                     Margin="0,4,0,0"
                                                     VerticalAlignment="Top"
-                                                    Background="#3B82F6"
+                                                    Background="{DynamicResource AccentBrush}"
                                                     CornerRadius="5" />
                                             <StackPanel Grid.Column="2">
                                                 <TextBlock FontSize="16"
@@ -621,11 +627,11 @@
                                                            Text="{Binding Title}"
                                                            TextWrapping="Wrap" />
                                                 <TextBlock Margin="0,3,0,0"
-                                                           Foreground="#64748B"
+                                                           Foreground="{DynamicResource MutedTextBrush}"
                                                            Text="{Binding InfoText}"
                                                            TextWrapping="Wrap" />
                                                 <TextBlock Margin="0,4,0,0"
-                                                           Foreground="#475569"
+                                                           Foreground="{DynamicResource SubtleTextBrush}"
                                                            FontSize="11"
                                                            Text="{Binding Attachments.Count, StringFormat={}{0} Anhänge}" />
                                             </StackPanel>
@@ -642,24 +648,24 @@
 
         <Border Grid.Row="2"
                 Padding="14,8"
-                Background="#E2E8F0"
-                BorderBrush="#CBD5E1"
+                Background="{DynamicResource SurfaceAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0">
             <DockPanel>
                 <TextBlock DockPanel.Dock="Right"
                            Margin="18,0,0,0"
                            VerticalAlignment="Center"
-                           Foreground="#334155"
+                           Foreground="{DynamicResource SecondaryTextBrush}"
                            Text="{Binding ActiveFilterText}" />
                 <TextBlock DockPanel.Dock="Right"
                            Margin="18,0,0,0"
                            VerticalAlignment="Center"
-                           Foreground="#334155"
+                           Foreground="{DynamicResource SecondaryTextBrush}"
                            Text="{Binding TimelineRangeText}" />
                 <TextBlock DockPanel.Dock="Right"
                            Margin="18,0,0,0"
                            VerticalAlignment="Center"
-                           Foreground="#334155"
+                           Foreground="{DynamicResource SecondaryTextBrush}"
                            FontWeight="SemiBold"
                            Text="{Binding TimelineZoomText, StringFormat=Zoom: {0}}" />
                 <Button DockPanel.Dock="Right"
@@ -675,7 +681,7 @@
                              VerticalAlignment="Center"
                              IsIndeterminate="True"
                              Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                <TextBlock VerticalAlignment="Center" Foreground="#334155" Text="{Binding StatusMessage}" />
+                <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource SecondaryTextBrush}" Text="{Binding StatusMessage}" />
             </DockPanel>
         </Border>
     </Grid>
