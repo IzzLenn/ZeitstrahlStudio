@@ -185,6 +185,23 @@ public sealed class TimelineProject
         Touch(modifiedAtUtc);
     }
 
+    /// <summary>Entfernt einen einzelnen visuellen Versatz, ohne Ereignisdaten zu verändern.</summary>
+    public bool RemoveLayoutPosition(
+        Guid eventId,
+        TimelineOrientation orientation,
+        DateTimeOffset modifiedAtUtc)
+    {
+        var removed = layoutPositions.RemoveAll(position =>
+            position.EventId == eventId && position.Orientation == orientation);
+        if (removed == 0)
+        {
+            return false;
+        }
+
+        Touch(modifiedAtUtc);
+        return true;
+    }
+
     /// <summary>Entfernt alle manuellen Layoutpositionen und aktiviert wieder die automatische Anordnung.</summary>
     public void ResetLayoutPositions(DateTimeOffset modifiedAtUtc)
     {

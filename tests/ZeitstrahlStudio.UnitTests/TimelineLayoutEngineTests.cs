@@ -127,6 +127,7 @@ public sealed class TimelineLayoutEngineTests
             new TimelineLayoutOptions(orientation)).Cards);
 
         Assert.Equal(expectedAxisDelta, adjusted.AxisPosition - automatic.AxisPosition, precision: 6);
+        Assert.Equal(automatic.AnchorAxisPosition, adjusted.AnchorAxisPosition, precision: 6);
         Assert.Equal(expectedCrossDelta, adjusted.CrossPosition - automatic.CrossPosition, precision: 6);
         Assert.True(adjusted.HasManualPosition);
         Assert.Equal(new DateTime(2026, 7, 19), timelineEvent.Date.SortStart);
@@ -186,6 +187,27 @@ public sealed class TimelineLayoutEngineTests
             Assert.True(double.IsFinite(card.AxisPosition));
             Assert.True(double.IsFinite(card.CrossPosition));
         });
+    }
+
+    [Fact]
+    public void GetAxisPosition_UsesTheSameCompressedProjectionAndClampsOutsideValues()
+    {
+        var project = CreateProject(
+            EventDate.Exact(new DateOnly(1900, 1, 1)),
+            EventDate.Exact(new DateOnly(2000, 1, 1)));
+        var options = new TimelineLayoutOptions(
+            TimelineOrientation.Horizontal,
+            ZoomFactor: 1.5,
+            CompressLargeGaps: true);
+        var layout = engine.Create(project, options);
+
+        var before = engine.GetAxisPosition(project, options, new DateTime(1800, 1, 1));
+        var middle = engine.GetAxisPosition(project, options, new DateTime(1950, 1, 1));
+        var after = engine.GetAxisPosition(project, options, new DateTime(2100, 1, 1));
+
+        Assert.Equal(layout.Cards[0].AxisPosition, before, precision: 6);
+        Assert.InRange(middle, before, after);
+        Assert.Equal(layout.Cards[1].AxisPosition, after, precision: 6);
     }
 
     private static TimelineProject CreateProject(params EventDate[] dates)

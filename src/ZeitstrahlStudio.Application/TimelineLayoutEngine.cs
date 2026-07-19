@@ -25,6 +25,7 @@ public sealed record TimelineLayoutOptions(
 /// <summary>Position einer Ereigniskarte relativ zur Zeitachse.</summary>
 public sealed record TimelineCardLayout(
     Guid EventId,
+    double AnchorAxisPosition,
     double AxisPosition,
     double CrossPosition,
     double AxisLength,
@@ -147,6 +148,35 @@ public sealed class TimelineLayoutEngine
             deadlines);
     }
 
+    /// <summary>
+    /// Projiziert ein frei gewähltes Datum mit denselben Skalierungs- und Lückenregeln wie das Layout.
+    /// Werte außerhalb des Projektzeitraums werden an dessen Grenzen begrenzt.
+    /// </summary>
+    public double GetAxisPosition(
+        TimelineProject project,
+        TimelineLayoutOptions options,
+        DateTime value)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        ValidateOptions(options);
+        var events = project.GetChronologicalEvents();
+        if (events.Count == 0)
+        {
+            return AxisPadding;
+        }
+
+        var anchors = CollectAnchors(project, events);
+        var start = anchors[0];
+        var end = anchors[^1];
+        var scaleUnit = SelectScaleUnit(end - start);
+        var pixelsPerDay = GetPixelsPerDay(scaleUnit) * options.ZoomFactor;
+        var gaps = options.CompressLargeGaps
+            ? DetectLargeGaps(anchors, events, scaleUnit, pixelsPerDay, options.ZoomFactor)
+            : [];
+        var projection = new AxisProjection(start, pixelsPerDay, gaps);
+        return projection.Map(value < start ? start : value > end ? end : value);
+    }
+
     private static TimelineLayoutResult Empty(TimelineLayoutOptions options)
     {
         var today = DateTime.Today;
@@ -231,13 +261,15 @@ public sealed class TimelineLayoutEngine
                 crossOffset = Math.Clamp(crossOffset, -MaximumManualOffset, MaximumManualOffset);
             }
 
+            var adjustedCross = cross + crossOffset;
             result.Add(new TimelineCardLayout(
                 timelineEvent.Id,
+                automaticAxis,
                 Math.Max((cardAxisLength / 2) + CardSpacing, automaticAxis + axisOffset),
-                cross + crossOffset,
+                adjustedCross,
                 cardAxisLength,
                 cardCrossLength,
-                positiveSide,
+                adjustedCross >= 0,
                 lane,
                 hasManualPosition));
         }
@@ -268,7 +300,7 @@ public sealed class TimelineLayoutEngine
     {
         var deadline = timelineEvent.Deadline!;
         var value = deadline.DueDate.ToDateTime(deadline.DueTime ?? TimeOnly.MinValue);
-        var eventPosition = cards.Single(card => card.EventId == timelineEvent.Id).AxisPosition;
+        var eventPosition = cards.Single(card => card.EventId == timelineEvent.Id).AnchorAxisPosition;
         return new TimelineDeadlineLayout(
             timelineEvent.Id,
             deadline.Id,

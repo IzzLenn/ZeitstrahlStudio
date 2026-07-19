@@ -9,6 +9,16 @@ using ZeitstrahlStudio.Domain;
 
 namespace ZeitstrahlStudio.App;
 
+/// <summary>Rein visuelle Verschiebung einer Zeitstrahlkarte in Viewportkoordinaten.</summary>
+public sealed record TimelineCardMoveRequest(
+    Guid EventId,
+    TimelineOrientation Orientation,
+    double HorizontalDelta,
+    double VerticalDelta);
+
+/// <summary>Ein einmaliger Navigationsauftrag für einen fachlichen Datumsbereich.</summary>
+public sealed record TimelineRangeRequest(DateOnly Start, DateOnly End, int Revision);
+
 /// <summary>
 /// Viewportbezogen gezeichneter WPF-Zeitstrahl. Es werden keine visuellen Kartenobjekte für
 /// außerhalb des sichtbaren Ausschnitts liegende Ereignisse erzeugt.
@@ -40,6 +50,11 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     private double panStartHorizontalOffset;
     private double panStartVerticalOffset;
     private bool isPanning;
+    private TimelineCardLayout? draggedCard;
+    private Point cardDragStart;
+    private Vector cardDragDelta;
+    private bool isCardDragActive;
+    private int lastAppliedRangeRevision = int.MinValue;
 
     public TimelineView()
     {
@@ -95,6 +110,18 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         typeof(TimelineView),
         new FrameworkPropertyMetadata(0, FrameworkPropertyMetadataOptions.AffectsRender, OnLayoutInputChanged));
 
+    public static readonly DependencyProperty MoveCardCommandProperty = DependencyProperty.Register(
+        nameof(MoveCardCommand),
+        typeof(ICommand),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(null));
+
+    public static readonly DependencyProperty RangeRequestProperty = DependencyProperty.Register(
+        nameof(RangeRequest),
+        typeof(TimelineRangeRequest),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(null, OnRangeRequestChanged));
+
     public TimelineProject? Project
     {
         get => (TimelineProject?)GetValue(ProjectProperty);
@@ -129,6 +156,18 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     {
         get => (int)GetValue(LayoutRevisionProperty);
         set => SetValue(LayoutRevisionProperty, value);
+    }
+
+    public ICommand? MoveCardCommand
+    {
+        get => (ICommand?)GetValue(MoveCardCommandProperty);
+        set => SetValue(MoveCardCommandProperty, value);
+    }
+
+    public TimelineRangeRequest? RangeRequest
+    {
+        get => (TimelineRangeRequest?)GetValue(RangeRequestProperty);
+        set => SetValue(RangeRequestProperty, value);
     }
 
     public bool CanHorizontallyScroll { get; set; } = true;
@@ -195,6 +234,48 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         {
             SetVerticalOffset(card.AxisPosition - (viewportHeight / 2));
             SetHorizontalOffset(GetCrossCenter() + card.CrossPosition - (viewportWidth / 2));
+        }
+    }
+
+    public void ShowRange(DateOnly start, DateOnly end)
+    {
+        if (end < start)
+        {
+            throw new ArgumentException("Das Ende des sichtbaren Zeitraums darf nicht vor dessen Beginn liegen.");
+        }
+
+        _ = TryShowRange(start, end);
+    }
+
+    /// <summary>Leitet eine visuelle Kartenverschiebung an das gebundene ViewModel weiter.</summary>
+    public void RequestCardMove(
+        Guid eventId,
+        double horizontalDelta,
+        double verticalDelta)
+    {
+        if (eventId == Guid.Empty)
+        {
+            throw new ArgumentException("Die Kartenverschiebung benötigt eine Ereignis-ID.", nameof(eventId));
+        }
+
+        if (!double.IsFinite(horizontalDelta) || !double.IsFinite(verticalDelta))
+        {
+            throw new ArgumentException("Die Kartenverschiebung muss endliche Werte enthalten.");
+        }
+
+        if (Math.Abs(horizontalDelta) < 1 && Math.Abs(verticalDelta) < 1)
+        {
+            return;
+        }
+
+        var request = new TimelineCardMoveRequest(
+            eventId,
+            Orientation,
+            Math.Round(horizontalDelta, 2),
+            Math.Round(verticalDelta, 2));
+        if (MoveCardCommand?.CanExecute(request) == true)
+        {
+            MoveCardCommand.Execute(request);
         }
     }
 
@@ -294,6 +375,7 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
                 SetCurrentValue(SelectedEventProperty, timelineEvent);
             }
 
+            BeginCardDrag(hit, e.GetPosition(this));
             e.Handled = true;
             return;
         }
@@ -316,6 +398,34 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     protected override void OnMouseMove(MouseEventArgs e)
     {
         base.OnMouseMove(e);
+        if (draggedCard is not null)
+        {
+            if (e.LeftButton != MouseButtonState.Pressed)
+            {
+                CancelCardDrag();
+                return;
+            }
+
+            var dragPoint = e.GetPosition(this);
+            var delta = dragPoint - cardDragStart;
+            if (!isCardDragActive &&
+                (Math.Abs(delta.X) >= SystemParameters.MinimumHorizontalDragDistance ||
+                 Math.Abs(delta.Y) >= SystemParameters.MinimumVerticalDragDistance))
+            {
+                isCardDragActive = true;
+                Cursor = Cursors.SizeAll;
+            }
+
+            if (isCardDragActive)
+            {
+                cardDragDelta = delta;
+                InvalidateVisual();
+            }
+
+            e.Handled = true;
+            return;
+        }
+
         if (!isPanning || e.LeftButton != MouseButtonState.Pressed && e.MiddleButton != MouseButtonState.Pressed)
         {
             return;
@@ -330,12 +440,34 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     protected override void OnMouseUp(MouseButtonEventArgs e)
     {
         base.OnMouseUp(e);
+        if (draggedCard is not null && e.ChangedButton == MouseButton.Left)
+        {
+            CompleteCardDrag();
+            e.Handled = true;
+            return;
+        }
+
         if (isPanning)
         {
             isPanning = false;
             ReleaseMouseCapture();
             Cursor = Cursors.Arrow;
             e.Handled = true;
+        }
+    }
+
+    protected override void OnLostMouseCapture(MouseEventArgs e)
+    {
+        base.OnLostMouseCapture(e);
+        if (draggedCard is not null)
+        {
+            ClearCardDrag();
+        }
+
+        if (isPanning)
+        {
+            isPanning = false;
+            Cursor = Cursors.Arrow;
         }
     }
 
@@ -395,6 +527,12 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         view.RebuildLayout();
     }
 
+    private static void OnRangeRequestChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
+    {
+        var view = (TimelineView)dependencyObject;
+        view.TryApplyRangeRequest();
+    }
+
     private static object CoerceZoom(DependencyObject dependencyObject, object baseValue)
     {
         var value = (double)baseValue;
@@ -444,6 +582,7 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         viewportWidth = Math.Max(0, width);
         viewportHeight = Math.Max(0, height);
         RebuildLayout();
+        TryApplyRangeRequest();
         ScrollOwner?.InvalidateScrollInfo();
     }
 
@@ -576,8 +715,8 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
                 continue;
             }
 
-            var axisPoint = GetAxisPoint(card.AxisPosition);
-            var cardPoint = GetCardConnectorPoint(card, rect);
+            var axisPoint = GetAxisPoint(card.AnchorAxisPosition);
+            var cardPoint = GetCardConnectorPoint(rect);
             drawingContext.DrawLine(ConnectorPen, axisPoint, cardPoint);
         }
 
@@ -712,7 +851,7 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     private Rect GetCardRect(TimelineCardLayout card)
     {
         var crossCenter = GetCrossCenter();
-        return Orientation == TimelineOrientation.Horizontal
+        var rect = Orientation == TimelineOrientation.Horizontal
             ? new Rect(
                 card.AxisPosition - (card.AxisLength / 2),
                 crossCenter + card.CrossPosition - (card.CrossLength / 2),
@@ -723,6 +862,12 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
                 card.AxisPosition - (card.AxisLength / 2),
                 card.CrossLength,
                 card.AxisLength);
+        if (isCardDragActive && draggedCard?.EventId == card.EventId)
+        {
+            rect.Offset(cardDragDelta.X, cardDragDelta.Y);
+        }
+
+        return rect;
     }
 
     private Point GetAxisPoint(double axisPosition)
@@ -733,10 +878,17 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
             : new Point(crossCenter, axisPosition);
     }
 
-    private Point GetCardConnectorPoint(TimelineCardLayout card, Rect rect) =>
-        Orientation == TimelineOrientation.Horizontal
-            ? new Point(card.AxisPosition, card.IsPositiveSide ? rect.Top : rect.Bottom)
-            : new Point(card.IsPositiveSide ? rect.Left : rect.Right, card.AxisPosition);
+    private Point GetCardConnectorPoint(Rect rect)
+    {
+        var crossCenter = GetCrossCenter();
+        return Orientation == TimelineOrientation.Horizontal
+            ? new Point(
+                rect.Left + (rect.Width / 2),
+                rect.Top + (rect.Height / 2) >= crossCenter ? rect.Top : rect.Bottom)
+            : new Point(
+                rect.Left + (rect.Width / 2) >= crossCenter ? rect.Left : rect.Right,
+                rect.Top + (rect.Height / 2));
+    }
 
     private Rect GetVisibleContentRect(double margin) => new(
         horizontalOffset - margin,
@@ -785,6 +937,99 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         isPanning = true;
         Cursor = Cursors.Hand;
         CaptureMouse();
+    }
+
+    private void BeginCardDrag(TimelineCardLayout card, Point point)
+    {
+        draggedCard = card;
+        cardDragStart = point;
+        cardDragDelta = default;
+        isCardDragActive = false;
+        CaptureMouse();
+    }
+
+    private void CompleteCardDrag()
+    {
+        var card = draggedCard;
+        var delta = cardDragDelta;
+        var shouldCommit = isCardDragActive && card is not null;
+        ClearCardDrag();
+        ReleaseMouseCapture();
+        if (shouldCommit)
+        {
+            RequestCardMove(card!.EventId, delta.X, delta.Y);
+        }
+    }
+
+    private void CancelCardDrag()
+    {
+        ClearCardDrag();
+        ReleaseMouseCapture();
+    }
+
+    private void ClearCardDrag()
+    {
+        draggedCard = null;
+        cardDragDelta = default;
+        isCardDragActive = false;
+        Cursor = Cursors.Arrow;
+        InvalidateVisual();
+    }
+
+    private void TryApplyRangeRequest()
+    {
+        if (RangeRequest is not { } request || request.Revision == lastAppliedRangeRevision)
+        {
+            return;
+        }
+
+        if (TryShowRange(request.Start, request.End))
+        {
+            lastAppliedRangeRevision = request.Revision;
+        }
+    }
+
+    private bool TryShowRange(DateOnly start, DateOnly end)
+    {
+        if (Project is null || Project.Events.Count == 0 ||
+            viewportWidth <= 0 || viewportHeight <= 0 || end < start)
+        {
+            return false;
+        }
+
+        var axisViewport = Orientation == TimelineOrientation.Horizontal ? viewportWidth : viewportHeight;
+        var startValue = start.ToDateTime(TimeOnly.MinValue);
+        var endValue = end.ToDateTime(TimeOnly.MaxValue);
+        var baselineOptions = CreateOptions(1);
+        var baselineStart = layoutEngine.GetAxisPosition(Project, baselineOptions, startValue);
+        var baselineEnd = layoutEngine.GetAxisPosition(Project, baselineOptions, endValue);
+        var zoom = Math.Clamp(
+            (axisViewport - 48) / Math.Max(1, Math.Abs(baselineEnd - baselineStart)),
+            0.25,
+            8);
+
+        double mappedStart = baselineStart;
+        double mappedEnd = baselineEnd;
+        for (var iteration = 0; iteration < 2; iteration++)
+        {
+            SetCurrentValue(ZoomFactorProperty, zoom);
+            RebuildLayout();
+            var options = CreateOptions(ZoomFactor);
+            mappedStart = layoutEngine.GetAxisPosition(Project, options, startValue);
+            mappedEnd = layoutEngine.GetAxisPosition(Project, options, endValue);
+            var actualSpan = Math.Max(1, Math.Abs(mappedEnd - mappedStart));
+            var adjusted = Math.Clamp(zoom * ((axisViewport - 48) / actualSpan), 0.25, 8);
+            if (Math.Abs(adjusted - zoom) < 0.01)
+            {
+                break;
+            }
+
+            zoom = adjusted;
+        }
+
+        CenterCrossAxis();
+        SetPrimaryOffset(Math.Min(mappedStart, mappedEnd) - 24);
+        return true;
     }
 
     private void DrawEmptyState(DrawingContext drawingContext)

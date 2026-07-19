@@ -212,6 +212,99 @@ public sealed class ProjectEventEditingServiceTests
         Assert.Empty(project.Events.Single().Attachments);
     }
 
+    [Fact]
+    public void MoveLayoutPosition_IsOrientationSpecificAndUndoable()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
+        var timelineEvent = service.Create(
+            project,
+            CreateRequest(deadline: null),
+            CreatedAt.AddMinutes(1));
+
+        var moved = service.MoveLayoutPosition(
+            project,
+            timelineEvent.Id,
+            TimelineOrientation.Horizontal,
+            horizontalDelta: 35,
+            verticalDelta: -18,
+            CreatedAt.AddMinutes(2));
+
+        Assert.NotNull(moved);
+        Assert.Equal(35, moved.HorizontalOffset);
+        Assert.Equal(-18, moved.VerticalOffset);
+        Assert.Equal(timelineEvent.Date, Assert.Single(project.Events).Date);
+
+        var undo = service.Undo(project, CreatedAt.AddMinutes(3));
+        Assert.Empty(project.LayoutPositions);
+        Assert.Equal(timelineEvent.Id, undo.SelectedEventId);
+
+        service.Redo(project, CreatedAt.AddMinutes(4));
+        Assert.Equal(moved, Assert.Single(project.LayoutPositions));
+    }
+
+    [Fact]
+    public void ResetLayoutPositions_IsOneUndoableOperation()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
+        var timelineEvent = service.Create(
+            project,
+            CreateRequest(deadline: null),
+            CreatedAt.AddMinutes(1));
+        service.MoveLayoutPosition(
+            project,
+            timelineEvent.Id,
+            TimelineOrientation.Horizontal,
+            20,
+            30,
+            CreatedAt.AddMinutes(2));
+        service.MoveLayoutPosition(
+            project,
+            timelineEvent.Id,
+            TimelineOrientation.Vertical,
+            -40,
+            50,
+            CreatedAt.AddMinutes(3));
+
+        Assert.True(service.ResetLayoutPositions(
+            project,
+            timelineEvent.Id,
+            CreatedAt.AddMinutes(4)));
+        Assert.Empty(project.LayoutPositions);
+
+        service.Undo(project, CreatedAt.AddMinutes(5));
+        Assert.Equal(2, project.LayoutPositions.Count);
+        Assert.Contains(project.LayoutPositions, position =>
+            position.Orientation == TimelineOrientation.Horizontal);
+        Assert.Contains(project.LayoutPositions, position =>
+            position.Orientation == TimelineOrientation.Vertical);
+    }
+
+    [Fact]
+    public void UndoDelete_RestoresManualLayoutPositions()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
+        var timelineEvent = service.Create(
+            project,
+            CreateRequest(deadline: null),
+            CreatedAt.AddMinutes(1));
+        service.MoveLayoutPosition(
+            project,
+            timelineEvent.Id,
+            TimelineOrientation.Horizontal,
+            12,
+            -7,
+            CreatedAt.AddMinutes(2));
+        service.Delete(project, timelineEvent.Id, CreatedAt.AddMinutes(3));
+        Assert.Empty(project.LayoutPositions);
+
+        service.Undo(project, CreatedAt.AddMinutes(4));
+
+        var restored = Assert.Single(project.LayoutPositions);
+        Assert.Equal(timelineEvent.Id, restored.EventId);
+        Assert.Equal(12, restored.HorizontalOffset);
+        Assert.Equal(-7, restored.VerticalOffset);
+    }
+
     private static EventEditRequest CreateRequest(Deadline? deadline) => new(
         EventDate.Range(new DateOnly(2020, 1, 2), new DateOnly(2020, 3, 4)),
         "Wichtig",

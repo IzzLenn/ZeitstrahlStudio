@@ -31,6 +31,10 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     private TimelineEvent? selectedEvent;
     private double timelineZoom = 1;
     private int timelineLayoutRevision;
+    private DateTime? timelineRangeStart;
+    private DateTime? timelineRangeEnd;
+    private TimelineRangeRequest? timelineRangeRequest;
+    private int timelineRangeRevision;
     private string statusMessage = "Bereit";
 
     public MainWindowViewModel(
@@ -120,6 +124,15 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         ToggleGapCompressionCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ToggleGapCompressionAsync),
             () => !IsBusy && HasProject);
+        MoveTimelineCardCommand = new AsyncRelayCommand<TimelineCardMoveRequest>(
+            request => ExecuteGuardedAsync(() => MoveTimelineCardAsync(request)),
+            CanMoveTimelineCard);
+        ResetTimelineLayoutCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(ResetTimelineLayoutAsync),
+            () => !IsBusy && CurrentProject?.LayoutPositions.Count > 0);
+        ShowTimelineRangeCommand = new AsyncRelayCommand(
+            ShowTimelineRangeAsync,
+            CanShowTimelineRange);
         ShowAuditLogCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ShowAuditLogAsync),
             () => !IsBusy && HasProject);
@@ -173,6 +186,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
     public AsyncRelayCommand SetHorizontalTimelineCommand { get; }
     public AsyncRelayCommand SetVerticalTimelineCommand { get; }
     public AsyncRelayCommand ToggleGapCompressionCommand { get; }
+    public AsyncRelayCommand<TimelineCardMoveRequest> MoveTimelineCardCommand { get; }
+    public AsyncRelayCommand ResetTimelineLayoutCommand { get; }
+    public AsyncRelayCommand ShowTimelineRangeCommand { get; }
     public AsyncRelayCommand ShowAuditLogCommand { get; }
     public AsyncRelayCommand AddAttachmentsCommand { get; }
     public AsyncRelayCommand AnalyzeAttachmentsCommand { get; }
@@ -227,6 +243,40 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
 
     public string TimelineZoomText => $"{TimelineZoom:P0}";
 
+    public DateTime? TimelineRangeStart
+    {
+        get => timelineRangeStart;
+        set
+        {
+            if (SetProperty(ref timelineRangeStart, value))
+            {
+                OnTimelineRangeInputChanged();
+            }
+        }
+    }
+
+    public DateTime? TimelineRangeEnd
+    {
+        get => timelineRangeEnd;
+        set
+        {
+            if (SetProperty(ref timelineRangeEnd, value))
+            {
+                OnTimelineRangeInputChanged();
+            }
+        }
+    }
+
+    public TimelineRangeRequest? TimelineRangeRequest
+    {
+        get => timelineRangeRequest;
+        private set => SetProperty(ref timelineRangeRequest, value);
+    }
+
+    public string TimelineRangeText => TimelineRangeStart.HasValue && TimelineRangeEnd.HasValue
+        ? $"Zeitraum: {TimelineRangeStart:dd.MM.yyyy} – {TimelineRangeEnd:dd.MM.yyyy}"
+        : "Zeitraum: nicht gewählt";
+
     public bool IsAttachmentImporting
     {
         get => isAttachmentImporting;
@@ -279,6 +329,7 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             }
 
             RefreshEventList(selectedEventId: null);
+            InitializeTimelineRange();
 
             OnPropertyChanged(nameof(HasProject));
             OnPropertyChanged(nameof(HasNoProject));
@@ -660,6 +711,87 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
             description,
             timestampUtc).ConfigureAwait(true);
         StatusMessage = description;
+    }
+
+    private async Task MoveTimelineCardAsync(TimelineCardMoveRequest request)
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var timelineEvent = CurrentWorkspace.Project.Events
+            .SingleOrDefault(item => item.Id == request.EventId);
+        if (timelineEvent is null)
+        {
+            return;
+        }
+
+        var timestampUtc = DateTimeOffset.UtcNow;
+        var moved = eventEditingService.MoveLayoutPosition(
+            CurrentWorkspace.Project,
+            request.EventId,
+            request.Orientation,
+            request.HorizontalDelta,
+            request.VerticalDelta,
+            timestampUtc);
+        if (moved is null)
+        {
+            return;
+        }
+
+        MarkCurrentProjectChanged(request.EventId);
+        var orientationText = request.Orientation == TimelineOrientation.Horizontal
+            ? "horizontalen"
+            : "vertikalen";
+        var description = $"Karte „{timelineEvent.Title}“ in der {orientationText} Ansicht verschoben";
+        await WriteAuditAsync(
+            "LayoutMove",
+            request.EventId,
+            description,
+            timestampUtc).ConfigureAwait(true);
+        StatusMessage = description + ".";
+    }
+
+    private async Task ResetTimelineLayoutAsync()
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var timestampUtc = DateTimeOffset.UtcNow;
+        if (!eventEditingService.ResetLayoutPositions(
+                CurrentWorkspace.Project,
+                SelectedEvent?.Id,
+                timestampUtc))
+        {
+            return;
+        }
+
+        MarkCurrentProjectChanged(SelectedEvent?.Id);
+        const string description = "Automatische Zeitstrahlanordnung wiederhergestellt";
+        await WriteAuditAsync(
+            "LayoutReset",
+            entityId: null,
+            description,
+            timestampUtc).ConfigureAwait(true);
+        StatusMessage = description + ".";
+    }
+
+    private Task ShowTimelineRangeAsync()
+    {
+        if (!CanShowTimelineRange())
+        {
+            return Task.CompletedTask;
+        }
+
+        var start = DateOnly.FromDateTime(TimelineRangeStart!.Value);
+        var end = DateOnly.FromDateTime(TimelineRangeEnd!.Value);
+        timelineRangeRevision = unchecked(timelineRangeRevision + 1);
+        TimelineRangeRequest = new TimelineRangeRequest(start, end, timelineRangeRevision);
+        StatusMessage = $"Zeitraum {start:dd.MM.yyyy} bis {end:dd.MM.yyyy} wird angezeigt.";
+        return Task.CompletedTask;
     }
 
     private async Task ShowAuditLogAsync()
@@ -1208,7 +1340,53 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         OnPropertyChanged(nameof(TimelineViewOrientation));
         OnPropertyChanged(nameof(CompressLargeGaps));
         OnPropertyChanged(nameof(GapCompressionText));
+        OnPropertyChanged(nameof(TimelineRangeText));
+        ResetTimelineLayoutCommand.RaiseCanExecuteChanged();
     }
+
+    private void InitializeTimelineRange()
+    {
+        TimelineRangeRequest = null;
+        if (CurrentProject is null)
+        {
+            TimelineRangeStart = null;
+            TimelineRangeEnd = null;
+            return;
+        }
+
+        var chronological = CurrentProject.GetChronologicalEvents();
+        TimelineRangeStart = CurrentProject.OverallStart?.ToDateTime(TimeOnly.MinValue) ??
+            chronological.FirstOrDefault()?.Date.SortStart;
+        TimelineRangeEnd = CurrentProject.OverallEnd?.ToDateTime(TimeOnly.MinValue) ??
+            (chronological.Count > 0 ? chronological.Max(GetTimelineEventEnd) : null);
+    }
+
+    private void OnTimelineRangeInputChanged()
+    {
+        OnPropertyChanged(nameof(TimelineRangeText));
+        ShowTimelineRangeCommand.RaiseCanExecuteChanged();
+    }
+
+    private bool CanShowTimelineRange() =>
+        !IsBusy &&
+        HasProject &&
+        TimelineRangeStart.HasValue &&
+        TimelineRangeEnd.HasValue &&
+        TimelineRangeEnd.Value.Date >= TimelineRangeStart.Value.Date;
+
+    private bool CanMoveTimelineCard(TimelineCardMoveRequest request) =>
+        !IsBusy &&
+        CurrentProject?.Events.Any(timelineEvent => timelineEvent.Id == request.EventId) == true &&
+        double.IsFinite(request.HorizontalDelta) &&
+        double.IsFinite(request.VerticalDelta);
+
+    private static DateTime GetTimelineEventEnd(TimelineEvent timelineEvent) =>
+        timelineEvent.Date.EndYear.HasValue
+            ? new DateTime(
+                timelineEvent.Date.EndYear.Value,
+                timelineEvent.Date.EndMonth!.Value,
+                timelineEvent.Date.EndDay!.Value)
+            : timelineEvent.Date.SortStart;
 
     private bool CanMoveSelectedEvent(bool moveEarlier) =>
         !IsBusy &&
@@ -1346,6 +1524,9 @@ public sealed class MainWindowViewModel : ObservableObject, IAsyncDisposable
         SetHorizontalTimelineCommand.RaiseCanExecuteChanged();
         SetVerticalTimelineCommand.RaiseCanExecuteChanged();
         ToggleGapCompressionCommand.RaiseCanExecuteChanged();
+        MoveTimelineCardCommand.RaiseCanExecuteChanged();
+        ResetTimelineLayoutCommand.RaiseCanExecuteChanged();
+        ShowTimelineRangeCommand.RaiseCanExecuteChanged();
         ShowAuditLogCommand.RaiseCanExecuteChanged();
         AddAttachmentsCommand.RaiseCanExecuteChanged();
         AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();

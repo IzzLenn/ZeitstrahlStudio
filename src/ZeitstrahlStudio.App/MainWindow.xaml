@@ -282,6 +282,7 @@
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
                                     <RowDefinition Height="*" />
                                 </Grid.RowDefinitions>
                                 <Border Padding="9"
@@ -335,6 +336,11 @@
                                                 Click="TimelineResetView_Click"
                                                 ToolTip="Zoom und sichtbaren Bereich zurücksetzen"
                                                 Content="Zurücksetzen" />
+                                        <Button DockPanel.Dock="Left"
+                                                Style="{StaticResource CompactButtonStyle}"
+                                                Command="{Binding ResetTimelineLayoutCommand}"
+                                                ToolTip="Alle manuellen Kartenpositionen entfernen und die automatische Anordnung wiederherstellen"
+                                                Content="Auto-Layout" />
                                         <TextBlock DockPanel.Dock="Right"
                                                    Margin="14,0,0,0"
                                                    VerticalAlignment="Center"
@@ -343,7 +349,36 @@
                                                    Text="Mausrad: Zoom · Hintergrund ziehen: Verschieben" />
                                     </DockPanel>
                                 </Border>
-                                <ScrollViewer Grid.Row="1"
+                                <Border Grid.Row="1"
+                                        Padding="9,6"
+                                        Background="#F8FAFC"
+                                        BorderBrush="#E2E8F0"
+                                        BorderThickness="0,0,0,1">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Margin="0,0,8,0"
+                                                   VerticalAlignment="Center"
+                                                   FontWeight="SemiBold"
+                                                   Text="Zeitraum anzeigen:" />
+                                        <DatePicker Width="125"
+                                                    SelectedDate="{Binding TimelineRangeStart, UpdateSourceTrigger=PropertyChanged}" />
+                                        <TextBlock Margin="8,0"
+                                                   VerticalAlignment="Center"
+                                                   Text="bis" />
+                                        <DatePicker Width="125"
+                                                    SelectedDate="{Binding TimelineRangeEnd, UpdateSourceTrigger=PropertyChanged}" />
+                                        <Button Margin="9,0,0,0"
+                                                Style="{StaticResource CompactButtonStyle}"
+                                                Command="{Binding ShowTimelineRangeCommand}"
+                                                ToolTip="Den gewählten fachlichen Zeitraum in den sichtbaren Ausschnitt einpassen"
+                                                Content="Anzeigen" />
+                                        <TextBlock Margin="14,0,0,0"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="#64748B"
+                                                   FontSize="11"
+                                                   Text="Karte ziehen: nur Layout ändern · Datum bleibt unverändert" />
+                                    </StackPanel>
+                                </Border>
+                                <ScrollViewer Grid.Row="2"
                                               HorizontalScrollBarVisibility="Auto"
                                               VerticalScrollBarVisibility="Auto"
                                               CanContentScroll="True"
@@ -355,7 +390,9 @@
                                                         ZoomFactor="{Binding TimelineZoom, Mode=TwoWay}"
                                                         CompressLargeGaps="{Binding CompressLargeGaps}"
                                                         LayoutRevision="{Binding TimelineLayoutRevision}"
-                                                        ToolTip="Ereigniskarte auswählen; Hintergrund mit der Maus ziehen; Mausrad zoomt" />
+                                                        MoveCardCommand="{Binding MoveTimelineCardCommand}"
+                                                        RangeRequest="{Binding TimelineRangeRequest}"
+                                                        ToolTip="Ereigniskarte auswählen oder rein visuell ziehen; Hintergrund ziehen; Mausrad zoomt" />
                                 </ScrollViewer>
                             </Grid>
                         </TabItem>
@@ -426,6 +463,11 @@
                 BorderBrush="#CBD5E1"
                 BorderThickness="0,1,0,0">
             <DockPanel>
+                <TextBlock DockPanel.Dock="Right"
+                           Margin="18,0,0,0"
+                           VerticalAlignment="Center"
+                           Foreground="#334155"
+                           Text="{Binding TimelineRangeText}" />
                 <TextBlock DockPanel.Dock="Right"
                            Margin="18,0,0,0"
                            VerticalAlignment="Center"

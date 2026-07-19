@@ -215,3 +215,13 @@ Die interaktive WPF-Zeitstrahlansicht ist ein eigenes `FrameworkElement` mit `IS
 Der Renderer besitzt keine fachliche Datums- oder Speicherlogik. Projekt, Auswahl, Orientierung, Zoom, Lückenkompression und eine reine Layoutrevision werden über Dependency Properties eingespeist. Auswahl und Viewportnavigation bleiben lokale Präsentationszustände; Änderungen der projektweiten Orientierung und Lückenkompression laufen über das Haupt-ViewModel, markieren das Projekt als geändert und erzeugen einen Audit-Eintrag.
 
 Zoom wird auf 25 bis 800 Prozent begrenzt und beim Mausrad am Inhalt unter dem Zeiger verankert. `IScrollInfo` stellt dieselben berechneten Ausmaße für Scrollleisten, Mausverschiebung, Zentrierung und Gesamtprojektansicht bereit. Dadurch bleibt die Bedienung unabhängig von der Orientierung konsistent, während die chronologische Liste als zugängliche alternative Darstellung erhalten bleibt.
+
+## ADR-028: Datumsanker bleibt von manueller Kartenposition getrennt
+
+**Status:** angenommen am 19.07.2026
+
+Ein `TimelineCardLayout` enthält sowohl den unveränderten Achsenanker des Ereignisdatums als auch die visuell versetzte Kartenposition. Verbindungslinien und Fristbezüge beginnen am fachlichen Anker, während Zentrierung, Treffertest und Kartendarstellung die manuelle Position verwenden. Dadurch bleibt selbst bei einem Versatz entlang der Zeitachse sichtbar, welchem realen Datum die Karte zugeordnet ist; Drag-and-drop kann in diesem Modus niemals unbemerkt ein Datum ändern.
+
+Die WPF-Ansicht übermittelt beim Ende einer Kartenbewegung ausschließlich die Bildschirmdifferenz, Ereignis-ID und aktuelle Orientierung an das ViewModel. Die Application-Schicht addiert diese Differenz auf die bestehende orientierungsabhängige `LayoutPosition`, begrenzt beide Koordinaten auf ±100.000 Pixel und zeichnet einen Layout-Änderungsschritt in derselben maximal 100 Einträge umfassenden Undo-/Redo-Historie auf. Löschen erfasst zugehörige Positionen mit, damit Undo das vollständige sichtbare Ereignis wiederherstellt. „Auto-Layout“ ist ein einzelner gemeinsamer Historieneintrag für alle entfernten Positionen.
+
+Die Navigation zu einem gewählten Zeitraum projiziert dessen Grenzen über eine öffentliche Datumsabbildung des gemeinsamen Layoutmodells. Eine zweite, vereinfachte lineare Umrechnung in WPF wurde verworfen, weil sie bei komprimierten Lücken einen anderen Ausschnitt als Achse, PDF oder spätere HTML-Darstellung liefern würde.

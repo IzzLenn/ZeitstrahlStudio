@@ -15,6 +15,7 @@ public sealed record EventHistoryResult(
 public sealed class ProjectEventEditingService
 {
     private const int MaximumHistoryEntries = 100;
+    private const double MaximumLayoutOffset = 100_000;
     private readonly Dictionary<Guid, HistoryState> historyByProject = [];
     private readonly object historyLock = new();
 
@@ -75,12 +76,21 @@ public sealed class ProjectEventEditingService
         DateTimeOffset timestampUtc)
     {
         ArgumentNullException.ThrowIfNull(project);
+        var layoutChanges = project.LayoutPositions
+            .Where(position => position.EventId == eventId)
+            .Select(position => new LayoutChange(
+                position.EventId,
+                position.Orientation,
+                Before: position,
+                After: null))
+            .ToArray();
         var removed = project.RemoveEvent(eventId, timestampUtc);
         Record(
             project.Id,
             new HistoryEntry(
                 $"Ereignis „{removed.Title}“ gelöscht",
-                [new EventChange(eventId, removed, After: null)]));
+                [new EventChange(eventId, removed, After: null)],
+                layoutChanges));
         return removed;
     }
 
@@ -227,6 +237,88 @@ public sealed class ProjectEventEditingService
         return currentIndex >= 0 && targetIndex >= 0 && targetIndex < group.Count;
     }
 
+    /// <summary>
+    /// Verschiebt eine Karte rein visuell und speichert den Versatz getrennt nach Ausrichtung.
+    /// </summary>
+    public LayoutPosition? MoveLayoutPosition(
+        TimelineProject project,
+        Guid eventId,
+        TimelineOrientation orientation,
+        double horizontalDelta,
+        double verticalDelta,
+        DateTimeOffset timestampUtc)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        _ = FindEvent(project, eventId);
+        if (!double.IsFinite(horizontalDelta) || !double.IsFinite(verticalDelta))
+        {
+            throw new DomainValidationException("Layoutversätze müssen endliche Zahlen sein.");
+        }
+
+        var before = project.LayoutPositions.SingleOrDefault(position =>
+            position.EventId == eventId && position.Orientation == orientation);
+        var horizontalOffset = Math.Clamp(
+            (before?.HorizontalOffset ?? 0) + horizontalDelta,
+            -MaximumLayoutOffset,
+            MaximumLayoutOffset);
+        var verticalOffset = Math.Clamp(
+            (before?.VerticalOffset ?? 0) + verticalDelta,
+            -MaximumLayoutOffset,
+            MaximumLayoutOffset);
+        if (before is not null &&
+            Math.Abs(before.HorizontalOffset - horizontalOffset) < 0.01 &&
+            Math.Abs(before.VerticalOffset - verticalOffset) < 0.01)
+        {
+            return null;
+        }
+
+        if (before is null && Math.Abs(horizontalOffset) < 0.01 && Math.Abs(verticalOffset) < 0.01)
+        {
+            return null;
+        }
+
+        var after = new LayoutPosition(eventId, orientation, horizontalOffset, verticalOffset);
+        project.SetLayoutPosition(after, timestampUtc);
+        Record(
+            project.Id,
+            new HistoryEntry(
+                $"Layoutposition von „{FindEvent(project, eventId).Title}“ geändert",
+                [],
+                [new LayoutChange(eventId, orientation, before, after)],
+                eventId));
+        return after;
+    }
+
+    /// <summary>Entfernt alle manuellen Kartenpositionen als einen Undo-Schritt.</summary>
+    public bool ResetLayoutPositions(
+        TimelineProject project,
+        Guid? selectedEventId,
+        DateTimeOffset timestampUtc)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        if (project.LayoutPositions.Count == 0)
+        {
+            return false;
+        }
+
+        var changes = project.LayoutPositions
+            .Select(position => new LayoutChange(
+                position.EventId,
+                position.Orientation,
+                Before: position,
+                After: null))
+            .ToArray();
+        project.ResetLayoutPositions(timestampUtc);
+        Record(
+            project.Id,
+            new HistoryEntry(
+                "Automatische Zeitstrahlanordnung wiederhergestellt",
+                [],
+                changes,
+                selectedEventId));
+        return true;
+    }
+
     public bool CanUndo(Guid projectId)
     {
         lock (historyLock)
@@ -328,10 +420,26 @@ public sealed class ProjectEventEditingService
                 project.ReplaceEvent(target, timestampUtc);
             }
         }
+
+        foreach (var change in entry.LayoutChanges)
+        {
+            var target = useBeforeState ? change.Before : change.After;
+            if (target is null)
+            {
+                project.RemoveLayoutPosition(
+                    change.EventId,
+                    change.Orientation,
+                    timestampUtc);
+            }
+            else
+            {
+                project.SetLayoutPosition(target, timestampUtc);
+            }
+        }
     }
 
     private static Guid? GetSelectedEventId(HistoryEntry entry, bool useBeforeState) =>
-        entry.Changes
+        entry.SelectedEventId ?? entry.Changes
             .Select(change => useBeforeState ? change.Before : change.After)
             .FirstOrDefault(timelineEvent => timelineEvent is not null)
             ?.Id;
@@ -464,9 +572,20 @@ public sealed class ProjectEventEditingService
         TimelineEvent? Before,
         TimelineEvent? After);
 
+    private sealed record LayoutChange(
+        Guid EventId,
+        TimelineOrientation Orientation,
+        LayoutPosition? Before,
+        LayoutPosition? After);
+
     private sealed record HistoryEntry(
         string Description,
-        IReadOnlyList<EventChange> Changes);
+        IReadOnlyList<EventChange> Changes,
+        IReadOnlyList<LayoutChange>? ChangedLayouts = null,
+        Guid? SelectedEventId = null)
+    {
+        public IReadOnlyList<LayoutChange> LayoutChanges { get; } = ChangedLayouts ?? [];
+    }
 
     private sealed class HistoryState
     {

@@ -1,4 +1,5 @@
 using System.Windows;
+using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using System.Windows.Threading;
@@ -21,6 +22,7 @@ public sealed class TimelineViewTests
             try
             {
                 var project = CreateProject();
+                TimelineCardMoveRequest? moveRequest = null;
                 var view = new TimelineView
                 {
                     Project = project,
@@ -28,10 +30,24 @@ public sealed class TimelineViewTests
                     Orientation = TimelineOrientation.Horizontal,
                     ZoomFactor = 1.25,
                     CompressLargeGaps = true,
+                    MoveCardCommand = new RecordingCommand(parameter =>
+                        moveRequest = Assert.IsType<TimelineCardMoveRequest>(parameter)),
                 };
 
                 var horizontalPixels = Render(view, 900, 560);
                 Assert.Contains(horizontalPixels, value => value < 80);
+                view.RequestCardMove(project.Events[25].Id, 24.5, -13.25);
+                Assert.NotNull(moveRequest);
+                Assert.Equal(project.Events[25].Id, moveRequest.EventId);
+                Assert.Equal(TimelineOrientation.Horizontal, moveRequest.Orientation);
+                Assert.Equal(24.5, moveRequest.HorizontalDelta);
+                Assert.Equal(-13.25, moveRequest.VerticalDelta);
+                view.RangeRequest = new TimelineRangeRequest(
+                    new DateOnly(1910, 1, 1),
+                    new DateOnly(1920, 12, 31),
+                    Revision: 1);
+                Assert.InRange(view.ZoomFactor, 0.25, 8);
+                Assert.True(double.IsFinite(view.HorizontalOffset));
                 view.ShowWholeProject();
                 view.CenterSelectedEvent();
                 Assert.InRange(view.ZoomFactor, 0.25, 8);
@@ -105,5 +121,18 @@ public sealed class TimelineViewTests
         }
 
         return project;
+    }
+
+    private sealed class RecordingCommand(Action<object?> execute) : ICommand
+    {
+        public event EventHandler? CanExecuteChanged
+        {
+            add { }
+            remove { }
+        }
+
+        public bool CanExecute(object? parameter) => true;
+
+        public void Execute(object? parameter) => execute(parameter);
     }
 }
