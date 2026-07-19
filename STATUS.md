@@ -6,7 +6,7 @@ Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Meilenstein 5B2 – Analysewarteschlange und Ergebnispersistenz
+Meilenstein 5B3 – begrenzte Analysewarteschlange und UI-Anbindung
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -139,6 +139,15 @@ Meilenstein 5B2 – Analysewarteschlange und Ergebnispersistenz
 - Analyzer liefern erwartbare Format-/Dateifehler als OperationResult statt das Projekt zu beschädigen
 - drei Integrationstests prüfen DOCX-Text/Metadaten/Datum, XLSX-Zellauflösung/Datum und ein defektes Archiv
 
+### Meilenstein 5B2 – Analyseergebnispersistenz
+
+- extrahierter Text, Extraktionsmethode, Metadaten, Titel, Datumsfundstellen, Vorschaureferenz und Seitenzahl werden transaktional in SQLite gespeichert
+- ein Analyseergebnis ersetzt atomar den vorherigen Stand desselben Anhangs und setzt dessen Datenbankzustand auf bereit
+- gespeicherte Analyseergebnisse können vollständig über den Application-Port zurückgelesen werden
+- FTS5 wird in derselben Transaktion aktualisiert; neuer Dokumenttext ist unmittelbar lokal durchsuchbar
+- Projekt-/Anhangszugehörigkeit wird vor jedem Schreiben per Fremdschlüsselbeziehung geprüft
+- ein Integrationstest prüft Roundtrip, Anhangszustand und unmittelbaren Volltexttreffer
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -151,7 +160,7 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 ```
 
-Aktueller Stand nach Meilenstein 5B1: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 25 Integrationstests bestanden.
+Aktueller Stand nach Meilenstein 5B2: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 29 Unit-Tests und 26 Integrationstests bestanden.
 
 ## Phasenweiser Implementierungsplan
 
@@ -174,7 +183,7 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 - Die manuelle Ereignisreihenfolge ist über tastaturzugängliche Früher-/Später-Aktionen verfügbar; direktes Drag-and-drop ist noch nicht implementiert.
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
-- DOCX-/XLSX-Analyzer sind getestet, aber noch nicht an die Importwarteschlange und Ergebnispersistenz der Oberfläche gebunden.
+- DOCX-/XLSX-Analyzer und Ergebnispersistenz sind getestet, aber noch nicht durch eine begrenzte Importwarteschlange an die Oberfläche gebunden.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
 - Dokumentanalyse, OCR und PDF-Vorschau benötigen später lokale native/verwaltete Komponenten; Lizenz, Größe und x64-Paketierung müssen vor Auswahl geprüft werden.
 - Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
@@ -183,4 +192,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Begrenzte abbrechbare Analysewarteschlange und transaktionale Speicherung von extrahiertem Text/Metadaten implementieren. Danach die vorhandenen DOCX-/XLSX-Analyzer beim Import ausführen und Status/Datumsfundstellen in der Oberfläche anzeigen.
+Begrenzte abbrechbare Analysewarteschlange implementieren und die vorhandenen DOCX-/XLSX-Analyzer nach dem Import ausführen. Status, extrahierten Text und Datumsfundstellen anschließend in der Anhangsoberfläche anzeigen.

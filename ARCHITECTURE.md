@@ -81,6 +81,8 @@ Der Anhangsimport verarbeitet jede Quelldatei streamend, berechnet SHA-256 im se
 
 DOCX- und XLSX-Analyse verwendet sichere streamende Open-XML-Reader ohne Office-Automation. Gemeinsame ZIP- und XML-Grenzen verhindern DTD-Auflösung, extrem große Einträge und Kompressionsbomben. Analyzer liefern Klartext, Kerneigenschaften und begrenzte Datumsfundstellen über den Application-Port; Warteschlange und Persistenz werden als nachgelagerte Orchestrierung getrennt gehalten.
 
+Die Analyseablage ersetzt Text und Metadaten eines Anhangs transaktional, setzt seinen Datenbankzustand und aktualisiert FTS5 im selben Commit. Reservierte Analysefelder werden beim Laden wieder in das typisierte Application-Ergebnis zusammengesetzt; dokumenteigene Metadaten bleiben davon getrennt.
+
 ViewModels stellen Commands und bindbare Zustände bereit. Der UI-Thread übernimmt nur kleine Zustandsänderungen. Listen werden virtualisiert; große Vorschaubilder und Dokumenttexte werden verzögert geladen. Dokumentanalyse und OCR verwenden eine begrenzte Warteschlange. Autosave serialisiert Speichervorgänge, damit niemals zwei Archivgenerationen konkurrieren.
 
 Helles und dunkles Theme sind Resource Dictionaries. Zeitstrahl-Layouts werden aus einem testbaren Layoutmodell erzeugt; horizontale und vertikale WPF-Ansichten konsumieren dasselbe Modell. Farben werden immer durch Text, Symbole oder Rahmen ergänzt.

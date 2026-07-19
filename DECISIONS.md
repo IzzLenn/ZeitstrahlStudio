@@ -141,3 +141,11 @@ Kopie und SHA-256-Berechnung erfolgen in einem asynchronen Streaming-Durchlauf m
 DOCX und XLSX werden als ZIP-basierte Open-XML-Formate direkt und streamend mit System.IO.Compression und XmlReader analysiert. DTD-Verarbeitung und externe XML-Resolver sind deaktiviert. Harte Grenzen für ZIP-Einträge, entpackte Größen, Kompressionsverhältnis und extrahierte Zeichen schützen vor Ressourcenmissbrauch.
 
 Für diese Formate wurde bewusst keine zusätzliche Office-Bibliothek eingeführt: Haupttext, Zellwerte, Shared Strings und Kerneigenschaften lassen sich mit wenigen klar begrenzten Readern vollständig lokal auslesen. Microsoft Office muss weder installiert noch automatisiert werden.
+
+## ADR-020: Analyseablage und FTS-Aktualisierung in einer Transaktion
+
+**Status:** angenommen am 19.07.2026
+
+Text, Extraktionsmethode und Anhangsmetadaten werden gemeinsam mit dem Statuswechsel des Anhangs in einer SQLite-Transaktion ersetzt. Derselbe Commit baut den projektbezogenen FTS5-Inhalt neu auf. Dadurch kann weder ein halbes Analyseergebnis noch ein vom gespeicherten Text abweichender Suchindex sichtbar werden.
+
+UI- und Analyzer-Schichten schreiben nicht direkt in Tabellen, sondern verwenden einen Application-Port. Reservierte interne Metadatenkeys erhalten ein ZeitstrahlStudio-Präfix und werden beim Laden wieder von dokumenteigenen Metadaten getrennt.

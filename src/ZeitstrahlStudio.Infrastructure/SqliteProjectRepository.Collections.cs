@@ -191,7 +191,7 @@ public sealed partial class SqliteProjectRepository
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task RefreshSearchIndexAsync(
+    internal static async Task RefreshSearchIndexAsync(
         SqliteConnection connection,
         SqliteTransaction transaction,
         Guid projectId,

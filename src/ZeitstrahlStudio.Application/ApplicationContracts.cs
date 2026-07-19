@@ -62,6 +62,20 @@ public interface IDocumentAnalyzer
         CancellationToken cancellationToken);
 }
 
+/// <summary>Speichert und lädt lokale Dokumentanalyseergebnisse transaktionssicher.</summary>
+public interface IAttachmentAnalysisStore
+{
+    Task SaveAsync(
+        ProjectWorkspace workspace,
+        Attachment attachment,
+        DocumentAnalysisResult result,
+        CancellationToken cancellationToken);
+    Task<DocumentAnalysisResult?> LoadAsync(
+        ProjectWorkspace workspace,
+        Attachment attachment,
+        CancellationToken cancellationToken);
+}
+
 /// <summary>Durchsucht Projektdaten und extrahierte Dokumenttexte.</summary>
 public interface IProjectSearchService
 {
