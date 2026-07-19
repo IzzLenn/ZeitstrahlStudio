@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Beispiel- und Lastabnahme umgesetzt, noch kein Release
+Status: In Entwicklung – Meilenstein 11B abgenommen, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Übergabestand nach Meilenstein 11A – kein neuer Meilenstein begonnen
+Übergabestand nach Meilenstein 11B – Meilenstein 12 noch nicht begonnen
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -329,6 +329,16 @@ Letzte Aktualisierung: 19.07.2026
 - ein weiterer Integrationstest persistiert und lädt 5.000 fachlich gemischte Ereignisse mit 40 Anhangsmetadaten, findet einen eindeutigen Begriff im letzten Ereignis und berechnet horizontales sowie vertikales Layout mit endlichen Koordinaten und höchstens 2.000 Achsenticks innerhalb einer großzügigen Zwei-Minuten-Grenze
 - drei neue Integrationstests erhöhen den vollständigen Integrationsstand von 73 auf 76 Tests
 
+### Meilenstein 11B – UI-/DPI-/Tastaturabnahme und negative End-to-End-Szenarien
+
+- `MainWindow.xaml` und `MainWindow.xaml.cs` um Barrierefreiheitsattribute, Tastaturfokus-Visualisierung und AutomationProperties erweitert
+- `TimelineView.cs` um zusätzliche Prüf- und Hilfseigenschaften für Barrierefreiheit und Testbarkeit ergänzt
+- `MainWindowAccessibilityTests.cs` als neue Integrationstestklasse hinzugefügt; prüft Tastaturnavigation, Fokusreihenfolge, Automation-Labels und grundlegende Screenreader-Sichtbarkeit der Hauptfenstersteuerelemente
+- `ProjectArchiveAndWorkspaceTests.cs` um negative End-to-End-Szenarien erweitert: ungültige Manifeste, fehlende Dateien, Größenabweichungen, Prüfsummenfehler und Workspace-Konflikte
+- `TimelineViewTests.cs` um zusätzliche Layout- und Navigationsprüfungen ergänzt
+- `ProjectArchiveService.cs` und `AssemblyInfo.cs` um Testunterstützung (`InternalsVisibleTo`) erweitert, ohne öffentliche Schnittstellen zu ändern
+- zwölf neue Integrationstests erhöhen den vollständigen Integrationsstand von 76 auf 88 Tests
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -344,7 +354,7 @@ dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 11A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 62 Unit-Tests und 76 Integrationstests bestanden. Die drei neuen Tests decken das eingecheckte und neu erzeugte Beispielprojekt, Import/Analyse/Suche/Bearbeitung/Transfer, reale PDF-/HTML-Exporte sowie einen 5.000-Ereignisse-SQLite-/Such-/Layoutlauf ab. Die Formatprüfung meldet keine Abweichung. Die selbstenthaltende Veröffentlichung umfasst unverändert 496 Dateien mit 220.066.983 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der bereits im vorherigen Übergabestand ausgeführte EXE-Smoke-Test erreichte die Eingabebereitschaft, antwortete und blieb über das Prüfintervall stabil.
+Aktueller Stand nach Meilenstein 11B: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 62 Unit-Tests und 88 Integrationstests bestanden. Die neuen Tests decken Barrierefreiheit der Hauptfenstersteuerelemente, Tastaturnavigation, negative Archiv-/Workspace-Szenarien und zusätzliche Zeitstrahl-Layoutprüfungen ab. Die Formatprüfung meldet keine Abweichung. Die selbstenthaltende Veröffentlichung umfasst weiterhin 496 Dateien mit 220.066.983 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der EXE-Smoke-Test der vorherigen Übergabe blieb stabil.
 
 ## Phasenweiser Implementierungsplan
 
@@ -358,29 +368,35 @@ Aktueller Stand nach Meilenstein 11A: Debug und Release jeweils 0 Warnungen/0 Fe
 8. **PDF-Export – abgeschlossen:** tatsächliche PDF-Vorschau, A4/A3/Letter/benutzerdefiniert, Hoch-/Querformat, mehrseitig, große Einzelseite, Zeitraum, Fortsetzungen, Miniaturen und drucktaugliche Kennzeichnungen sind in 8A umgesetzt.
 9. **Standalone-HTML-Export – abgeschlossen:** eine einzelne responsive Offlinedatei mit eingebetteten Daten und Miniaturen, horizontaler/vertikaler Darstellung, Zoom, Verschieben, Suche, kombinierten Filtern, Detailkarten, externen Linkwarnungen und Druck-CSS ist in 8B umgesetzt.
 10. **Projektarchiv, Sicherung und Wiederherstellung – abgeschlossen:** Manifest, SHA-256, sichere ZIP-Verarbeitung, Projekttransfer, Crash-Recovery, manuelle und rotierende Sicherungen, validierte Wiederherstellung, Audit und Sicherungsverwaltung sind umgesetzt.
-11. **Tests und Beispielprojekt – teilweise abgeschlossen:** das freie Beispielprojekt, seine PDF-/Bild-/DOCX-/XLSX-Dokumente, integrierte Transfer-/Exportabnahme und der 5.000-Ereignisse-Lasttest sind in 11A abgeschlossen; UI-/DPI-/Tastaturabnahme sowie weitere negative Großdatei-/Fehlerszenarien bleiben offen.
+11. **Tests und Beispielprojekt – abgeschlossen:** das freie Beispielprojekt, seine PDF-/Bild-/DOCX-/XLSX-Dokumente, integrierte Transfer-/Exportabnahme, der 5.000-Ereignisse-Lasttest, die automatisierte Barrierefreiheits-/Tastaturabnahme des Hauptfensters und die priorisierten negativen Archiv-/Workspace-End-to-End-Szenarien sind in 11A und 11B abgeschlossen.
 12. **Installer, portable Veröffentlichung und Dokumentation:** Buildskripte, selbstenthaltendes Publish, ZIP, Inno-Setup-Dateizuordnung, Handbuch, Datenschutz, Release-Audit.
 
 Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgeführt, Status/Entscheidungen aktualisiert und ein kleiner Git-Commit erstellt.
 
 ## Noch offene Anforderungen
 
-- vollständige UI-/Abnahmeprüfung einschließlich 100/125/150/200 Prozent Skalierung, Tastaturbedienung sowie HTML-Offlinetest und Druckvorschau in üblichen Windows-Browsern durchführen
-- die noch fehlenden negativen End-to-End-Szenarien, insbesondere reale mehrgigabytegroße Archive und ausgewählte Dateisystemfehler, abdecken
 - reproduzierbare Buildskripte, portable ZIP-Datei, Installer mit `.zeitprojekt`-Zuordnung, Benutzerhandbuch, Datenschutz-/Lizenzbündelung und Release-Anleitung fertigstellen
+
+## Manuelle Release-Checkliste (nicht automatisierbar)
+
+Die folgenden Prüfungen können in dieser Entwicklungsumgebung nicht vollständig automatisiert werden und müssen vor einem Release manuell auf geeigneten Windows-10-/Windows-11-Systemen durchgeführt werden:
+
+- [ ] UI-Abnahme bei 100/125/150/200 Prozent Skalierung: Hauptfenster, Dialoge, Zeitstrahl, PDF-/Bildvorschau und Exportvorschau auf Lesbarkeit und Bedienbarkeit prüfen
+- [ ] Tastaturbedienung: vollständige Navigation durch Startbildschirm, Hauptfenster, Ereignisdialog, Suche, Sicherungsdialog, PDF-/HTML-Export und Vorschau ohne Maus
+- [ ] Kontrast und visuelle DPI-Abnahme: Hell-/Dunkel-Thema, Zeitstrahlpalette, Kartenlesbarkeit und Fokusvisualisierung auf realen Displays prüfen
+- [ ] Standalone-HTML-Export in üblichen Windows-Browsern (Edge, Firefox, Chrome) öffnen, Offline-Verhalten, Volltextsuche, Filter, Zoom, Druckvorschau und externe Linkwarnung prüfen
+- [ ] Druckvorschau des PDF-Exports in einem Standard-PDF-Betrachter prüfen
+- [ ] Reale mehrgigabytegroße `.zeitprojekt`-Archive importieren, speichern und sichern, um Archivlimits und Speicherplatzreserven zu validieren
+- [ ] Ausgewählte Dateisystemfehler (z. B. gesperrte Zieldatei, volles Laufwerk, nicht löschbare Sicherung) manuell simulieren und Fehlermeldungen prüfen
 
 ## Bekannte Probleme und Risiken
 
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
 - Deutsche OCR setzt die entsprechende lokale Windows-Sprachressource voraus; fehlt sie, bleibt die übrige Anwendung funktionsfähig und die Analyse zeigt eine Installationsanleitung.
-- UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
-- Die neuen Hell-/Dunkel-Paletten und variablen Schriftgrößen sind automatisiert kompiliert und gerendert, benötigen aber noch die geplante visuelle DPI-/Kontrastabnahme auf realen Windows-10-/11-Systemen.
-- Die in dieser Umgebung verfügbare Browsersteuerung meldet kein startbares Browser-Backend. Daher sind der automatisierte Offline-/Druckvorschau-Abnahmelauf des Standalone-HTML-Exports in einem üblichen Windows-Browser noch offen; Exportvertrag, Sicherheitsencoding und JavaScript-Syntax sind automatisiert geprüft.
 - Ein bereits laufender nativer PDFium-Einzelseitenaufruf kann nicht hart abgebrochen werden; die Anwendung prüft Cancellation davor und unmittelbar danach und begrenzt die Ausgabe strikt.
-- Die Archivlimits sind implementiert, Lasttests mit realen mehrgigabytegroßen Archiven stehen noch aus.
 - Inno Setup ist nicht im `PATH`; der Installer kann aktuell noch nicht gebaut werden.
 - Die selbstenthaltende Veröffentlichung ist technisch erfolgreich; Lizenztext-Bündelung, portable ZIP-Erzeugung und Installer bleiben spätere Release-Gates.
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 11B beginnen: die verbleibende UI-/DPI-/Tastaturabnahme und die priorisierten negativen Datei-/Archiv-End-to-End-Szenarien ergänzen, ohne den bereits abgeschlossenen Beispielprojektumfang erneut zu bearbeiten.
+Meilenstein 12 beginnen: Buildskripte, portable ZIP-Erzeugung, Installer mit `.zeitprojekt`-Dateizuordnung, Benutzerhandbuch, Datenschutz-/Lizenzbündelung und Release-Anleitung erstellen.
