@@ -1,0 +1,36 @@
+# Visual Studio und VS Code
+.vs/
+.vscode/*.log
+*.user
+*.suo
+
+# Build-Ausgaben
+**/bin/
+**/obj/
+artifacts/
+TestResults/
+coverage/
+
+# Kompilierte und binäre Dateien
+*.dll
+*.exe
+*.pdb
+*.nupkg
+*.zip
+
+# Generierte lokale Daten
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.log
+
+# Große Projektarchive und Testartefakte
+*.zeitprojekt
+
+# Temporäre Dateien
+*.tmp
+*.temp
+~$*
