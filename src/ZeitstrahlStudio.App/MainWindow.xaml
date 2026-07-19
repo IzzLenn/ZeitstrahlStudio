@@ -11,7 +11,7 @@
         Closing="Window_Closing"
         PreviewKeyDown="Window_PreviewKeyDown"
         AllowDrop="True"
-        PreviewDragOver="Window_PreviewDragOver"
+        DragOver="Window_DragOver"
         Drop="Window_Drop"
         FontFamily="Segoe UI"
         Background="{DynamicResource WindowBackgroundBrush}">
@@ -578,6 +578,7 @@
                                                         AxisFontSize="{Binding TimelineAxisFontSize}"
                                                         IsDarkTheme="{Binding IsDarkTheme}"
                                                         MoveCardCommand="{Binding MoveTimelineCardCommand}"
+                                                        DropFilesCommand="{Binding ImportDroppedFilesCommand}"
                                                         RangeRequest="{Binding TimelineRangeRequest}"
                                                         VisibleEventIds="{Binding TimelineVisibleEventIds}"
                                                         CenterSelectionRevision="{Binding TimelineSelectionNavigationRevision}"
@@ -586,19 +587,47 @@
                             </Grid>
                         </TabItem>
                         <TabItem Header="Ereignisliste">
-                            <Border Background="{DynamicResource SurfaceBrush}"
-                                    CornerRadius="6">
-                        <ListBox Margin="12"
+                            <Grid Background="{DynamicResource SurfaceBrush}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="310" />
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" CornerRadius="6">
+                        <ListBox x:Name="EventList"
+                                 Margin="12"
                                  ItemsSource="{Binding Events}"
                                  SelectedItem="{Binding SelectedEvent}"
                                  Background="Transparent"
                                  BorderThickness="0"
+                                 AllowDrop="True"
+                                 PreviewMouseLeftButtonDown="EventList_PreviewMouseLeftButtonDown"
+                                 PreviewMouseMove="EventList_PreviewMouseMove"
+                                 DragOver="EventList_DragOver"
+                                 DragLeave="EventList_DragLeave"
+                                 Drop="EventList_Drop"
                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                 ToolTip="Ereignis innerhalb derselben Datumsgruppe ziehen; Dateien auf das gewünschte Ereignis ablegen">
                             <ListBox.ItemContainerStyle>
                                 <Style TargetType="ListBoxItem">
                                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                                     <Setter Property="Padding" Value="8" />
+                                    <Setter Property="BorderBrush" Value="Transparent" />
+                                    <Setter Property="BorderThickness" Value="0" />
+                                    <Style.Triggers>
+                                        <Trigger Property="Tag" Value="Before">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                            <Setter Property="BorderThickness" Value="0,3,0,0" />
+                                        </Trigger>
+                                        <Trigger Property="Tag" Value="After">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                            <Setter Property="BorderThickness" Value="0,0,0,3" />
+                                        </Trigger>
+                                        <Trigger Property="Tag" Value="DropFiles">
+                                            <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
+                                            <Setter Property="BorderThickness" Value="2" />
+                                        </Trigger>
+                                    </Style.Triggers>
                                 </Style>
                             </ListBox.ItemContainerStyle>
                             <ListBox.ItemTemplate>
@@ -639,7 +668,90 @@
                                     </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                            </Border>
+                                </Border>
+                                <Border x:Name="AttachmentDropZone"
+                                        Grid.Column="1"
+                                        Margin="0,12,12,12"
+                                        Padding="16"
+                                        Background="{DynamicResource RaisedSurfaceBrush}"
+                                        BorderBrush="{DynamicResource BorderBrush}"
+                                        BorderThickness="1"
+                                        CornerRadius="6"
+                                        AllowDrop="True"
+                                        DragOver="AttachmentDropZone_DragOver"
+                                        Drop="AttachmentDropZone_Drop"
+                                        ToolTip="Eine oder mehrere lokale Dateien hier ablegen">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="*" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Foreground="{DynamicResource AccentTextBrush}"
+                                                   FontSize="11"
+                                                   FontWeight="Bold"
+                                                   Text="ANHÄNGE DES EREIGNISSES" />
+                                        <StackPanel Grid.Row="1" Margin="0,7,0,12">
+                                            <TextBlock FontSize="16"
+                                                       FontWeight="SemiBold"
+                                                       Text="{Binding SelectedEvent.Title, TargetNullValue='Ereignis auswählen'}"
+                                                       TextWrapping="Wrap" />
+                                            <TextBlock Margin="0,4,0,0"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="11"
+                                                       Text="Dateien hier ablegen oder über die Schaltfläche auswählen. Mehrfachauswahl wird vollständig verarbeitet."
+                                                       TextWrapping="Wrap" />
+                                        </StackPanel>
+                                        <ListBox Grid.Row="2"
+                                                 ItemsSource="{Binding SelectedEvent.Attachments}"
+                                                 BorderThickness="0"
+                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                 VirtualizingPanel.IsVirtualizing="True"
+                                                 VirtualizingPanel.VirtualizationMode="Recycling">
+                                            <ListBox.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Margin="0,0,0,6"
+                                                            Padding="8"
+                                                            Background="{DynamicResource SurfaceAltBrush}"
+                                                            CornerRadius="4">
+                                                        <StackPanel>
+                                                            <TextBlock FontWeight="SemiBold"
+                                                                       Text="{Binding OriginalFileName}"
+                                                                       TextTrimming="CharacterEllipsis" />
+                                                            <DockPanel Margin="0,3,0,0">
+                                                                <TextBlock DockPanel.Dock="Right"
+                                                                           Foreground="{DynamicResource MutedTextBrush}"
+                                                                           FontSize="10"
+                                                                           Text="{Binding State}" />
+                                                                <TextBlock Foreground="{DynamicResource MutedTextBrush}"
+                                                                           FontSize="10"
+                                                                           Text="{Binding MediaType}" />
+                                                            </DockPanel>
+                                                        </StackPanel>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ListBox.ItemTemplate>
+                                        </ListBox>
+                                        <StackPanel Grid.Row="3" Margin="0,12,0,0">
+                                            <Button Style="{StaticResource PrimaryButtonStyle}"
+                                                    Command="{Binding AddAttachmentsCommand}"
+                                                    Content="Dateien hinzufügen" />
+                                            <WrapPanel Margin="0,7,0,0">
+                                                <Button Style="{StaticResource CompactButtonStyle}"
+                                                        Command="{Binding PreviewImageCommand}"
+                                                        Content="Bild" />
+                                                <Button Style="{StaticResource CompactButtonStyle}"
+                                                        Command="{Binding PreviewPdfCommand}"
+                                                        Content="PDF" />
+                                                <Button Style="{StaticResource CompactButtonStyle}"
+                                                        Command="{Binding ShowAttachmentAnalysisCommand}"
+                                                        Content="Analyse" />
+                                            </WrapPanel>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </Grid>
                         </TabItem>
                     </TabControl>
                 </Grid>

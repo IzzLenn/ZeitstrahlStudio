@@ -218,7 +218,8 @@ public sealed class ProjectEventEditingService
             project.Id,
             new HistoryEntry(
                 $"Reihenfolge von „{selected.Title}“ geändert",
-                changes));
+                changes,
+                SelectedEventId: eventId));
         return true;
     }
 
@@ -235,6 +236,67 @@ public sealed class ProjectEventEditingService
         var currentIndex = group.FindIndex(timelineEvent => timelineEvent.Id == eventId);
         var targetIndex = currentIndex + (moveEarlier ? -1 : 1);
         return currentIndex >= 0 && targetIndex >= 0 && targetIndex < group.Count;
+    }
+
+    /// <summary>
+    /// Ordnet ein Ereignis vor oder nach einem Ziel derselben fachlichen Datumsgruppe ein.
+    /// </summary>
+    public bool ReorderWithinSameDate(
+        TimelineProject project,
+        Guid eventId,
+        Guid targetEventId,
+        bool insertAfterTarget,
+        DateTimeOffset timestampUtc)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        var reordered = CreateReorderedDateGroup(
+            project,
+            eventId,
+            targetEventId,
+            insertAfterTarget);
+        if (reordered is null)
+        {
+            return false;
+        }
+
+        var selected = FindEvent(project, eventId);
+        var target = FindEvent(project, targetEventId);
+        var changes = new List<EventChange>(reordered.Count);
+        for (var index = 0; index < reordered.Count; index++)
+        {
+            var current = FindEvent(project, reordered[index].Id);
+            var replacement = CloneWithManualSortPosition(
+                current,
+                (index + 1) * 10m,
+                timestampUtc);
+            project.ReplaceEvent(replacement, timestampUtc);
+            changes.Add(new EventChange(current.Id, current, replacement));
+        }
+
+        Record(
+            project.Id,
+            new HistoryEntry(
+                insertAfterTarget
+                    ? $"Ereignis „{selected.Title}“ nach „{target.Title}“ eingeordnet"
+                    : $"Ereignis „{selected.Title}“ vor „{target.Title}“ eingeordnet",
+                changes,
+                SelectedEventId: eventId));
+        return true;
+    }
+
+    /// <summary>Prüft einen Sortier-Drop, ohne das Projekt zu verändern.</summary>
+    public bool CanReorderWithinSameDate(
+        TimelineProject project,
+        Guid eventId,
+        Guid targetEventId,
+        bool insertAfterTarget)
+    {
+        ArgumentNullException.ThrowIfNull(project);
+        return CreateReorderedDateGroup(
+            project,
+            eventId,
+            targetEventId,
+            insertAfterTarget) is not null;
     }
 
     /// <summary>
@@ -395,6 +457,41 @@ public sealed class ProjectEventEditingService
         ?? throw new DomainValidationException(
             "Das Ereignis wurde nicht gefunden.",
             nameof(eventId));
+
+    private static List<TimelineEvent>? CreateReorderedDateGroup(
+        TimelineProject project,
+        Guid eventId,
+        Guid targetEventId,
+        bool insertAfterTarget)
+    {
+        if (eventId == Guid.Empty || targetEventId == Guid.Empty || eventId == targetEventId)
+        {
+            return null;
+        }
+
+        var source = project.Events.SingleOrDefault(timelineEvent => timelineEvent.Id == eventId);
+        var target = project.Events.SingleOrDefault(timelineEvent => timelineEvent.Id == targetEventId);
+        if (source is null || target is null || source.Date != target.Date)
+        {
+            return null;
+        }
+
+        var original = project.GetChronologicalEvents()
+            .Where(timelineEvent => timelineEvent.Date == source.Date)
+            .ToList();
+        var reordered = original.Where(timelineEvent => timelineEvent.Id != eventId).ToList();
+        var targetIndex = reordered.FindIndex(timelineEvent => timelineEvent.Id == targetEventId);
+        if (targetIndex < 0)
+        {
+            return null;
+        }
+
+        reordered.Insert(targetIndex + (insertAfterTarget ? 1 : 0), source);
+        return original.Select(timelineEvent => timelineEvent.Id)
+            .SequenceEqual(reordered.Select(timelineEvent => timelineEvent.Id))
+            ? null
+            : reordered;
+    }
 
     private static void Apply(
         TimelineProject project,

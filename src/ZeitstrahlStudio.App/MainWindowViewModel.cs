@@ -129,6 +129,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         MoveEventLaterCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(() => MoveSelectedEventAsync(moveEarlier: false)),
             () => CanMoveSelectedEvent(moveEarlier: false));
+        ReorderEventCommand = new AsyncRelayCommand<EventReorderRequest>(
+            request => ExecuteGuardedAsync(() => ReorderDroppedEventAsync(request)),
+            CanReorderEvent);
         SetHorizontalTimelineCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(() => SetTimelineOrientationAsync(TimelineOrientation.Horizontal)),
             () => !IsBusy && HasProject && TimelineViewOrientation != TimelineOrientation.Horizontal);
@@ -159,6 +162,11 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         AddAttachmentsCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ChooseAndImportAttachmentsAsync),
             () => !IsBusy && SelectedEvent is not null);
+        ImportDroppedFilesCommand = new AsyncRelayCommand<AttachmentDropRequest>(
+            request => ExecuteGuardedAsync(() => ImportAttachmentPathsAsync(
+                request.Paths,
+                request.EventId)),
+            CanImportDroppedFiles);
         AnalyzeAttachmentsCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(AnalyzeSelectedAttachmentsAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Any(IsAnalyzableAttachment) == true);
@@ -212,6 +220,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     public AsyncRelayCommand RedoCommand { get; }
     public AsyncRelayCommand MoveEventEarlierCommand { get; }
     public AsyncRelayCommand MoveEventLaterCommand { get; }
+    public AsyncRelayCommand<EventReorderRequest> ReorderEventCommand { get; }
     public AsyncRelayCommand SetHorizontalTimelineCommand { get; }
     public AsyncRelayCommand SetVerticalTimelineCommand { get; }
     public AsyncRelayCommand ToggleGapCompressionCommand { get; }
@@ -222,6 +231,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     public AsyncRelayCommand ManageBackupsCommand { get; }
     public AsyncRelayCommand SettingsCommand { get; }
     public AsyncRelayCommand AddAttachmentsCommand { get; }
+    public AsyncRelayCommand<AttachmentDropRequest> ImportDroppedFilesCommand { get; }
     public AsyncRelayCommand AnalyzeAttachmentsCommand { get; }
     public AsyncRelayCommand ShowAttachmentAnalysisCommand { get; }
     public AsyncRelayCommand PreviewImageCommand { get; }
@@ -423,7 +433,17 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
 
     /// <summary>Importiert explizit per Drag-and-drop übergebene lokale Dateien.</summary>
     public Task ImportDroppedFilesAsync(IReadOnlyList<string> paths) =>
-        ExecuteGuardedAsync(() => ImportAttachmentPathsAsync(paths));
+        SelectedEvent is { } timelineEvent
+            ? ImportDroppedFilesAsync(paths, timelineEvent.Id)
+            : Task.CompletedTask;
+
+    /// <summary>Importiert abgelegte Dateien in das ausdrücklich bestimmte Ereignis.</summary>
+    public Task ImportDroppedFilesAsync(IReadOnlyList<string> paths, Guid eventId) =>
+        ExecuteGuardedAsync(() => ImportAttachmentPathsAsync(paths, eventId));
+
+    /// <summary>Prüft, ob eine Ereigniszeile als interne Drag-Quelle verwendet werden darf.</summary>
+    public bool CanStartEventDrag(Guid eventId) =>
+        !IsBusy && CurrentProject?.Events.Any(timelineEvent => timelineEvent.Id == eventId) == true;
 
     /// <summary>Bereitet einen geordneten Fensterschluss vor.</summary>
     public async Task<bool> PrepareToCloseAsync()
@@ -726,6 +746,42 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         StatusMessage = description;
     }
 
+    private async Task ReorderDroppedEventAsync(EventReorderRequest request)
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var source = CurrentWorkspace.Project.Events.SingleOrDefault(
+            timelineEvent => timelineEvent.Id == request.DraggedEventId);
+        var target = CurrentWorkspace.Project.Events.SingleOrDefault(
+            timelineEvent => timelineEvent.Id == request.TargetEventId);
+        if (source is null || target is null)
+        {
+            return;
+        }
+
+        var timestampUtc = DateTimeOffset.UtcNow;
+        var insertAfter = request.Placement == EventDropPlacement.After;
+        if (!eventEditingService.ReorderWithinSameDate(
+                CurrentWorkspace.Project,
+                source.Id,
+                target.Id,
+                insertAfter,
+                timestampUtc))
+        {
+            return;
+        }
+
+        MarkCurrentProjectChanged(source.Id);
+        var description = insertAfter
+            ? $"Ereignis „{source.Title}“ nach „{target.Title}“ eingeordnet"
+            : $"Ereignis „{source.Title}“ vor „{target.Title}“ eingeordnet";
+        await WriteAuditAsync("Reorder", source.Id, description, timestampUtc).ConfigureAwait(true);
+        StatusMessage = description;
+    }
+
     private async Task SetTimelineOrientationAsync(TimelineOrientation orientation)
     {
         if (CurrentWorkspace is null || CurrentWorkspace.Project.Settings.PreferredOrientation == orientation)
@@ -973,21 +1029,21 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     private async Task ChooseAndImportAttachmentsAsync()
     {
         var paths = dialogs.RequestAttachmentPaths();
-        if (paths.Count > 0)
+        if (paths.Count > 0 && SelectedEvent is { } timelineEvent)
         {
-            await ImportAttachmentPathsAsync(paths).ConfigureAwait(true);
+            await ImportAttachmentPathsAsync(paths, timelineEvent.Id).ConfigureAwait(true);
         }
     }
 
-    private async Task ImportAttachmentPathsAsync(IReadOnlyList<string> paths)
+    private async Task ImportAttachmentPathsAsync(IReadOnlyList<string> paths, Guid eventId)
     {
-        if (CurrentWorkspace is null || SelectedEvent is null || paths.Count == 0)
+        if (CurrentWorkspace is null || paths.Count == 0 ||
+            CurrentWorkspace.Project.Events.All(timelineEvent => timelineEvent.Id != eventId))
         {
             return;
         }
 
         var workspace = CurrentWorkspace;
-        var eventId = SelectedEvent.Id;
         using var operationCancellation =
             CancellationTokenSource.CreateLinkedTokenSource(lifetimeCancellation.Token);
         attachmentImportCancellation = operationCancellation;
@@ -1634,6 +1690,22 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         double.IsFinite(request.HorizontalDelta) &&
         double.IsFinite(request.VerticalDelta);
 
+    private bool CanReorderEvent(EventReorderRequest request) =>
+        !IsBusy &&
+        CurrentWorkspace is { } workspace &&
+        eventEditingService.CanReorderWithinSameDate(
+            workspace.Project,
+            request.DraggedEventId,
+            request.TargetEventId,
+            request.Placement == EventDropPlacement.After);
+
+    private bool CanImportDroppedFiles(AttachmentDropRequest request) =>
+        !IsBusy &&
+        request.EventId != Guid.Empty &&
+        request.Paths.Count > 0 &&
+        request.Paths.All(path => !string.IsNullOrWhiteSpace(path)) &&
+        CurrentProject?.Events.Any(timelineEvent => timelineEvent.Id == request.EventId) == true;
+
     private static DateTime GetTimelineEventEnd(TimelineEvent timelineEvent) =>
         timelineEvent.Date.EndYear.HasValue
             ? new DateTime(
@@ -1775,6 +1847,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         RedoCommand.RaiseCanExecuteChanged();
         MoveEventEarlierCommand.RaiseCanExecuteChanged();
         MoveEventLaterCommand.RaiseCanExecuteChanged();
+        ReorderEventCommand.RaiseCanExecuteChanged();
         SetHorizontalTimelineCommand.RaiseCanExecuteChanged();
         SetVerticalTimelineCommand.RaiseCanExecuteChanged();
         ToggleGapCompressionCommand.RaiseCanExecuteChanged();
@@ -1785,6 +1858,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         ManageBackupsCommand.RaiseCanExecuteChanged();
         SettingsCommand.RaiseCanExecuteChanged();
         AddAttachmentsCommand.RaiseCanExecuteChanged();
+        ImportDroppedFilesCommand.RaiseCanExecuteChanged();
         AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();
         ShowAttachmentAnalysisCommand.RaiseCanExecuteChanged();
         PreviewImageCommand.RaiseCanExecuteChanged();

@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Kernfunktionen einschließlich interaktiver Dokumentminiaturen und Projekteinstellungen umgesetzt, noch kein Release
+Status: In Entwicklung – Kernfunktionen einschließlich zielgenauem Drag-and-drop umgesetzt, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Übergabestand nach Meilenstein 6D – kein neuer Meilenstein begonnen
+Übergabestand nach Meilenstein 6E – kein neuer Meilenstein begonnen
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -256,6 +256,17 @@ Letzte Aktualisierung: 19.07.2026
 - die Kartengröße wächst bei größeren Kartenschriften mit, Achsenbeschriftung und neue Ereignisse übernehmen unmittelbar die gespeicherten Vorgaben; der PDF-Export verwendet weiterhin denselben persistierten Exportfont
 - drei neue Unit-Tests prüfen Primärauswahl und schriftgrößenabhängiges Layout; fünf neue Integrationstests prüfen Einstellungsvalidierung/Standardfarbe, sicheren lokalen Thumbnail-Cache und Abbruch, der erweiterte STA-WPF-Test prüft verzögertes Laden und beide Paletten
 
+### Meilenstein 6E – Ereignissortierung und zielgenauer Datei-Drop
+
+- Ereignisse lassen sich in der chronologischen Liste per Drag-and-drop vor oder nach ein Ziel derselben fachlichen Datumsgruppe einordnen; Drops auf andere Datumswerte und wirkungslose Positionen werden bereits im `CanExecute`-Pfad abgelehnt
+- eine Sortieränderung normalisiert ausschließlich die manuellen Sortierpositionen der betroffenen Datumsgruppe und verändert weder Datum noch Uhrzeit; die sichtbaren Früher-/Später-Aktionen bleiben als tastaturzugängliche Alternative erhalten
+- beliebige Sortier-Drops sind ein gemeinsamer Undo-/Redo-Schritt, halten das gezogene Ereignis ausgewählt, markieren das Projekt als ungespeichert und erzeugen einen lokalen `Reorder`-Audit-Eintrag
+- externe Einzel- und Mehrfachdateien können auf das Hauptfenster, eine konkrete Zeitstrahlkarte, eine Ereigniszeile, die Ereignisliste oder den neuen sichtbaren Anhangsbereich abgelegt werden
+- konkrete Karten und Zeilen bestimmen ihr Zielereignis ausdrücklich; freie Flächen und der Anhangsbereich verwenden das ausgewählte Ereignis, ohne dass ein während des asynchronen Imports wechselnder Auswahlzustand das Batch-Ziel ändern kann
+- alle Drop-Pfade verwenden unverändert den vorhandenen sicheren Importdienst mit Projektkopie, kollisionsfreien Namen, Fortschritt, Teilfehlerbehandlung, Abbruch, gemeinsamem Anhangs-Undo, Checkpoint, Analyse und Audit
+- WPF-Code-behind übersetzt ausschließlich Treffertest und geroutete Drag-Daten in typisierte Commands; Sortierung, Datumsgruppenregel, Historie, Projektänderung und Audit bleiben in Application-Schicht und ViewModel
+- zwei neue Unit-Tests prüfen beliebige gruppeninterne Einordnung, No-op-/Gruppengrenzen sowie Undo/Redo; ein neuer Integrationstest prüft explizites Batch-Ziel, Selektion, Checkpoint und Audit beim Datei-Drop
+
 ### Meilenstein 7A – lokale Volltextsuche und kombinierbare Filter
 
 - die Schema-Migration 2 ergänzt einen getrennten FTS5-Index ausschließlich für extrahierte PDF-, OCR-, DOCX- und XLSX-Inhalte; vorhandene Datenbanken der Version 1 werden transaktional aktualisiert und vorhandene Dokumenttexte übernommen
@@ -323,7 +334,7 @@ dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 6D: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 60 Unit-Tests und 72 Integrationstests bestanden. Die neuen Tests decken zusätzlich Primärauswahl, Schriftgrößenlayout, Einstellungsvalidierung, Standardfarbe, sicheren JPEG-Dateicache, Abbruch und verzögertes Laden im realen WPF-Renderer ab. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 220.047.663 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft, antwortete und blieb über das Prüfintervall stabil.
+Aktueller Stand nach Meilenstein 6E: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 62 Unit-Tests und 73 Integrationstests bestanden. Die neuen Tests decken zusätzlich beliebige Sortier-Drops innerhalb identischer Datumswerte, abgelehnte Gruppen-/No-op-Drops, Undo/Redo sowie zielstabilen Mehrfachdateiimport mit Checkpoint und Audit ab. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 220.066.983 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft, antwortete und blieb über das Prüfintervall stabil.
 
 ## Phasenweiser Implementierungsplan
 
@@ -332,7 +343,7 @@ Aktueller Stand nach Meilenstein 6D: Debug und Release jeweils 0 Warnungen/0 Feh
 3. **Projektverwaltung – abgeschlossen:** sichere Arbeitsordner, Archivtransfer, Neu/Öffnen/Speichern/Speichern unter/Duplizieren/Schließen, zuletzt verwendet, Autosave, Crash-Recovery, produktive DI und verbundene MVVM-Oberfläche.
 4. **Ereignisse und Fristen – abgeschlossen:** vollständige MVVM-Bearbeitung, Datumsgenauigkeiten, Fristen, Tags, Links, mehrstufiges Undo/Redo, manuelle Reihenfolge gleicher Datumswerte und persistentes Audit.
 5. **Anhänge und lokale Dokumentenanalyse – abgeschlossen:** sicherer Import und Undo-fähige Zuordnung, DOCX-/XLSX-/PDF-Extraktion, transaktionale Persistenz, begrenzte Warteschlange, Bild- und PDF-Vorschau, Integritätsprüfung, Standardprogramm und lokale OCR für Bilder sowie bildbasierte PDF-Seiten sind in 5A bis 5D umgesetzt.
-6. **Zeitstrahldarstellung – abgeschlossen:** gemeinsames Layoutmodell, automatische Skala, Lückenkompression, Kollisionsbahnen und Fristprojektion sind in 6A umgesetzt; die virtualisierte horizontale/vertikale WPF-Ansicht samt Zoom, Mausverschiebung, Scrollleisten und Navigation ist in 6B aktiv. Manuelle, persistente und Undo-fähige Kartenpositionen sowie ausgewählte Zeiträume sind in 6C umgesetzt. Kleine verzögert geladene Dokumentvorschaubilder, lokale Caches und projektbezogene Darstellungs-/Exportvorgaben sind in 6D umgesetzt.
+6. **Zeitstrahldarstellung – abgeschlossen:** gemeinsames Layoutmodell, automatische Skala, Lückenkompression, Kollisionsbahnen und Fristprojektion sind in 6A umgesetzt; die virtualisierte horizontale/vertikale WPF-Ansicht samt Zoom, Mausverschiebung, Scrollleisten und Navigation ist in 6B aktiv. Manuelle, persistente und Undo-fähige Kartenpositionen sowie ausgewählte Zeiträume sind in 6C umgesetzt. Kleine verzögert geladene Dokumentvorschaubilder, lokale Caches und projektbezogene Darstellungs-/Exportvorgaben sind in 6D umgesetzt. Datumsneutrale Ereignissortierung und zielgenauer Datei-Drop auf Anwendung, Ereignisse, Liste und Anhangsbereich sind in 6E umgesetzt.
 7. **Suche und Filter – abgeschlossen:** getrennte lokale Dokument-FTS, Suche in aktuellen Aggregatfeldern, kombinierbare Filter, Eingabedebounce/Abbruch, Relevanz-/Datumssortierung, hervorgehobene Fundstellen, direkte Navigation und gefilterte Zeitstrahldarstellung sind in 7A umgesetzt.
 8. **PDF-Export – abgeschlossen:** tatsächliche PDF-Vorschau, A4/A3/Letter/benutzerdefiniert, Hoch-/Querformat, mehrseitig, große Einzelseite, Zeitraum, Fortsetzungen, Miniaturen und drucktaugliche Kennzeichnungen sind in 8A umgesetzt.
 9. **Standalone-HTML-Export – abgeschlossen:** eine einzelne responsive Offlinedatei mit eingebetteten Daten und Miniaturen, horizontaler/vertikaler Darstellung, Zoom, Verschieben, Suche, kombinierten Filtern, Detailkarten, externen Linkwarnungen und Druck-CSS ist in 8B umgesetzt.
@@ -344,14 +355,12 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Noch offene Anforderungen
 
-- das in `SPEC.md` geforderte Drag-and-drop-Umsortieren von Ereignissen sowie das Ablegen von Dateien gezielt auf Ereignis und Anhangsbereich vervollständigen
 - vollständige UI-/Abnahmeprüfung einschließlich 100/125/150/200 Prozent Skalierung, Tastaturbedienung sowie HTML-Offlinetest und Druckvorschau in üblichen Windows-Browsern durchführen
 - freies Beispielprojekt mit mindestens zehn Ereignissen und den geforderten Testdokumenten erstellen und die noch fehlenden End-to-End- und großen Lastszenarien abdecken
 - reproduzierbare Buildskripte, portable ZIP-Datei, Installer mit `.zeitprojekt`-Zuordnung, Benutzerhandbuch, Datenschutz-/Lizenzbündelung und Release-Anleitung fertigstellen
 
 ## Bekannte Probleme und Risiken
 
-- Die manuelle Ereignisreihenfolge ist über tastaturzugängliche Früher-/Später-Aktionen verfügbar; direktes Drag-and-drop ist noch nicht implementiert.
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
 - Deutsche OCR setzt die entsprechende lokale Windows-Sprachressource voraus; fehlt sie, bleibt die übrige Anwendung funktionsfähig und die Analyse zeigt eine Installationsanleitung.
 - UI-Automation und visuelle Abnahmetests für 100/125/150/200 Prozent Skalierung stehen noch aus.
@@ -364,4 +373,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 6E beginnen: das fachliche Drag-and-drop-Umsortieren von Ereignissen sowie das gezielte Ablegen lokaler Dateien auf Ereigniskarten und den Anhangsbereich mit Tastaturalternative, Undo/Redo, Audit und sicheren Importgrenzen vervollständigen.
+Meilenstein 11A beginnen: ein frei weitergebbares Beispielprojekt mit mindestens zehn fachlich vielfältigen Ereignissen und den geforderten PDF-, Bild-, DOCX- und XLSX-Testdokumenten erstellen und daraus die noch fehlenden End-to-End- und Lastszenarien ableiten.

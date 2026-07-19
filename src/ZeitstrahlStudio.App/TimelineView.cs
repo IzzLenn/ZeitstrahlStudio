@@ -65,12 +65,14 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     private Point cardDragStart;
     private Vector cardDragDelta;
     private bool isCardDragActive;
+    private Guid? fileDropTargetEventId;
     private int lastAppliedRangeRevision = int.MinValue;
 
     public TimelineView()
     {
         Focusable = true;
         ClipToBounds = true;
+        AllowDrop = true;
         ApplyPalette(isDark: false);
         Loaded += OnLoaded;
         Unloaded += OnUnloaded;
@@ -168,6 +170,12 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         typeof(TimelineView),
         new FrameworkPropertyMetadata(null));
 
+    public static readonly DependencyProperty DropFilesCommandProperty = DependencyProperty.Register(
+        nameof(DropFilesCommand),
+        typeof(ICommand),
+        typeof(TimelineView),
+        new FrameworkPropertyMetadata(null));
+
     public static readonly DependencyProperty RangeRequestProperty = DependencyProperty.Register(
         nameof(RangeRequest),
         typeof(TimelineRangeRequest),
@@ -256,6 +264,12 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     {
         get => (ICommand?)GetValue(MoveCardCommandProperty);
         set => SetValue(MoveCardCommandProperty, value);
+    }
+
+    public ICommand? DropFilesCommand
+    {
+        get => (ICommand?)GetValue(DropFilesCommandProperty);
+        set => SetValue(DropFilesCommandProperty, value);
     }
 
     public TimelineRangeRequest? RangeRequest
@@ -467,6 +481,66 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         DrawVisibleCards(drawingContext);
         drawingContext.Pop();
         drawingContext.Pop();
+    }
+
+    protected override void OnDragOver(DragEventArgs e)
+    {
+        base.OnDragOver(e);
+        if (!TryGetDroppedPaths(e.Data, out var paths))
+        {
+            ClearFileDropTarget();
+            return;
+        }
+
+        var target = HitTestCard(e.GetPosition(this));
+        if (target is null)
+        {
+            ClearFileDropTarget();
+            return;
+        }
+
+        var request = new AttachmentDropRequest(target.EventId, paths);
+        var canExecute = DropFilesCommand?.CanExecute(request) == true;
+        SetFileDropTarget(canExecute ? target.EventId : null);
+        e.Effects = canExecute ? DragDropEffects.Copy : DragDropEffects.None;
+        e.Handled = true;
+    }
+
+    protected override void OnDragLeave(DragEventArgs e)
+    {
+        base.OnDragLeave(e);
+        ClearFileDropTarget();
+    }
+
+    protected override void OnDrop(DragEventArgs e)
+    {
+        base.OnDrop(e);
+        if (!TryGetDroppedPaths(e.Data, out var paths))
+        {
+            ClearFileDropTarget();
+            return;
+        }
+
+        var target = HitTestCard(e.GetPosition(this));
+        if (target is null)
+        {
+            ClearFileDropTarget();
+            return;
+        }
+
+        var request = new AttachmentDropRequest(target.EventId, paths);
+        if (DropFilesCommand?.CanExecute(request) == true)
+        {
+            DropFilesCommand.Execute(request);
+            e.Effects = DragDropEffects.Copy;
+        }
+        else
+        {
+            e.Effects = DragDropEffects.None;
+        }
+
+        ClearFileDropTarget();
+        e.Handled = true;
     }
 
     protected override void OnMouseLeftButtonDown(MouseButtonEventArgs e)
@@ -963,7 +1037,10 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     {
         var color = GetEventBrush(timelineEvent.ColorHex);
         var selected = SelectedEvent?.Id == timelineEvent.Id;
-        var borderPen = CreatePen(selected ? SelectedBrush : color, selected ? 3 : 2);
+        var isFileDropTarget = fileDropTargetEventId == timelineEvent.Id;
+        var borderPen = CreatePen(
+            selected || isFileDropTarget ? SelectedBrush : color,
+            isFileDropTarget ? 4 : selected ? 3 : 2);
         drawingContext.DrawRoundedRectangle(
             CardBrush,
             borderPen,
@@ -1425,6 +1502,7 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
 
     private void OnUnloaded(object sender, RoutedEventArgs e)
     {
+        ClearFileDropTarget();
         thumbnailCancellation.Cancel();
         thumbnailGeneration++;
         loadingThumbnails.Clear();
@@ -1459,6 +1537,38 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         ConnectorPen = CreatePen(AxisBrush, 1);
         DeadlinePen = CreateDashedPen(DeadlineBrush, 1.5);
     }
+
+    private static bool TryGetDroppedPaths(IDataObject data, out IReadOnlyList<string> paths)
+    {
+        if (data.GetData(DataFormats.FileDrop) is string[] droppedPaths)
+        {
+            var normalized = droppedPaths
+                .Where(path => !string.IsNullOrWhiteSpace(path))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToArray();
+            if (normalized.Length > 0)
+            {
+                paths = normalized;
+                return true;
+            }
+        }
+
+        paths = [];
+        return false;
+    }
+
+    private void SetFileDropTarget(Guid? eventId)
+    {
+        if (fileDropTargetEventId == eventId)
+        {
+            return;
+        }
+
+        fileDropTargetEventId = eventId;
+        InvalidateVisual();
+    }
+
+    private void ClearFileDropTarget() => SetFileDropTarget(null);
 
     private void DrawEmptyState(DrawingContext drawingContext)
     {

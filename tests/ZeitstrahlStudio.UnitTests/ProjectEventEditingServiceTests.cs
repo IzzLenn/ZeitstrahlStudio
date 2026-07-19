@@ -175,6 +175,79 @@ public sealed class ProjectEventEditingServiceTests
     }
 
     [Fact]
+    public void ReorderWithinSameDate_MovesToArbitraryPositionAndSupportsUndoRedo()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
+        var sharedDate = EventDate.Exact(new DateOnly(2020, 1, 2));
+        var events = Enumerable.Range(0, 4)
+            .Select(index => TimelineEvent.Create(
+                Guid.NewGuid(),
+                ((char)('A' + index)).ToString(),
+                sharedDate,
+                CreatedAt.AddSeconds(index)))
+            .ToArray();
+        foreach (var timelineEvent in events)
+        {
+            project.AddEvent(timelineEvent, CreatedAt.AddMinutes(1));
+        }
+
+        Assert.True(service.ReorderWithinSameDate(
+            project,
+            events[3].Id,
+            events[1].Id,
+            insertAfterTarget: false,
+            CreatedAt.AddMinutes(2)));
+        Assert.Equal(
+            [events[0].Id, events[3].Id, events[1].Id, events[2].Id],
+            project.GetChronologicalEvents().Select(item => item.Id));
+
+        var undo = service.Undo(project, CreatedAt.AddMinutes(3));
+        Assert.Equal(events.Select(item => item.Id), project.GetChronologicalEvents().Select(item => item.Id));
+        Assert.Equal(events[3].Id, undo.SelectedEventId);
+
+        var redo = service.Redo(project, CreatedAt.AddMinutes(4));
+        Assert.Equal(
+            [events[0].Id, events[3].Id, events[1].Id, events[2].Id],
+            project.GetChronologicalEvents().Select(item => item.Id));
+        Assert.Equal(events[3].Id, redo.SelectedEventId);
+    }
+
+    [Fact]
+    public void CanReorderWithinSameDate_RejectsDifferentDatesAndNoOpPlacement()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
+        var sharedDate = EventDate.Exact(new DateOnly(2020, 1, 2));
+        var first = TimelineEvent.Create(Guid.NewGuid(), "A", sharedDate, CreatedAt);
+        var second = TimelineEvent.Create(Guid.NewGuid(), "B", sharedDate, CreatedAt.AddSeconds(1));
+        var later = TimelineEvent.Create(
+            Guid.NewGuid(),
+            "C",
+            EventDate.Exact(new DateOnly(2020, 1, 3)),
+            CreatedAt.AddSeconds(2));
+        project.AddEvent(first, CreatedAt.AddMinutes(1));
+        project.AddEvent(second, CreatedAt.AddMinutes(1));
+        project.AddEvent(later, CreatedAt.AddMinutes(1));
+
+        Assert.False(service.CanReorderWithinSameDate(
+            project,
+            first.Id,
+            second.Id,
+            insertAfterTarget: false));
+        Assert.False(service.CanReorderWithinSameDate(
+            project,
+            first.Id,
+            later.Id,
+            insertAfterTarget: true));
+        Assert.False(service.ReorderWithinSameDate(
+            project,
+            first.Id,
+            later.Id,
+            insertAfterTarget: true,
+            CreatedAt.AddMinutes(2)));
+        Assert.Equal([first.Id, second.Id, later.Id], project.GetChronologicalEvents().Select(item => item.Id));
+    }
+
+    [Fact]
     public void AddAndRemoveAttachment_AreUndoable()
     {
         var project = TimelineProject.Create(Guid.NewGuid(), "Chronik", CreatedAt);
