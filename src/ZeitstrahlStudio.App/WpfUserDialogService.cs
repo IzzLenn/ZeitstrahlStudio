@@ -12,15 +12,21 @@ public sealed class WpfUserDialogService : IUserDialogService
     private readonly IPdfPreviewService pdfPreviewService;
     private readonly IPdfExportService pdfExportService;
     private readonly ILocalLogService logService;
+    private readonly IBackupService backupService;
+    private readonly IProjectWorkspaceService workspaceService;
 
     public WpfUserDialogService(
         IPdfPreviewService pdfPreviewService,
         IPdfExportService pdfExportService,
-        ILocalLogService logService)
+        ILocalLogService logService,
+        IBackupService backupService,
+        IProjectWorkspaceService workspaceService)
     {
         this.pdfPreviewService = pdfPreviewService;
         this.pdfExportService = pdfExportService;
         this.logService = logService;
+        this.backupService = backupService;
+        this.workspaceService = workspaceService;
     }
 
     public string? RequestProjectName()
@@ -267,6 +273,38 @@ public sealed class WpfUserDialogService : IUserDialogService
         };
         return dialog.ShowDialog() == true ? viewModel.ExportedTargetPath : null;
     }
+
+    public async Task<BackupManagerResult> ShowBackupManagerAsync(
+        ProjectWorkspace workspace,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(workspace);
+        var viewModel = new BackupManagerDialogViewModel(
+            backupService,
+            workspaceService,
+            workspace,
+            ConfirmBackupRestore);
+        await viewModel.InitializeAsync(cancellationToken).ConfigureAwait(true);
+        var dialog = new BackupManagerDialog(viewModel)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        dialog.ShowDialog();
+        return new BackupManagerResult(
+            viewModel.Workspace,
+            viewModel.WasRestored,
+            viewModel.SettingsChanged);
+    }
+
+    private static bool ConfirmBackupRestore(BackupDisplayItem backup) => MessageBox.Show(
+        System.Windows.Application.Current.MainWindow,
+        $"Soll die Sicherung vom {backup.CreatedAtLocal:dd.MM.yyyy HH:mm:ss} wiederhergestellt werden?\n\n" +
+        "Der aktuelle Stand wird zuvor automatisch als manuelle Sicherheitssicherung abgelegt. " +
+        "Die wiederhergestellte Fassung wird erst beim nächsten Speichern in die Projektdatei geschrieben.",
+        "Sicherung wiederherstellen",
+        MessageBoxButton.YesNo,
+        MessageBoxImage.Warning,
+        MessageBoxResult.No) == MessageBoxResult.Yes;
 
     private static string? RequestPdfExportTargetPath(string projectName)
     {

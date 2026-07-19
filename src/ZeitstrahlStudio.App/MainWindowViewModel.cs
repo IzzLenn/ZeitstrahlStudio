@@ -12,6 +12,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     private readonly IRecentProjectsService recentProjectsService;
     private readonly IProjectRecoveryService recoveryService;
     private readonly IProjectAutosaveService autosaveService;
+    private readonly IBackupService backupService;
     private readonly ILocalLogService logService;
     private readonly IAuditLogService auditLogService;
     private readonly IProjectSearchService searchService;
@@ -44,6 +45,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         IRecentProjectsService recentProjectsService,
         IProjectRecoveryService recoveryService,
         IProjectAutosaveService autosaveService,
+        IBackupService backupService,
         ILocalLogService logService,
         IAuditLogService auditLogService,
         IProjectSearchService searchService,
@@ -59,6 +61,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         this.recentProjectsService = recentProjectsService;
         this.recoveryService = recoveryService;
         this.autosaveService = autosaveService;
+        this.backupService = backupService;
         this.logService = logService;
         this.auditLogService = auditLogService;
         this.searchService = searchService;
@@ -142,6 +145,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         ShowAuditLogCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ShowAuditLogAsync),
             () => !IsBusy && HasProject);
+        ManageBackupsCommand = new AsyncRelayCommand(
+            () => ExecuteGuardedAsync(ManageBackupsAsync),
+            () => !IsBusy && HasProject);
         AddAttachmentsCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ChooseAndImportAttachmentsAsync),
             () => !IsBusy && SelectedEvent is not null);
@@ -203,6 +209,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     public AsyncRelayCommand ResetTimelineLayoutCommand { get; }
     public AsyncRelayCommand ShowTimelineRangeCommand { get; }
     public AsyncRelayCommand ShowAuditLogCommand { get; }
+    public AsyncRelayCommand ManageBackupsCommand { get; }
     public AsyncRelayCommand AddAttachmentsCommand { get; }
     public AsyncRelayCommand AnalyzeAttachmentsCommand { get; }
     public AsyncRelayCommand ShowAttachmentAnalysisCommand { get; }
@@ -466,7 +473,13 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         await recentProjectsService.RecordOpenedAsync(CurrentWorkspace, lifetimeCancellation.Token)
             .ConfigureAwait(true);
         await RefreshStartDataAsync().ConfigureAwait(true);
-        StatusMessage = "Projekt wurde erstellt und gespeichert.";
+        var automaticBackup = await TryCreateDueAutomaticBackupAsync(CurrentWorkspace).ConfigureAwait(true);
+        StatusMessage = automaticBackup switch
+        {
+            { Failed: true } => "Projekt wurde erstellt; die automatische Sicherung ist fehlgeschlagen.",
+            { Created: true } => "Projekt wurde erstellt, gespeichert und automatisch gesichert.",
+            _ => "Projekt wurde erstellt und gespeichert.",
+        };
     }
 
     private async Task ChooseAndOpenProjectAsync()
@@ -830,6 +843,45 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             lifetimeCancellation.Token).ConfigureAwait(true);
         dialogs.ShowAuditLog(entries);
         StatusMessage = $"{entries.Count} Audit-Einträge geladen.";
+    }
+
+    private async Task ManageBackupsAsync()
+    {
+        if (CurrentWorkspace is null)
+        {
+            return;
+        }
+
+        var previousWorkspace = CurrentWorkspace;
+        var result = await dialogs.ShowBackupManagerAsync(
+            previousWorkspace,
+            lifetimeCancellation.Token).ConfigureAwait(true);
+        if (result.WasRestored)
+        {
+            await workspaceService.CloseAsync(
+                previousWorkspace,
+                lifetimeCancellation.Token).ConfigureAwait(true);
+            eventEditingService.Clear(previousWorkspace.Project.Id);
+            CurrentWorkspace = result.Workspace;
+            if (CurrentWorkspace.ArchivePath is not null)
+            {
+                await recentProjectsService.RecordOpenedAsync(
+                    CurrentWorkspace,
+                    lifetimeCancellation.Token).ConfigureAwait(true);
+            }
+
+            await RefreshStartDataAsync().ConfigureAwait(true);
+            StatusMessage = "Die Sicherung wurde wiederhergestellt. Bitte speichern Sie das Projekt.";
+            return;
+        }
+
+        CurrentWorkspace = result.Workspace;
+        if (result.SettingsChanged)
+        {
+            OnPropertyChanged(nameof(HasUnsavedChanges));
+            RaiseCommandStates();
+            StatusMessage = "Die Sicherungseinstellungen wurden gespeichert.";
+        }
     }
 
     private async Task ChooseAndImportAttachmentsAsync()
@@ -1286,7 +1338,40 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         await recentProjectsService.RecordOpenedAsync(CurrentWorkspace, lifetimeCancellation.Token)
             .ConfigureAwait(true);
         await RefreshRecentProjectsAsync().ConfigureAwait(true);
-        StatusMessage = "Projekt wurde gespeichert.";
+        var automaticBackup = await TryCreateDueAutomaticBackupAsync(CurrentWorkspace).ConfigureAwait(true);
+        StatusMessage = automaticBackup switch
+        {
+            { Failed: true } => "Projekt wurde gespeichert; die automatische Sicherung ist fehlgeschlagen.",
+            { Created: true } => "Projekt wurde gespeichert und automatisch gesichert.",
+            _ => "Projekt wurde gespeichert.",
+        };
+    }
+
+    private async Task<(bool Created, bool Failed)> TryCreateDueAutomaticBackupAsync(
+        ProjectWorkspace workspace)
+    {
+        try
+        {
+            var created = await backupService.CreateAutomaticIfDueAsync(
+                workspace,
+                lifetimeCancellation.Token).ConfigureAwait(true);
+            return (created is not null, false);
+        }
+        catch (OperationCanceledException) when (lifetimeCancellation.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException or InvalidDataException or
+            InvalidOperationException or Microsoft.Data.Sqlite.SqliteException)
+        {
+            await TryWriteLogAsync(
+                LocalLogLevel.Warning,
+                "BackupAutomaticFailed",
+                "Das Projekt wurde gespeichert, die automatische Sicherung ist jedoch fehlgeschlagen.",
+                exception.ToString()).ConfigureAwait(true);
+            return (false, true);
+        }
     }
 
     private async Task SaveCurrentAsAsync()
@@ -1608,6 +1693,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         ResetTimelineLayoutCommand.RaiseCanExecuteChanged();
         ShowTimelineRangeCommand.RaiseCanExecuteChanged();
         ShowAuditLogCommand.RaiseCanExecuteChanged();
+        ManageBackupsCommand.RaiseCanExecuteChanged();
         AddAttachmentsCommand.RaiseCanExecuteChanged();
         AnalyzeAttachmentsCommand.RaiseCanExecuteChanged();
         ShowAttachmentAnalysisCommand.RaiseCanExecuteChanged();

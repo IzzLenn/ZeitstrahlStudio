@@ -1,4 +1,5 @@
 using ZeitstrahlStudio.Application;
+using ZeitstrahlStudio.Domain;
 using ZeitstrahlStudio.Shared;
 
 namespace ZeitstrahlStudio.Infrastructure;
@@ -7,6 +8,7 @@ namespace ZeitstrahlStudio.Infrastructure;
 public sealed class ProjectAutosaveService : IProjectAutosaveService, IDisposable
 {
     private readonly IProjectWorkspaceService workspaceService;
+    private readonly IBackupService? backupService;
     private readonly TimeProvider timeProvider;
     private readonly SemaphoreSlim runGate = new(1, 1);
 
@@ -17,6 +19,16 @@ public sealed class ProjectAutosaveService : IProjectAutosaveService, IDisposabl
     {
         this.workspaceService = workspaceService ?? throw new ArgumentNullException(nameof(workspaceService));
         this.timeProvider = timeProvider ?? TimeProvider.System;
+    }
+
+    /// <summary>Initialisiert Autosave einschließlich fälliger rotierender Sicherungen.</summary>
+    public ProjectAutosaveService(
+        IProjectWorkspaceService workspaceService,
+        IBackupService backupService,
+        TimeProvider? timeProvider = null)
+        : this(workspaceService, timeProvider)
+    {
+        this.backupService = backupService ?? throw new ArgumentNullException(nameof(backupService));
     }
 
     /// <inheritdoc />
@@ -59,10 +71,40 @@ public sealed class ProjectAutosaveService : IProjectAutosaveService, IDisposabl
                         targetArchivePath: null,
                         cancellationToken).ConfigureAwait(false);
                     workspaceUpdated(updated);
+                    BackupRecord? createdBackup = null;
+                    ApplicationError? backupError = null;
+                    if (backupService is not null)
+                    {
+                        try
+                        {
+                            createdBackup = await backupService.CreateAutomaticIfDueAsync(
+                                updated,
+                                cancellationToken).ConfigureAwait(false);
+                        }
+                        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                        {
+                            throw;
+                        }
+                        catch (Exception exception) when (
+                            exception is IOException or UnauthorizedAccessException or InvalidDataException or
+                            InvalidOperationException or Microsoft.Data.Sqlite.SqliteException)
+                        {
+                            backupError = new ApplicationError(
+                                "Backup.AutomaticFailed",
+                                "Das Projekt wurde gespeichert, die automatische Sicherung ist jedoch fehlgeschlagen.",
+                                exception.ToString());
+                        }
+                    }
+
                     progress?.Report(new AutosaveStatus(
                         timeProvider.GetUtcNow(),
-                        Succeeded: true,
-                        "Das Projekt wurde automatisch gespeichert."));
+                        Succeeded: backupError is null,
+                        backupError is not null
+                            ? backupError.UserMessage
+                            : createdBackup is null
+                                ? "Das Projekt wurde automatisch gespeichert."
+                                : "Das Projekt wurde automatisch gespeichert und gesichert.",
+                        backupError));
                 }
                 catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
                 {

@@ -105,6 +105,42 @@ public sealed class ApplicationStateRecoveryAndLoggingTests
     }
 
     [Fact]
+    public async Task AutosaveService_CreatesDueAutomaticBackupAfterSuccessfulSave()
+    {
+        await using var root = new TemporaryRoot();
+        var repository = new SqliteProjectRepository();
+        var fakeTime = new ImmediateTimerTimeProvider(BaseTime);
+        var workspaceService = new LocalProjectWorkspaceService(
+            repository,
+            new ProjectArchiveService(repository, fakeTime),
+            System.IO.Path.Combine(root.Path, "workspaces"),
+            fakeTime);
+        var archivePath = System.IO.Path.Combine(root.Path, "Autosave-mit-Sicherung.zeitprojekt");
+        var current = await workspaceService.CreateAsync(
+            "Autosave mit Sicherung",
+            archivePath,
+            CancellationToken.None);
+        current.Project.AddEvent(
+            TimelineEvent.Create(Guid.NewGuid(), "Zu sichern", EventDate.Year(2026), BaseTime),
+            BaseTime.AddMinutes(1));
+        current = current with { HasUnsavedChanges = true };
+        using var cancellation = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        var backups = new RecordingBackupService(() => cancellation.Cancel());
+        using var autosave = new ProjectAutosaveService(workspaceService, backups, fakeTime);
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => autosave.RunAsync(
+            () => current,
+            updated => current = updated,
+            TimeSpan.FromSeconds(15),
+            progress: null,
+            cancellation.Token));
+
+        Assert.False(current.HasUnsavedChanges);
+        Assert.Equal(1, backups.AutomaticRequests);
+        await workspaceService.CloseAsync(current, CancellationToken.None);
+    }
+
+    [Fact]
     public async Task LocalLogService_RotatesReadsExportsAndClearsJsonLines()
     {
         await using var root = new TemporaryRoot();
@@ -144,6 +180,48 @@ public sealed class ApplicationStateRecoveryAndLoggingTests
     private sealed class FixedTimeProvider(DateTimeOffset timestamp) : TimeProvider
     {
         public override DateTimeOffset GetUtcNow() => timestamp;
+    }
+
+    private sealed class RecordingBackupService(Action onAutomaticRequest) : IBackupService
+    {
+        public int AutomaticRequests { get; private set; }
+
+        public Task<BackupRecord> CreateAsync(
+            ProjectWorkspace workspace,
+            bool automatic,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<BackupRecord?> CreateAutomaticIfDueAsync(
+            ProjectWorkspace workspace,
+            CancellationToken cancellationToken)
+        {
+            AutomaticRequests++;
+            onAutomaticRequest();
+            return Task.FromResult<BackupRecord?>(new BackupRecord(
+                Guid.NewGuid(),
+                BaseTime,
+                "project/automatic.zeitprojekt",
+                1,
+                new string('a', 64),
+                true));
+        }
+
+        public Task<IReadOnlyList<BackupRecord>> ListAsync(
+            ProjectWorkspace workspace,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task<ProjectWorkspace> RestoreAsync(
+            ProjectWorkspace currentWorkspace,
+            BackupRecord backup,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
+
+        public Task ApplyRetentionAsync(
+            ProjectWorkspace workspace,
+            CancellationToken cancellationToken) =>
+            throw new NotSupportedException();
     }
 
     private sealed class ImmediateTimerTimeProvider(DateTimeOffset timestamp) : TimeProvider

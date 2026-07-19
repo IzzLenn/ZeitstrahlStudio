@@ -23,6 +23,14 @@ public interface IProjectWorkspaceService
     Task<ProjectWorkspace> CheckpointAsync(
         ProjectWorkspace workspace,
         CancellationToken cancellationToken);
+    Task ExportSnapshotAsync(
+        ProjectWorkspace workspace,
+        string targetArchivePath,
+        CancellationToken cancellationToken);
+    Task<ProjectWorkspace> RestoreSnapshotAsync(
+        ProjectWorkspace currentWorkspace,
+        string snapshotArchivePath,
+        CancellationToken cancellationToken);
     Task<ProjectWorkspace> DuplicateAsync(ProjectWorkspace workspace, string targetArchivePath, CancellationToken cancellationToken);
     Task CloseAsync(ProjectWorkspace workspace, CancellationToken cancellationToken);
     Task DeleteArchiveAsync(string archivePath, bool deletionConfirmed, CancellationToken cancellationToken);
@@ -151,9 +159,19 @@ public interface IHtmlExportService
 public interface IBackupService
 {
     Task<BackupRecord> CreateAsync(ProjectWorkspace workspace, bool automatic, CancellationToken cancellationToken);
-    Task<IReadOnlyList<BackupRecord>> ListAsync(Guid projectId, CancellationToken cancellationToken);
-    Task<ProjectWorkspace> RestoreAsync(BackupRecord backup, CancellationToken cancellationToken);
-    Task ApplyRetentionAsync(Guid projectId, ProjectSettings settings, CancellationToken cancellationToken);
+    Task<BackupRecord?> CreateAutomaticIfDueAsync(
+        ProjectWorkspace workspace,
+        CancellationToken cancellationToken);
+    Task<IReadOnlyList<BackupRecord>> ListAsync(
+        ProjectWorkspace workspace,
+        CancellationToken cancellationToken);
+    Task<ProjectWorkspace> RestoreAsync(
+        ProjectWorkspace currentWorkspace,
+        BackupRecord backup,
+        CancellationToken cancellationToken);
+    Task ApplyRetentionAsync(
+        ProjectWorkspace workspace,
+        CancellationToken cancellationToken);
 }
 
 /// <summary>Schreibt das lokale, projektbezogene Änderungsprotokoll.</summary>

@@ -145,6 +145,88 @@ public sealed partial class LocalProjectWorkspaceService : IProjectWorkspaceServ
     }
 
     /// <inheritdoc />
+    public async Task ExportSnapshotAsync(
+        ProjectWorkspace workspace,
+        string targetArchivePath,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(workspace);
+        await saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            EnsureManagedWorkspace(workspace.WorkingDirectory);
+            await repository.SaveAsync(
+                workspace.Project,
+                Path.Combine(workspace.WorkingDirectory, "project.db"),
+                cancellationToken).ConfigureAwait(false);
+            await archiveService.ExportAsync(
+                workspace.WorkingDirectory,
+                ValidateArchivePath(targetArchivePath),
+                progress: null,
+                cancellationToken).ConfigureAwait(false);
+            await WriteRecoveryMarkerAsync(workspace, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            saveGate.Release();
+        }
+    }
+
+    /// <inheritdoc />
+    public async Task<ProjectWorkspace> RestoreSnapshotAsync(
+        ProjectWorkspace currentWorkspace,
+        string snapshotArchivePath,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(currentWorkspace);
+        await saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        string? restoredWorkingDirectory = null;
+        try
+        {
+            EnsureManagedWorkspace(currentWorkspace.WorkingDirectory);
+            restoredWorkingDirectory = AllocateWorkingDirectory();
+            var result = await archiveService.ImportAsync(
+                ValidateArchivePath(snapshotArchivePath),
+                restoredWorkingDirectory,
+                progress: null,
+                cancellationToken).ConfigureAwait(false);
+            if (!result.IsSuccess || result.Value is null)
+            {
+                throw new InvalidDataException(
+                    result.Error?.UserMessage ?? "Die ausgewählte Sicherung konnte nicht wiederhergestellt werden.");
+            }
+
+            if (result.Value.Workspace.Project.Id != currentWorkspace.Project.Id)
+            {
+                throw new InvalidDataException(
+                    "Die ausgewählte Sicherung gehört nicht zum aktuell geöffneten Projekt.");
+            }
+
+            var restored = result.Value.Workspace with
+            {
+                ArchivePath = currentWorkspace.ArchivePath,
+                HasUnsavedChanges = true,
+            };
+            await WriteRecoveryMarkerAsync(restored, cancellationToken).ConfigureAwait(false);
+            restoredWorkingDirectory = null;
+            return restored;
+        }
+        catch
+        {
+            if (restoredWorkingDirectory is not null)
+            {
+                await DeleteManagedDirectoryBestEffortAsync(restoredWorkingDirectory).ConfigureAwait(false);
+            }
+
+            throw;
+        }
+        finally
+        {
+            saveGate.Release();
+        }
+    }
+
+    /// <inheritdoc />
     public async Task<ProjectWorkspace> DuplicateAsync(
         ProjectWorkspace workspace,
         string targetArchivePath,
@@ -226,12 +308,20 @@ public sealed partial class LocalProjectWorkspaceService : IProjectWorkspaceServ
     public async Task CloseAsync(ProjectWorkspace workspace, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(workspace);
-        EnsureManagedWorkspace(workspace.WorkingDirectory);
-        cancellationToken.ThrowIfCancellationRequested();
-        SqliteConnection.ClearAllPools();
-        await Task.Run(
-            () => Directory.Delete(workspace.WorkingDirectory, recursive: true),
-            cancellationToken).ConfigureAwait(false);
+        await saveGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            EnsureManagedWorkspace(workspace.WorkingDirectory);
+            cancellationToken.ThrowIfCancellationRequested();
+            SqliteConnection.ClearAllPools();
+            await Task.Run(
+                () => Directory.Delete(workspace.WorkingDirectory, recursive: true),
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            saveGate.Release();
+        }
     }
 
     /// <inheritdoc />

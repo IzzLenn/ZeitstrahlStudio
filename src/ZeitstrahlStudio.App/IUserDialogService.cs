@@ -14,6 +14,12 @@ public enum SaveChangesDecision
 /// <summary>Vom Benutzer bestätigte Einstellungen und Zieldatei eines HTML-Exports.</summary>
 public sealed record HtmlExportRequest(HtmlExportOptions Options, string TargetPath);
 
+/// <summary>Ergebnis der modalen Sicherungsverwaltung.</summary>
+public sealed record BackupManagerResult(
+    ProjectWorkspace Workspace,
+    bool WasRestored,
+    bool SettingsChanged);
+
 /// <summary>Kapselt ausschließlich WPF-spezifische Datei- und Benutzerdialoge.</summary>
 public interface IUserDialogService
 {
@@ -39,6 +45,9 @@ public interface IUserDialogService
         Func<CancellationToken, Task> openExternallyAsync,
         CancellationToken cancellationToken);
     Task<string?> ShowPdfExportAsync(
+        ProjectWorkspace workspace,
+        CancellationToken cancellationToken);
+    Task<BackupManagerResult> ShowBackupManagerAsync(
         ProjectWorkspace workspace,
         CancellationToken cancellationToken);
     HtmlExportRequest? RequestHtmlExport(TimelineProject project);

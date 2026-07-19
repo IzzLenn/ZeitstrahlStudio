@@ -82,6 +82,7 @@
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding RedoCommand}" Content="Wiederholen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Click="SearchFocus_Click" Content="Suchen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ShowAuditLogCommand}" Content="Protokoll" />
+                <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding ManageBackupsCommand}" Content="Sicherungen" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SetHorizontalTimelineCommand}" Content="Horizontal" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding SetVerticalTimelineCommand}" Content="Vertikal" />
                 <Button DockPanel.Dock="Left" Style="{StaticResource ToolbarButtonStyle}" Command="{Binding AddAttachmentsCommand}" Content="Dateien +" />

@@ -79,6 +79,12 @@ public partial class App : System.Windows.Application
         services.AddSingleton<IRecentProjectsService>(_ => new JsonRecentProjectsService());
         services.AddSingleton<ILocalLogService>(_ => new JsonLinesLocalLogService());
         services.AddSingleton<IAuditLogService, SqliteAuditLogService>();
+        services.AddSingleton<BackupRetentionPolicy>();
+        services.AddSingleton<IBackupService>(provider => new LocalBackupService(
+            provider.GetRequiredService<IProjectWorkspaceService>(),
+            provider.GetRequiredService<IAuditLogService>(),
+            provider.GetRequiredService<BackupRetentionPolicy>(),
+            provider.GetRequiredService<ILocalLogService>()));
         services.AddSingleton<IProjectSearchService, SqliteProjectSearchService>();
         services.AddSingleton<IAttachmentImportService, LocalAttachmentImportService>();
         services.AddSingleton<IAttachmentFileService, LocalAttachmentFileService>();
@@ -97,7 +103,9 @@ public partial class App : System.Windows.Application
                 provider.GetServices<IDocumentAnalyzer>(),
                 provider.GetRequiredService<IAttachmentAnalysisStore>(),
                 maximumConcurrency: 2));
-        services.AddSingleton<IProjectAutosaveService, ProjectAutosaveService>();
+        services.AddSingleton<IProjectAutosaveService>(provider => new ProjectAutosaveService(
+            provider.GetRequiredService<IProjectWorkspaceService>(),
+            provider.GetRequiredService<IBackupService>()));
         services.AddSingleton<ProjectEventEditingService>();
         services.AddSingleton<IUserDialogService, WpfUserDialogService>();
         services.AddSingleton<MainWindowViewModel>();

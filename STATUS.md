@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Kernfunktionen bis zum Standalone-HTML-Export umgesetzt, noch kein Release
+Status: In Entwicklung – Kernfunktionen einschließlich lokaler Sicherung und Wiederherstellung umgesetzt, noch kein Release
 
 Letzte Aktualisierung: 19.07.2026
 
 ## Aktuelle Phase
 
-Übergabestand nach Meilenstein 8B – kein neuer Meilenstein begonnen
+Übergabestand nach Meilenstein 10A – kein neuer Meilenstein begonnen
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -284,6 +284,19 @@ Letzte Aktualisierung: 19.07.2026
 - der Export schreibt zunächst eine eindeutige temporäre Datei im Zielordner und übernimmt sie erst nach vollständigem Erfolg atomar; Ziele im aktiven Projektarbeitsordner sowie andere Dateiendungen als `.html`/`.htm` werden abgelehnt
 - ein Unit-Test prüft JSON-Roundtrip und die Abwehr eines `</script>`-Injektionsversuchs; drei Integrationstests prüfen Offline-Vertrag, Optionen, Datumsgrenzen/-präzision, Dokumentvolltext, Miniatur, atomare Ersetzung, Workspace-Schutz und Abbruch
 
+### Meilenstein 10A – lokale Sicherung, Rotation und Wiederherstellung
+
+- der vollständige lokale `IBackupService` erzeugt manuelle und automatische `.zeitprojekt`-Sicherungen unter `%LocalAppData%\Zeitstrahl Studio\Backups\{Projekt-ID}`; Sicherungsdateien enthalten UTC-Zeitpunkt, Art und unveränderliche ID im verwalteten Namen
+- jeder Snapshot speichert zuerst den aktuellen Aggregatzustand serialisiert in die Workspace-SQLite-Datenbank und exportiert anschließend über den vorhandenen atomaren Archivdienst, ohne Archivpfad oder Ungespeichert-Zustand des geöffneten Projekts zu verändern
+- Metadaten mit relativem Pfad, Dateigröße, SHA-256, UTC-Zeitpunkt und Sicherungsart werden erst nach vollständigem Archiv und stabiler Prüfsummenberechnung in SQLite eingetragen
+- vollständig geschriebene Sicherungsarchive ohne Metadatensatz werden beim Auflisten anhand des streng validierten Dateinamens wieder in SQLite aufgenommen; verwaiste Metadatensätze ohne Datei werden bereinigt
+- automatische Sicherungen werden nach erfolgreichen Projekterstellungen, manuellen Speicherungen und Autosaves fälligkeitsgesteuert angestoßen; ein Sicherungsfehler macht eine bereits erfolgreiche Projektspeicherung nicht rückgängig und wird lokal strukturiert protokolliert
+- die konfigurierbare Rotation behält mehrere Sicherungen des aktuellen lokalen Tages, je eine tägliche Sicherung der letzten konfigurierten Tage und je eine wöchentliche Sicherung für den älteren Zeitraum; manuelle Sicherungen werden niemals automatisch entfernt
+- alte automatische Sicherungen werden ausschließlich nach einer vollständig erfolgreichen neuen automatischen Sicherung rotiert; nicht löschbare Altdateien bleiben erhalten und erzeugen eine lokale Warnung
+- die WPF-Werkzeugleiste öffnet einen MVVM-gesteuerten Sicherungsdialog mit lokaler Zeit, Art, Größe und SHA-256, manueller Sofortsicherung sowie validierten Aufbewahrungswerten
+- vor jeder bestätigten Wiederherstellung wird eine manuelle Sicherheitssicherung des aktuellen Zustands erzeugt; die Auswahl wird vor und nach dem Import gegen Größe und SHA-256 geprüft, in einen neuen verwalteten Workspace geladen, mit dem bisherigen Archivpfad als ungespeichert markiert und im Audit protokolliert
+- zwei neue Unit-Tests prüfen Aufbewahrungsstufen und Fälligkeit; acht neue Integrationstests prüfen Snapshot/Wiederherstellung, Manipulationsabwehr, Rotation, Metadatenrekonstruktion, Autosave-Anbindung, Einstellungs-Checkpoint, Wiederherstellungsbefehl und den realen WPF-Dialog
+
 ## Erfolgreiche Build- und Testbefehle
 
 Am 19.07.2026 erfolgreich ausgeführt:
@@ -299,7 +312,7 @@ dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 8B: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 55 Unit-Tests und 59 Integrationstests bestanden. Die gezielten Standalone-HTML-Tests bestanden zusätzlich mit 1 Unit- und 3 Integrationstests. Ein durch den produktiven Exportdienst erzeugtes QA-Artefakt enthält genau ein syntaktisch gültiges Programmskript, eine restriktive Offline-CSP und keine externen Skript-/Stylesheetverweise. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.902.795 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft und blieb über das Prüfintervall stabil.
+Aktueller Stand nach Meilenstein 10A: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 57 Unit-Tests und 67 Integrationstests bestanden. Die Sicherungstests decken zusätzlich zum reinen Aufbewahrungsmodell reale Archive, SQLite-Metadaten, SHA-256-Manipulationsabwehr, Wiederherstellung mit Sicherheitssicherung und Audit, Autosave sowie den WPF-Dialog ab. Die selbstenthaltende Veröffentlichung umfasst 496 Dateien mit 219.989.375 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der veröffentlichte EXE-Smoke-Test erreichte die Eingabebereitschaft und blieb über das Prüfintervall stabil.
 
 ## Phasenweiser Implementierungsplan
 
@@ -312,7 +325,7 @@ Aktueller Stand nach Meilenstein 8B: Debug und Release jeweils 0 Warnungen/0 Feh
 7. **Suche und Filter – abgeschlossen:** getrennte lokale Dokument-FTS, Suche in aktuellen Aggregatfeldern, kombinierbare Filter, Eingabedebounce/Abbruch, Relevanz-/Datumssortierung, hervorgehobene Fundstellen, direkte Navigation und gefilterte Zeitstrahldarstellung sind in 7A umgesetzt.
 8. **PDF-Export – abgeschlossen:** tatsächliche PDF-Vorschau, A4/A3/Letter/benutzerdefiniert, Hoch-/Querformat, mehrseitig, große Einzelseite, Zeitraum, Fortsetzungen, Miniaturen und drucktaugliche Kennzeichnungen sind in 8A umgesetzt.
 9. **Standalone-HTML-Export – abgeschlossen:** eine einzelne responsive Offlinedatei mit eingebetteten Daten und Miniaturen, horizontaler/vertikaler Darstellung, Zoom, Verschieben, Suche, kombinierten Filtern, Detailkarten, externen Linkwarnungen und Druck-CSS ist in 8B umgesetzt.
-10. **Projektarchiv, Sicherung und Wiederherstellung – teilweise abgeschlossen:** Manifest, SHA-256, sichere ZIP-Verarbeitung, Projekttransfer und Crash-Recovery sind umgesetzt; manuelle und rotierende Sicherungen samt Wiederherstellung und UI fehlen noch.
+10. **Projektarchiv, Sicherung und Wiederherstellung – abgeschlossen:** Manifest, SHA-256, sichere ZIP-Verarbeitung, Projekttransfer, Crash-Recovery, manuelle und rotierende Sicherungen, validierte Wiederherstellung, Audit und Sicherungsverwaltung sind umgesetzt.
 11. **Tests und Beispielprojekt:** vollständige Unit-/Integrationstestmatrix, Fehlerfälle, freie PDF/Bild/DOCX/XLSX-Testdokumente und mindestens zehn Beispielereignisse.
 12. **Installer, portable Veröffentlichung und Dokumentation:** Buildskripte, selbstenthaltendes Publish, ZIP, Inno-Setup-Dateizuordnung, Handbuch, Datenschutz, Release-Audit.
 
@@ -320,7 +333,6 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Noch offene Anforderungen
 
-- manuellen und zeitgesteuerten `IBackupService`, anpassbare Tages-/Wochenrotation, Sicherungsliste, Wiederherstellung und zugehöriges Audit vollständig implementieren
 - kleine Dokumentvorschaubilder direkt in der interaktiven WPF-Zeitstrahlansicht und noch fehlende projektbezogene Darstellungs-/Exporteinstellungen ergänzen
 - das in `SPEC.md` geforderte Drag-and-drop-Umsortieren von Ereignissen sowie das Ablegen von Dateien gezielt auf Ereignis und Anhangsbereich vervollständigen
 - vollständige UI-/Abnahmeprüfung einschließlich 100/125/150/200 Prozent Skalierung, Tastaturbedienung sowie HTML-Offlinetest und Druckvorschau in üblichen Windows-Browsern durchführen
@@ -341,4 +353,4 @@ Nach jedem Meilenstein werden relevante Debug-/Release-Builds und Tests ausgefü
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 10A beginnen: den vorhandenen `IBackupService` als vollständig lokalen Dienst für manuelle und automatische atomare Projektsicherungen implementieren, die konfigurierbare Tages-/Wochenrotation erst nach erfolgreicher neuer Sicherung anwenden und Auflisten sowie validierte Wiederherstellung durch Integrationstests absichern.
+Meilenstein 6D beginnen: kleine, verzögert geladene und lokal gecachte Vorschaubilder des primären PDF- oder Bildanhangs in den virtualisierten Ereigniskarten ergänzen und die noch fehlenden projektbezogenen Darstellungsoptionen über eine MVVM-Einstellungsoberfläche zugänglich machen.
