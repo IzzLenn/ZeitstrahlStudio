@@ -2,7 +2,7 @@
 
 Status: In Entwicklung – Meilenstein 11B abgenommen, noch kein Release
 
-Letzte Aktualisierung: 19.07.2026
+Letzte Aktualisierung: 21.07.2026
 
 ## Aktuelle Phase
 
@@ -354,7 +354,7 @@ dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
 dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
 ```
 
-Aktueller Stand nach Meilenstein 11B: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 62 Unit-Tests und 88 Integrationstests bestanden. Die neuen Tests decken Barrierefreiheit der Hauptfenstersteuerelemente, Tastaturnavigation, negative Archiv-/Workspace-Szenarien und zusätzliche Zeitstrahl-Layoutprüfungen ab. Die Formatprüfung meldet keine Abweichung. Die selbstenthaltende Veröffentlichung umfasst weiterhin 496 Dateien mit 220.066.983 Bytes und enthält die benötigten x64-PDFium-/Skia-Bibliotheken. Der EXE-Smoke-Test der vorherigen Übergabe blieb stabil.
+Aktueller Stand nach Meilenstein 11B und Installer-Korrekturen: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 62 Unit-Tests und 88 Integrationstests bestanden. Die Formatprüfung meldet keine Abweichung. Der Installer-Build mit Inno Setup 6 verläuft erfolgreich ohne Warnungen und erzeugt `ZeitstrahlStudio-0.1.0-win-x64-setup.exe` direkt im Projekt-Hauptverzeichnis. Die Setup-EXE fordert durch `PrivilegesRequired=admin` Administratorrechte an, sodass die Installation unter `C:\Program Files` zuverlässig funktioniert.
 
 ## Phasenweiser Implementierungsplan
 
@@ -394,8 +394,10 @@ Die folgenden Prüfungen können in dieser Entwicklungsumgebung nicht vollständ
 - Nach Ablauf der Undo-Historie ist noch keine Bereinigung nicht mehr referenzierter physischer Anhangsdateien implementiert.
 - Deutsche OCR setzt die entsprechende lokale Windows-Sprachressource voraus; fehlt sie, bleibt die übrige Anwendung funktionsfähig und die Analyse zeigt eine Installationsanleitung.
 - Ein bereits laufender nativer PDFium-Einzelseitenaufruf kann nicht hart abgebrochen werden; die Anwendung prüft Cancellation davor und unmittelbar danach und begrenzt die Ausgabe strikt.
-- Inno Setup ist nicht im `PATH`; der Installer kann aktuell noch nicht gebaut werden.
-- Die selbstenthaltende Veröffentlichung ist technisch erfolgreich; Lizenztext-Bündelung, portable ZIP-Erzeugung und Installer bleiben spätere Release-Gates.
+- Die Setup-EXE wird direkt ins Projekt-Hauptverzeichnis geschrieben, damit Endbenutzer sie sofort finden.
+- Installer-Setup wird mit `PrivilegesRequired=admin` erzeugt, damit die Installation unter `C:\Program Files` zuverlässig funktioniert.
+- Inno Setup 6 ist verfügbar; der Installer-Build funktioniert ohne Warnungen.
+- Die selbstenthaltende Veröffentlichung ist technisch erfolgreich; portable ZIP-Erzeugung und Lizenztext-Bündelung bleiben spätere Release-Gates.
 
 ## Nächster konkreter Arbeitsschritt
 

@@ -122,7 +122,8 @@ Das Buildskript verwendet folgende Fehlercodes:
 | Verzeichnis | Inhalt |
 |-------------|--------|
 | `artifacts\publish\win-x64` | Selbstenthaltende win-x64-Anwendung |
-| `artifacts\release` | Portable ZIP, Installer, Prüfsummen |
+| `artifacts\release` | Portable ZIP, Prüfsummen |
+| Projekt-Hauptverzeichnis | Installer-EXE (`ZeitstrahlStudio-*-win-x64-setup.exe`) |
 
 ## Bekannte Einschränkungen
 

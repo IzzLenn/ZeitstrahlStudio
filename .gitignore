@@ -19,3 +19,6 @@ TestResults/
 # Reproduzierbare Veröffentlichungsartefakte
 publish/
 release/
+
+# Installer-Ausgabe im Projekt-Root
+/ZeitstrahlStudio-*-win-x64-setup.exe
