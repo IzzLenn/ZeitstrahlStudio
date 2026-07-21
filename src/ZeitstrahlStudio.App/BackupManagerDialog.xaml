@@ -11,30 +11,20 @@
         Background="{DynamicResource SurfaceBrush}"
         Closing="Window_Closing">
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="MinWidth" Value="105" />
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Margin" Value="0,0,8,0" />
-            <Setter Property="Padding" Value="12,0" />
-            <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource StrongBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style x:Key="PrimaryButtonStyle"
-               TargetType="Button"
-               BasedOn="{StaticResource ActionButtonStyle}">
-            <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}" />
-            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,13,0,4" />
-            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Theme.Light.xaml" />
+                <ResourceDictionary Source="Themes/Typography.xaml" />
+                <ResourceDictionary Source="Themes/ControlStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <Style x:Key="LabelStyle" TargetType="TextBlock">
+                <Setter Property="Margin" Value="0,13,0,4" />
+                <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid>
@@ -48,7 +38,7 @@
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left">
                     <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
-                               FontSize="20"
+                               FontSize="{StaticResource FontSize2Xl}"
                                FontWeight="SemiBold"
                                Text="Lokale Projektsicherungen" />
                     <TextBlock Margin="0,3,0,0"
@@ -76,7 +66,7 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource PrimaryTextBrush}"
-                                   FontSize="15"
+                                   FontSize="{StaticResource FontSizeLg}"
                                    FontWeight="Bold"
                                    Text="Aufbewahrung" />
                         <TextBlock Margin="0,5,0,0"
@@ -109,23 +99,23 @@
 
                         <Border Margin="0,18,0,0"
                                 Padding="11"
-                                Background="#FFFBEB"
-                                BorderBrush="#F59E0B"
+                                Background="{DynamicResource WarningLightBrush}"
+                                BorderBrush="{DynamicResource WarningBrush}"
                                 BorderThickness="1"
-                                CornerRadius="4">
-                            <TextBlock Foreground="#92400E"
+                                CornerRadius="{DynamicResource ControlCornerRadius}">
+                            <TextBlock Foreground="{DynamicResource WarningTextBrush}"
                                        Text="Vor jeder Wiederherstellung wird automatisch eine manuelle Sicherheitssicherung des aktuellen Stands erstellt."
                                        TextWrapping="Wrap" />
                         </Border>
 
                         <Border Margin="0,12,0,0"
                                 Padding="11"
-                                Background="#FEF2F2"
-                                BorderBrush="#EF4444"
+                                Background="{DynamicResource DangerLightBrush}"
+                                BorderBrush="{DynamicResource DangerBrush}"
                                 BorderThickness="1"
-                                CornerRadius="4"
+                                CornerRadius="{DynamicResource ControlCornerRadius}"
                                 Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <TextBlock Foreground="#991B1B"
+                            <TextBlock Foreground="{DynamicResource DangerTextBrush}"
                                        Text="{Binding ErrorMessage}"
                                        TextWrapping="Wrap" />
                         </Border>
@@ -143,15 +133,18 @@
                 <DockPanel Grid.Row="0" Margin="0,0,0,10">
                     <TextBlock DockPanel.Dock="Left"
                                VerticalAlignment="Center"
-                               FontSize="15"
+                               FontSize="{StaticResource FontSizeLg}"
                                FontWeight="Bold"
                                Text="Verfügbare Sicherungen" />
                     <Button DockPanel.Dock="Right"
-                            Style="{StaticResource ActionButtonStyle}"
+                            Style="{StaticResource BaseButtonStyle}"
+                            MinWidth="105"
+                            Margin="0,0,8,0"
                             Command="{Binding RefreshCommand}"
                             Content="Aktualisieren" />
                     <Button DockPanel.Dock="Right"
                             Style="{StaticResource PrimaryButtonStyle}"
+                            MinWidth="105"
                             Command="{Binding CreateManualBackupCommand}"
                             Content="Jetzt sichern" />
                 </DockPanel>
@@ -191,6 +184,7 @@
                                Text="Die Wiederherstellung ersetzt nicht sofort die gespeicherte Projektdatei." />
                     <Button DockPanel.Dock="Right"
                             Style="{StaticResource PrimaryButtonStyle}"
+                            MinWidth="105"
                             Command="{Binding RestoreCommand}"
                             Content="Auswahl wiederherstellen" />
                 </DockPanel>
@@ -202,15 +196,15 @@
                 Background="{DynamicResource SurfaceAltBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0">
-            <Button Width="105"
-                    Height="34"
+            <Button Style="{StaticResource BaseButtonStyle}"
+                    Width="105"
                     HorizontalAlignment="Right"
                     IsCancel="True"
                     Content="Schließen" />
         </Border>
 
         <Border Grid.RowSpan="3"
-                Background="#990F172A"
+                Background="{DynamicResource DialogOverlayBrush}"
                 Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
             <StackPanel Width="360"
                         HorizontalAlignment="Center"

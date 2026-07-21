@@ -6,8 +6,17 @@
         Height="420"
         ResizeMode="NoResize"
         ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource SurfaceBrush}">
+        WindowStartupLocation="CenterOwner">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Theme.Light.xaml" />
+                <ResourceDictionary Source="Themes/Typography.xaml" />
+                <ResourceDictionary Source="Themes/ControlStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -18,7 +27,7 @@
         <Border Grid.Row="0" Padding="20,15" Background="{DynamicResource HeaderBackgroundBrush}">
             <StackPanel>
                 <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
-                           FontSize="18"
+                           FontSize="{StaticResource FontSize2Xl}"
                            FontWeight="SemiBold"
                            Text="Standalone-HTML exportieren" />
                 <TextBlock Margin="0,5,0,0"
@@ -28,11 +37,8 @@
         </Border>
 
         <StackPanel Grid.Row="1" Margin="24,18">
-            <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"
-                       FontWeight="SemiBold"
-                       Text="Anfangsdarstellung" />
+            <TextBlock Style="{StaticResource LabelStyle}" Text="Anfangsdarstellung" />
             <ComboBox x:Name="OrientationBox"
-                      Height="32"
                       Margin="0,6,0,0"
                       SelectedIndex="0">
                 <ComboBoxItem Content="Horizontaler Zeitstrahl" />
@@ -45,7 +51,7 @@
                       Content="Kleine Dokumentvorschauen einbetten" />
             <TextBlock Margin="22,4,0,0"
                        Foreground="{DynamicResource MutedTextBrush}"
-                       FontSize="11"
+                       FontSize="{StaticResource FontSizeXs}"
                        Text="Primäre PDF-Seiten und Bilder werden verkleinert direkt in die HTML-Datei aufgenommen."
                        TextWrapping="Wrap" />
 
@@ -55,11 +61,11 @@
 
             <Border Margin="0,18,0,0"
                     Padding="11"
-                    Background="#FFFBEB"
-                    BorderBrush="#F59E0B"
+                    Background="{DynamicResource WarningLightBrush}"
+                    BorderBrush="{DynamicResource WarningBrush}"
                     BorderThickness="1"
-                    CornerRadius="4">
-                <TextBlock Foreground="#92400E"
+                    CornerRadius="{DynamicResource ControlCornerRadius}">
+                <TextBlock Foreground="{DynamicResource WarningTextBrush}"
                            Text="Die HTML-Datei enthält eine unveränderliche Momentaufnahme. Webseitenlinks sind als externe Ziele gekennzeichnet und fragen vor dem Öffnen nach."
                            TextWrapping="Wrap" />
             </Border>
@@ -68,18 +74,13 @@
         <Border Grid.Row="2" Padding="16,12" Background="{DynamicResource SurfaceAltBrush}">
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                 <Button Width="96"
-                        Height="32"
                         Margin="0,0,8,0"
                         IsCancel="True"
                         Content="Abbrechen" />
                 <Button Width="110"
-                        Height="32"
                         IsDefault="True"
                         Click="Confirm_Click"
-                        Foreground="{DynamicResource HeaderForegroundBrush}"
-                        Background="{DynamicResource AccentBrush}"
-                        BorderBrush="{DynamicResource AccentDarkBrush}"
-                        FontWeight="SemiBold"
+                        Style="{StaticResource PrimaryButtonStyle}"
                         Content="Weiter …" />
             </StackPanel>
         </Border>

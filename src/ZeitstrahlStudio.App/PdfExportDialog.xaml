@@ -7,33 +7,16 @@
         MinWidth="980"
         MinHeight="640"
         ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource SurfaceAltBrush}">
+        WindowStartupLocation="CenterOwner">
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="MinWidth" Value="90" />
-            <Setter Property="Height" Value="32" />
-            <Setter Property="Margin" Value="0,0,8,0" />
-            <Setter Property="Padding" Value="10,0" />
-            <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource StrongBorderBrush}" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Cursor" Value="Hand" />
-        </Style>
-        <Style x:Key="PrimaryButtonStyle"
-               TargetType="Button"
-               BasedOn="{StaticResource ActionButtonStyle}">
-            <Setter Property="Foreground" Value="{DynamicResource HeaderForegroundBrush}" />
-            <Setter Property="Background" Value="{DynamicResource AccentBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource AccentDarkBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,10,0,4" />
-            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Theme.Light.xaml" />
+                <ResourceDictionary Source="Themes/Typography.xaml" />
+                <ResourceDictionary Source="Themes/ControlStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid>
@@ -47,7 +30,7 @@
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left">
                     <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
-                               FontSize="18"
+                               FontSize="{StaticResource FontSize2Xl}"
                                FontWeight="SemiBold"
                                Text="PDF-Exportvorschau" />
                     <TextBlock Margin="0,3,0,0"
@@ -75,14 +58,13 @@
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource PrimaryTextBrush}"
-                                   FontSize="15"
+                                   FontSize="{StaticResource FontSizeLg}"
                                    FontWeight="Bold"
                                    Text="Druckeinstellungen" />
 
                         <TextBlock Style="{StaticResource LabelStyle}" Text="Papierformat" />
                         <ComboBox ItemsSource="{Binding PaperSizes}"
-                                  SelectedItem="{Binding SelectedPaperSize}"
-                                  Height="30" />
+                                  SelectedItem="{Binding SelectedPaperSize}" />
 
                         <CheckBox Margin="0,9,0,0"
                                   IsChecked="{Binding Landscape}"
@@ -97,21 +79,18 @@
                             </Grid.ColumnDefinitions>
                             <StackPanel Grid.Column="0">
                                 <TextBlock Style="{StaticResource LabelStyle}" Text="Breite (mm)" />
-                                <TextBox Height="28"
-                                         Text="{Binding WidthMillimeters, UpdateSourceTrigger=LostFocus}" />
+                                <TextBox Text="{Binding WidthMillimeters, UpdateSourceTrigger=LostFocus}" />
                             </StackPanel>
                             <StackPanel Grid.Column="2">
                                 <TextBlock Style="{StaticResource LabelStyle}" Text="Höhe (mm)" />
-                                <TextBox Height="28"
-                                         Text="{Binding HeightMillimeters, UpdateSourceTrigger=LostFocus}" />
+                                <TextBox Text="{Binding HeightMillimeters, UpdateSourceTrigger=LostFocus}" />
                             </StackPanel>
                         </Grid>
 
                         <TextBlock Style="{StaticResource LabelStyle}" Text="Exportmodus" />
                         <ComboBox ItemsSource="{Binding Modes}"
                                   SelectedItem="{Binding SelectedMode}"
-                                  DisplayMemberPath="DisplayName"
-                                  Height="30" />
+                                  DisplayMemberPath="DisplayName" />
 
                         <StackPanel Visibility="{Binding IsRangeMode, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <TextBlock Style="{StaticResource LabelStyle}" Text="Zeitraum von" />
@@ -125,8 +104,7 @@
                         </StackPanel>
 
                         <TextBlock Style="{StaticResource LabelStyle}" Text="Exportschriftgröße (pt)" />
-                        <TextBox Height="28"
-                                 Text="{Binding FontSize, UpdateSourceTrigger=LostFocus}" />
+                        <TextBox Text="{Binding FontSize, UpdateSourceTrigger=LostFocus}" />
 
                         <CheckBox Margin="0,10,0,0"
                                   IsChecked="{Binding IncludeNotes}"
@@ -139,24 +117,24 @@
 
                         <Border Margin="0,14,0,0"
                                 Padding="10"
-                                Background="#FFFBEB"
-                                BorderBrush="#F59E0B"
+                                Background="{DynamicResource WarningLightBrush}"
+                                BorderBrush="{DynamicResource WarningBrush}"
                                 BorderThickness="1"
-                                CornerRadius="4"
+                                CornerRadius="{DynamicResource ControlCornerRadius}"
                                 Visibility="{Binding HasWarnings, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <TextBlock Foreground="#92400E"
+                            <TextBlock Foreground="{DynamicResource WarningTextBrush}"
                                        Text="{Binding WarningsText}"
                                        TextWrapping="Wrap" />
                         </Border>
 
                         <Border Margin="0,14,0,0"
                                 Padding="10"
-                                Background="#FEF2F2"
-                                BorderBrush="#EF4444"
+                                Background="{DynamicResource DangerLightBrush}"
+                                BorderBrush="{DynamicResource DangerBrush}"
                                 BorderThickness="1"
-                                CornerRadius="4"
+                                CornerRadius="{DynamicResource ControlCornerRadius}"
                                 Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
-                            <TextBlock Foreground="#991B1B"
+                            <TextBlock Foreground="{DynamicResource DangerTextBrush}"
                                        Text="{Binding ErrorMessage}"
                                        TextWrapping="Wrap" />
                         </Border>
@@ -164,7 +142,7 @@
                 </ScrollViewer>
             </Border>
 
-            <Grid Grid.Column="1" Background="#111827">
+            <Grid Grid.Column="1" Background="{DynamicResource SurfaceBrush}">
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
                     <RowDefinition Height="*" />
@@ -172,41 +150,48 @@
 
                 <Border Grid.Row="0"
                         Padding="12,9"
-                        Background="#1E293B"
-                        BorderBrush="#334155"
+                        Background="{DynamicResource SurfaceAltBrush}"
+                        BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1">
                     <ScrollViewer HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Disabled">
                         <StackPanel Orientation="Horizontal">
-                            <Button Style="{StaticResource ActionButtonStyle}"
+                            <Button MinWidth="38"
+                                    Margin="0,0,8,0"
                                     Command="{Binding Preview.PreviousPageCommand}"
                                     Content="◀" />
                             <TextBlock Width="130"
                                        VerticalAlignment="Center"
-                                       Foreground="#E2E8F0"
+                                       Style="{StaticResource BodyStyle}"
                                        TextAlignment="Center"
                                        Text="{Binding Preview.PageDisplay}" />
-                            <Button Style="{StaticResource ActionButtonStyle}"
+                            <Button MinWidth="38"
+                                    Margin="0,0,8,0"
                                     Command="{Binding Preview.NextPageCommand}"
                                     Content="▶" />
-                            <Button Style="{StaticResource ActionButtonStyle}"
+                            <Button MinWidth="38"
+                                    Margin="0,0,8,0"
                                     Command="{Binding Preview.ZoomOutCommand}"
                                     Content="−" />
                             <TextBlock Width="90"
                                        VerticalAlignment="Center"
-                                       Foreground="#E2E8F0"
+                                       Style="{StaticResource BodyStyle}"
                                        TextAlignment="Center"
                                        Text="{Binding Preview.ZoomDisplay}" />
-                            <Button Style="{StaticResource ActionButtonStyle}"
+                            <Button MinWidth="38"
+                                    Margin="0,0,8,0"
                                     Command="{Binding Preview.ZoomInCommand}"
                                     Content="+" />
-                            <Button Style="{StaticResource ActionButtonStyle}"
+                            <Button MinWidth="90"
+                                    Margin="0,0,8,0"
                                     Command="{Binding Preview.FitWidthCommand}"
                                     Content="Fensterbreite" />
-                            <Button Style="{StaticResource ActionButtonStyle}"
+                            <Button MinWidth="90"
+                                    Margin="0,0,8,0"
                                     Command="{Binding Preview.ShowWholePageCommand}"
                                     Content="Ganze Seite" />
-                            <Button Style="{StaticResource ActionButtonStyle}"
+                            <Button MinWidth="100"
+                                    Margin="0,0,8,0"
                                     Command="{Binding Preview.OpenExternallyCommand}"
                                     Content="Extern prüfen" />
                         </StackPanel>
@@ -222,8 +207,8 @@
                         <Border HorizontalAlignment="Center"
                                 VerticalAlignment="Top"
                                 Padding="1"
-                                Background="#FFFFFF"
-                                BorderBrush="#64748B"
+                                Background="{DynamicResource RaisedSurfaceBrush}"
+                                BorderBrush="{DynamicResource StrongBorderBrush}"
                                 BorderThickness="1">
                             <Image Width="{Binding Preview.PreviewWidth}"
                                    Height="{Binding Preview.PreviewHeight}"
@@ -233,14 +218,14 @@
                         </Border>
                     </ScrollViewer>
 
-                    <Border Background="#990F172A"
+                    <Border Background="{DynamicResource DialogOverlayBrush}"
                             Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <StackPanel Width="320"
                                     HorizontalAlignment="Center"
                                     VerticalAlignment="Center">
                             <ProgressBar Height="7" IsIndeterminate="True" />
                             <TextBlock Margin="0,12,0,0"
-                                       Foreground="{DynamicResource HeaderForegroundBrush}"
+                                       Foreground="{DynamicResource OnAccentTextBrush}"
                                        TextAlignment="Center"
                                        Text="{Binding StatusMessage}" />
                         </StackPanel>
@@ -255,7 +240,7 @@
                            Foreground="{DynamicResource SubtleTextBrush}"
                            Text="{Binding PageSummary}" />
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
-                    <Button Style="{StaticResource ActionButtonStyle}"
+                    <Button Margin="0,0,8,0"
                             IsCancel="True"
                             Content="Abbrechen" />
                     <Button Style="{StaticResource PrimaryButtonStyle}"

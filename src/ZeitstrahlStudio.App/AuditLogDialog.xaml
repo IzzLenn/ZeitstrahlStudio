@@ -9,6 +9,16 @@
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SurfaceBrush}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Theme.Light.xaml" />
+                <ResourceDictionary Source="Themes/Typography.xaml" />
+                <ResourceDictionary Source="Themes/ControlStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
@@ -16,7 +26,10 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
         <StackPanel Margin="20,16,20,12">
-            <TextBlock FontSize="23" FontWeight="SemiBold" Text="Änderungsprotokoll" />
+            <TextBlock Foreground="{DynamicResource PrimaryTextBrush}"
+                       FontSize="{StaticResource FontSize2Xl}"
+                       FontWeight="SemiBold"
+                       Text="Änderungsprotokoll" />
             <TextBlock Margin="0,4,0,0"
                        Foreground="{DynamicResource MutedTextBrush}"
                        Text="Lokal in der Projektdatenbank gespeicherte Ereignisoperationen." />
@@ -47,8 +60,8 @@
                 Background="{DynamicResource SurfaceAltBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0">
-            <Button Width="100"
-                    Height="32"
+            <Button Style="{StaticResource BaseButtonStyle}"
+                    Width="100"
                     HorizontalAlignment="Right"
                     IsCancel="True"
                     Content="Schließen" />

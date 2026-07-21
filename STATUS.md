@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – Meilenstein 11B abgenommen, noch kein Release
+Status: In Entwicklung – UI-Redesign Phase 5 abgeschlossen, Phase 6 in Vorbereitung
 
 Letzte Aktualisierung: 21.07.2026
 
 ## Aktuelle Phase
 
-Übergabestand nach Meilenstein 11B – Meilenstein 12 noch nicht begonnen
+UI-Redesign-Implementierung nach dem abgenommenen Redesignplan. Phase 5 (Startansicht und alle Dialoge) ist abgeschlossen; Phase 6 (Ereigniskarten und Zeitstrahllayout) folgt.
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -341,7 +341,17 @@ Letzte Aktualisierung: 21.07.2026
 
 ## Erfolgreiche Build- und Testbefehle
 
-Am 19.07.2026 erfolgreich ausgeführt:
+Am 21.07.2026 erfolgreich ausgeführt:
+
+```powershell
+dotnet build src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Debug --no-restore
+dotnet test tests\ZeitstrahlStudio.UnitTests\ZeitstrahlStudio.UnitTests.csproj -c Debug --no-restore --no-build
+dotnet test tests\ZeitstrahlStudio.IntegrationTests\ZeitstrahlStudio.IntegrationTests.csproj -c Debug --no-restore --no-build
+```
+
+Ergebnis: 0 Warnungen, 0 Fehler; 62 Unit-Tests bestanden; 88 Integrationstests bestanden.
+
+Vorherige vollständige Matrix am 19.07.2026 erfolgreich ausgeführt:
 
 ```powershell
 dotnet restore ZeitstrahlStudio.sln
@@ -401,4 +411,4 @@ Die folgenden Prüfungen können in dieser Entwicklungsumgebung nicht vollständ
 
 ## Nächster konkreter Arbeitsschritt
 
-Meilenstein 12 beginnen: Buildskripte, portable ZIP-Erzeugung, Installer mit `.zeitprojekt`-Dateizuordnung, Benutzerhandbuch, Datenschutz-/Lizenzbündelung und Release-Anleitung erstellen.
+Phase 6 des UI-Redesigns beginnen: Ereigniskarten und Zeitstrahllayout überarbeiten, Kollisionen vermeiden, Lesbarkeit und visuelle Hierarchie verbessern.

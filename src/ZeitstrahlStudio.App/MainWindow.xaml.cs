@@ -344,8 +344,25 @@ public partial class MainWindow : Window
     private void FocusSearch()
     {
         SearchExpander.IsExpanded = true;
+        if (SidebarColumn.Width.Value < 1)
+        {
+            SidebarColumn.Width = new GridLength(320);
+        }
+
         SearchQueryTextBox.Focus();
         SearchQueryTextBox.SelectAll();
+    }
+
+    private void SidebarToggle_Click(object sender, RoutedEventArgs e)
+    {
+        if (SidebarColumn.Width.Value < 1)
+        {
+            SidebarColumn.Width = new GridLength(320);
+        }
+        else
+        {
+            SidebarColumn.Width = new GridLength(0);
+        }
     }
 
     private static bool IsTextEditingElement(IInputElement? inputElement)

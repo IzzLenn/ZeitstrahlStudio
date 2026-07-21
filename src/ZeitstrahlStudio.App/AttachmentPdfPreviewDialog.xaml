@@ -7,30 +7,16 @@
         MinWidth="720"
         MinHeight="520"
         ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner"
-        Background="#111827">
+        WindowStartupLocation="CenterOwner">
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <Style x:Key="PreviewButtonStyle" TargetType="Button">
-            <Setter Property="MinWidth" Value="38" />
-            <Setter Property="Height" Value="32" />
-            <Setter Property="Margin" Value="0,0,8,0" />
-            <Setter Property="Padding" Value="10,0" />
-            <Setter Property="Foreground" Value="#E2E8F0" />
-            <Setter Property="Background" Value="#334155" />
-            <Setter Property="BorderBrush" Value="#475569" />
-            <Setter Property="BorderThickness" Value="1" />
-            <Setter Property="Cursor" Value="Hand" />
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="True">
-                    <Setter Property="Background" Value="#475569" />
-                </Trigger>
-                <Trigger Property="IsEnabled" Value="False">
-                    <Setter Property="Opacity" Value="0.45" />
-                    <Setter Property="Cursor" Value="Arrow" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Theme.Light.xaml" />
+                <ResourceDictionary Source="Themes/Typography.xaml" />
+                <ResourceDictionary Source="Themes/ControlStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid>
@@ -41,17 +27,16 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="18,13" Background="#1E293B">
+        <Border Grid.Row="0" Padding="18,13" Background="{DynamicResource SurfaceAltBrush}">
             <DockPanel LastChildFill="True">
                 <TextBlock DockPanel.Dock="Left"
-                           Foreground="#FFFFFF"
-                           FontSize="17"
-                           FontWeight="SemiBold"
+                           Style="{StaticResource HeadingStyle}"
                            Text="{Binding FileName}"
                            TextTrimming="CharacterEllipsis" />
                 <TextBlock Margin="18,3,0,0"
                            HorizontalAlignment="Right"
-                           Foreground="#94A3B8"
+                           Style="{StaticResource BodyStyle}"
+                           Foreground="{DynamicResource MutedTextBrush}"
                            Text="{Binding StatusMessage}"
                            TextTrimming="CharacterEllipsis" />
             </DockPanel>
@@ -59,13 +44,14 @@
 
         <Border Grid.Row="1"
                 Padding="14,10"
-                Background="#0F172A"
-                BorderBrush="#334155"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,1">
             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Disabled">
                 <StackPanel Orientation="Horizontal">
-                    <Button Style="{StaticResource PreviewButtonStyle}"
+                    <Button MinWidth="38"
+                            Margin="0,0,8,0"
                             Command="{Binding PreviousPageCommand}"
                             ToolTip="Vorherige Seite"
                             Content="◀" />
@@ -73,15 +59,17 @@
                                Margin="4,0,10,0"
                                VerticalAlignment="Center"
                                TextAlignment="Center"
-                               Foreground="#E2E8F0"
+                               Style="{StaticResource BodyStyle}"
                                FontWeight="SemiBold"
                                Text="{Binding PageDisplay}" />
-                    <Button Style="{StaticResource PreviewButtonStyle}"
+                    <Button MinWidth="38"
+                            Margin="0,0,8,0"
                             Command="{Binding NextPageCommand}"
                             ToolTip="Nächste Seite"
                             Content="▶" />
-                    <Border Width="1" Margin="4,2,12,2" Background="#475569" />
-                    <Button Style="{StaticResource PreviewButtonStyle}"
+                    <Border Width="1" Margin="4,2,12,2" Background="{DynamicResource DividerBrush}" />
+                    <Button MinWidth="38"
+                            Margin="0,0,8,0"
                             Command="{Binding ZoomOutCommand}"
                             ToolTip="Herauszoomen"
                             Content="−" />
@@ -89,20 +77,24 @@
                                Margin="2,0,8,0"
                                VerticalAlignment="Center"
                                TextAlignment="Center"
-                               Foreground="#E2E8F0"
+                               Style="{StaticResource BodyStyle}"
                                Text="{Binding ZoomDisplay}" />
-                    <Button Style="{StaticResource PreviewButtonStyle}"
+                    <Button MinWidth="38"
+                            Margin="0,0,8,0"
                             Command="{Binding ZoomInCommand}"
                             ToolTip="Hineinzoomen"
                             Content="+" />
-                    <Button Style="{StaticResource PreviewButtonStyle}"
+                    <Button MinWidth="90"
+                            Margin="0,0,8,0"
                             Command="{Binding FitWidthCommand}"
                             Content="Fensterbreite" />
-                    <Button Style="{StaticResource PreviewButtonStyle}"
+                    <Button MinWidth="90"
+                            Margin="0,0,8,0"
                             Command="{Binding ShowWholePageCommand}"
                             Content="Ganze Seite" />
-                    <Border Width="1" Margin="4,2,12,2" Background="#475569" />
-                    <Button Style="{StaticResource PreviewButtonStyle}"
+                    <Border Width="1" Margin="4,2,12,2" Background="{DynamicResource DividerBrush}" />
+                    <Button MinWidth="110"
+                            Margin="0,0,8,0"
                             Command="{Binding OpenExternallyCommand}"
                             Content="In Windows öffnen" />
                 </StackPanel>
@@ -110,8 +102,8 @@
         </Border>
 
         <Grid Grid.Row="2" Margin="12">
-            <Border Background="#0B1220"
-                    BorderBrush="#334155"
+            <Border Background="{DynamicResource SurfaceBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1">
                 <ScrollViewer x:Name="PreviewViewport"
                               Padding="16"
@@ -121,8 +113,8 @@
                     <Border HorizontalAlignment="Center"
                             VerticalAlignment="Top"
                             Padding="1"
-                            Background="#FFFFFF"
-                            BorderBrush="#64748B"
+                            Background="{DynamicResource RaisedSurfaceBrush}"
+                            BorderBrush="{DynamicResource StrongBorderBrush}"
                             BorderThickness="1">
                         <Image Width="{Binding PreviewWidth}"
                                Height="{Binding PreviewHeight}"
@@ -138,44 +130,45 @@
                     Padding="22"
                     HorizontalAlignment="Center"
                     VerticalAlignment="Center"
-                    Background="#E61E293B"
-                    BorderBrush="#F87171"
+                    Background="{DynamicResource DangerLightBrush}"
+                    BorderBrush="{DynamicResource DangerBrush}"
                     BorderThickness="1"
-                    CornerRadius="6"
+                    CornerRadius="{DynamicResource CardCornerRadius}"
                     Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel>
-                    <TextBlock Foreground="#FCA5A5"
-                               FontSize="16"
+                    <TextBlock Foreground="{DynamicResource DangerTextBrush}"
+                               FontSize="{StaticResource FontSizeXl}"
                                FontWeight="SemiBold"
                                Text="PDF-Vorschau nicht verfügbar" />
                     <TextBlock Margin="0,9,0,0"
-                               Foreground="#E2E8F0"
+                               Style="{StaticResource BodyStyle}"
                                Text="{Binding ErrorMessage}"
                                TextWrapping="Wrap" />
                 </StackPanel>
             </Border>
 
-            <Border Background="#660F172A"
+            <Border Background="{DynamicResource DialogOverlayBrush}"
                     Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <StackPanel Width="300"
                             HorizontalAlignment="Center"
                             VerticalAlignment="Center">
                     <ProgressBar Height="6" IsIndeterminate="True" />
                     <TextBlock Margin="0,12,0,0"
-                               Foreground="#FFFFFF"
+                               Style="{StaticResource BodyStyle}"
+                               Foreground="{DynamicResource OnAccentTextBrush}"
                                TextAlignment="Center"
                                Text="{Binding StatusMessage}" />
                 </StackPanel>
             </Border>
         </Grid>
 
-        <Border Grid.Row="3" Padding="14,10" Background="#1E293B">
+        <Border Grid.Row="3" Padding="14,10" Background="{DynamicResource SurfaceAltBrush}">
             <DockPanel>
                 <TextBlock VerticalAlignment="Center"
-                           Foreground="#94A3B8"
+                           Style="{StaticResource BodyStyle}"
+                           Foreground="{DynamicResource MutedTextBrush}"
                            Text="{Binding DimensionsText}" />
                 <Button Width="100"
-                        Height="32"
                         HorizontalAlignment="Right"
                         IsDefault="True"
                         IsCancel="True"

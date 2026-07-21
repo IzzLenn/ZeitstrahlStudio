@@ -10,21 +10,20 @@
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SurfaceBrush}">
     <Window.Resources>
-        <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
-        <Style x:Key="LabelStyle" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,13,0,4" />
-            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <Style x:Key="ActionButtonStyle" TargetType="Button">
-            <Setter Property="MinWidth" Value="105" />
-            <Setter Property="Height" Value="34" />
-            <Setter Property="Margin" Value="0,0,8,0" />
-            <Setter Property="Padding" Value="12,0" />
-            <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
-            <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-            <Setter Property="BorderBrush" Value="{DynamicResource StrongBorderBrush}" />
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Theme.Light.xaml" />
+                <ResourceDictionary Source="Themes/Typography.xaml" />
+                <ResourceDictionary Source="Themes/ControlStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
+            <Style x:Key="LabelStyle" TargetType="TextBlock">
+                <Setter Property="Margin" Value="0,13,0,4" />
+                <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid>
@@ -37,7 +36,7 @@
         <Border Grid.Row="0" Padding="20,15" Background="{DynamicResource HeaderBackgroundBrush}">
             <StackPanel>
                 <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
-                           FontSize="20"
+                           FontSize="{StaticResource FontSize2Xl}"
                            FontWeight="SemiBold"
                            Text="Projekteinstellungen" />
                 <TextBlock Margin="0,3,0,0"
@@ -49,14 +48,12 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,14,24,20">
                 <TextBlock Style="{StaticResource LabelStyle}" Text="Farbschema" />
-                <ComboBox Height="31"
-                          ItemsSource="{Binding ThemeOptions}"
+                <ComboBox ItemsSource="{Binding ThemeOptions}"
                           SelectedItem="{Binding SelectedTheme}"
                           DisplayMemberPath="Label" />
 
                 <TextBlock Style="{StaticResource LabelStyle}" Text="Bevorzugte Zeitstrahlansicht" />
-                <ComboBox Height="31"
-                          ItemsSource="{Binding OrientationOptions}"
+                <ComboBox ItemsSource="{Binding OrientationOptions}"
                           SelectedItem="{Binding SelectedOrientation}"
                           DisplayMemberPath="Label" />
 
@@ -65,8 +62,7 @@
                           Content="Große leere Zeitlücken komprimieren" />
 
                 <TextBlock Style="{StaticResource LabelStyle}" Text="Standardfarbe neuer Ereignisse (#RRGGBB)" />
-                <TextBox Height="31"
-                         MaxLength="7"
+                <TextBox MaxLength="7"
                          Text="{Binding DefaultEventColorHex, UpdateSourceTrigger=PropertyChanged}" />
 
                 <Grid Margin="0,4,0,0">
@@ -77,28 +73,25 @@
                     </Grid.ColumnDefinitions>
                     <StackPanel Grid.Column="0">
                         <TextBlock Style="{StaticResource LabelStyle}" Text="Kartenschrift (8–48 pt)" />
-                        <TextBox Height="31"
-                                 Text="{Binding TimelineCardFontSize, UpdateSourceTrigger=LostFocus}" />
+                        <TextBox Text="{Binding TimelineCardFontSize, UpdateSourceTrigger=LostFocus}" />
                     </StackPanel>
                     <StackPanel Grid.Column="2">
                         <TextBlock Style="{StaticResource LabelStyle}" Text="Achsenschrift (8–48 pt)" />
-                        <TextBox Height="31"
-                                 Text="{Binding TimelineAxisFontSize, UpdateSourceTrigger=LostFocus}" />
+                        <TextBox Text="{Binding TimelineAxisFontSize, UpdateSourceTrigger=LostFocus}" />
                     </StackPanel>
                 </Grid>
 
                 <TextBlock Style="{StaticResource LabelStyle}" Text="Standardschrift für Exporte (8–48 pt)" />
-                <TextBox Height="31"
-                         Text="{Binding ExportFontSize, UpdateSourceTrigger=LostFocus}" />
+                <TextBox Text="{Binding ExportFontSize, UpdateSourceTrigger=LostFocus}" />
 
                 <Border Margin="0,18,0,0"
                         Padding="11"
-                        Background="#FEF2F2"
-                        BorderBrush="#EF4444"
+                        Background="{DynamicResource DangerLightBrush}"
+                        BorderBrush="{DynamicResource DangerBrush}"
                         BorderThickness="1"
-                        CornerRadius="4"
+                        CornerRadius="{DynamicResource ControlCornerRadius}"
                         Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock Foreground="#991B1B"
+                    <TextBlock Foreground="{DynamicResource DangerTextBrush}"
                                Text="{Binding ErrorMessage}"
                                TextWrapping="Wrap" />
                 </Border>
@@ -116,14 +109,13 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0">
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                <Button Style="{StaticResource ActionButtonStyle}"
+                <Button Style="{StaticResource BaseButtonStyle}"
+                        MinWidth="105"
+                        Margin="0,0,8,0"
                         IsCancel="True"
                         Content="Abbrechen" />
-                <Button Style="{StaticResource ActionButtonStyle}"
-                        Background="{DynamicResource AccentBrush}"
-                        BorderBrush="{DynamicResource AccentDarkBrush}"
-                        Foreground="{DynamicResource HeaderForegroundBrush}"
-                        FontWeight="SemiBold"
+                <Button Style="{StaticResource PrimaryButtonStyle}"
+                        MinWidth="105"
                         Click="Confirm_Click"
                         Content="Übernehmen" />
             </StackPanel>

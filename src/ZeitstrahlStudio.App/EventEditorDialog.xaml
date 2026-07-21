@@ -10,20 +10,19 @@
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource SurfaceBrush}">
     <Window.Resources>
-        <Style x:Key="FormLabelStyle" TargetType="TextBlock">
-            <Setter Property="Margin" Value="0,0,0,5" />
-            <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
-            <Setter Property="FontWeight" Value="SemiBold" />
-        </Style>
-        <Style TargetType="TextBox">
-            <Setter Property="MinHeight" Value="30" />
-            <Setter Property="Padding" Value="7,4" />
-            <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
-        </Style>
-        <Style TargetType="ComboBox">
-            <Setter Property="MinHeight" Value="30" />
-            <Setter Property="Padding" Value="6,3" />
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="Themes/Theme.Light.xaml" />
+                <ResourceDictionary Source="Themes/Typography.xaml" />
+                <ResourceDictionary Source="Themes/ControlStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="FormLabelStyle" TargetType="TextBlock">
+                <Setter Property="Margin" Value="0,0,0,5" />
+                <Setter Property="Foreground" Value="{DynamicResource SecondaryTextBrush}" />
+                <Setter Property="FontWeight" Value="SemiBold" />
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
 
     <Grid>
@@ -151,7 +150,7 @@
                                    Margin="0,14,0,0"
                                    Foreground="{DynamicResource MutedTextBrush}"
                                    Text="* Pflichtfeld"
-                                   FontSize="11" />
+                                   FontSize="{StaticResource FontSizeSm}" />
                     </Grid>
                 </ScrollViewer>
             </TabItem>
@@ -247,7 +246,7 @@
                             <TextBox Text="{Binding TagsText}" />
                             <TextBlock Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}"
-                                       FontSize="11"
+                                       FontSize="{StaticResource FontSizeSm}"
                                        Text="Mehrere Schlagwörter mit Komma oder Semikolon trennen." />
                         </StackPanel>
 
@@ -261,7 +260,7 @@
                                      Text="{Binding WebLinksText}" />
                             <TextBlock Margin="0,4,0,0"
                                        Foreground="{DynamicResource MutedTextBrush}"
-                                       FontSize="11"
+                                       FontSize="{StaticResource FontSizeSm}"
                                        Text="Ein Link pro Zeile: Bezeichnung | https://adresse.example – die Bezeichnung ist optional." />
                         </StackPanel>
                     </Grid>
@@ -275,19 +274,15 @@
                 BorderBrush="{DynamicResource BorderBrush}"
                 BorderThickness="0,1,0,0">
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
-                <Button Width="100"
-                        Height="34"
+                <Button Style="{StaticResource BaseButtonStyle}"
+                        Width="100"
                         Margin="0,0,10,0"
                         IsCancel="True"
                         Content="Abbrechen" />
-                <Button Width="115"
-                        Height="34"
+                <Button Style="{StaticResource PrimaryButtonStyle}"
+                        Width="115"
                         IsDefault="True"
                         Click="Confirm_Click"
-                        Background="{DynamicResource AccentBrush}"
-                        BorderBrush="{DynamicResource AccentDarkBrush}"
-                        Foreground="{DynamicResource HeaderForegroundBrush}"
-                        FontWeight="SemiBold"
                         Content="Übernehmen" />
             </StackPanel>
         </Border>
