@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – UI-Redesign Phase 5 abgeschlossen, Phase 6 in Vorbereitung
+Status: In Entwicklung – UI-Redesign Phase 5 in master gemergt, Release 0.2.0 erzeugt
 
 Letzte Aktualisierung: 21.07.2026
 
 ## Aktuelle Phase
 
-UI-Redesign-Implementierung nach dem abgenommenen Redesignplan. Phase 5 (Startansicht und alle Dialoge) ist abgeschlossen; Phase 6 (Ereigniskarten und Zeitstrahllayout) folgt.
+UI-Redesign-Änderungen wurden von Branch `kimi-k3-fertigstellung` in `master` gemergt. Version 0.2.0 wurde gebaut, getestet und als Installer sowie portable ZIP veröffentlicht. Die installierte Version 0.1.0 enthielt das Redesign nicht, weil die Änderungen auf einem separaten Branch lagen und der Publish-Ordner einen alten Stand enthielt.
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -344,12 +344,14 @@ UI-Redesign-Implementierung nach dem abgenommenen Redesignplan. Phase 5 (Startan
 Am 21.07.2026 erfolgreich ausgeführt:
 
 ```powershell
-dotnet build src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Debug --no-restore
-dotnet test tests\ZeitstrahlStudio.UnitTests\ZeitstrahlStudio.UnitTests.csproj -c Debug --no-restore --no-build
-dotnet test tests\ZeitstrahlStudio.IntegrationTests\ZeitstrahlStudio.IntegrationTests.csproj -c Debug --no-restore --no-build
+.\build.ps1 -Task All -Version 0.2.0
 ```
 
-Ergebnis: 0 Warnungen, 0 Fehler; 62 Unit-Tests bestanden; 88 Integrationstests bestanden.
+Ergebnis: 0 Warnungen, 0 Fehler; 62 Unit-Tests bestanden; 88 Integrationstests bestanden; Formatprüfung bestanden; Publish und Installer erfolgreich.
+
+Artefakte:
+- `ZeitstrahlStudio-0.2.0-win-x64-setup.exe` (62.815.324 Bytes)
+- `artifacts\release\ZeitstrahlStudio-0.2.0-win-x64-portable.zip` (87.695.616 Bytes)
 
 Vorherige vollständige Matrix am 19.07.2026 erfolgreich ausgeführt:
 
@@ -411,4 +413,4 @@ Die folgenden Prüfungen können in dieser Entwicklungsumgebung nicht vollständ
 
 ## Nächster konkreter Arbeitsschritt
 
-Phase 6 des UI-Redesigns beginnen: Ereigniskarten und Zeitstrahllayout überarbeiten, Kollisionen vermeiden, Lesbarkeit und visuelle Hierarchie verbessern.
+Neue Version 0.2.0 installieren und visuelle Abnahme durchführen. Anschließend Phase 6 des UI-Redesigns beginnen: Ereigniskarten und Zeitstrahllayout überarbeiten.

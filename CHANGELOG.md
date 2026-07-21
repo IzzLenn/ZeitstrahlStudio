@@ -2,6 +2,13 @@
 
 Alle wichtigen Änderungen an Zeitstrahl Studio werden in dieser Datei dokumentiert.
 
+## [0.2.0] - 2026-07-21
+
+### Geändert
+
+- UI-Redesign Phase 5: semantische Theme-Ressourcen, globale Control-Styles, überarbeitete Hauptnavigation mit kollabierbarer Seitenleiste, konsistente Dialoge
+- Installer-Version auf 0.2.0 erhöht, um korrektes Upgrade-Verhalten sicherzustellen
+
 ## [0.1.0] - 2026-07-19
 
 ### Hinzugefügt
