@@ -24,7 +24,7 @@ Stellen Sie sicher, dass der Working Tree clean ist.
 ### 2. Vollständigen Build durchführen
 
 ```powershell
-.\build.ps1 -Task All -Version 0.1.0
+.\build.ps1 -Task All -Version 0.2.0
 ```
 
 Dieser Befehl führt alle Build-, Test-, Publish- und Paketierungsschritte aus.
@@ -33,9 +33,9 @@ Dieser Befehl führt alle Build-, Test-, Publish- und Paketierungsschritte aus.
 
 Nach erfolgreichem Build befinden sich folgende Artefakte im Projekt-Hauptverzeichnis und in `artifacts\release`:
 
-- `ZeitstrahlStudio-0.1.0-win-x64-setup.exe` (im Projekt-Hauptverzeichnis, direkt auffindbar)
-- `artifacts\release\ZeitstrahlStudio-0.1.0-win-x64-portable.zip`
-- `artifacts\release\ZeitstrahlStudio-0.1.0-win-x64-portable.zip.sha256`
+- `ZeitstrahlStudio-0.2.0-win-x64-setup.exe` (im Projekt-Hauptverzeichnis, direkt auffindbar)
+- `artifacts\release\ZeitstrahlStudio-0.2.0-win-x64-portable.zip`
+- `artifacts\release\ZeitstrahlStudio-0.2.0-win-x64-portable.zip.sha256`
 - `artifacts\release\checksums.txt`
 
 ### 4. Manuelle Release-Checkliste
@@ -67,15 +67,15 @@ Stellen Sie sicher, dass folgende Dokumente aktuell sind:
 ### 6. Git-Tag erstellen
 
 ```powershell
-git tag -a v0.1.0 -m "Release Version 0.1.0"
+git tag -a v0.2.0 -m "Release Version 0.2.0"
 ```
 
 ### 7. Release-Artefakte verteilen
 
 Die folgenden Dateien können verteilt werden:
 
-- `ZeitstrahlStudio-0.1.0-win-x64-setup.exe` (im Projekt-Hauptverzeichnis)
-- `artifacts\release\ZeitstrahlStudio-0.1.0-win-x64-portable.zip`
+- `ZeitstrahlStudio-0.2.0-win-x64-setup.exe` (im Projekt-Hauptverzeichnis)
+- `artifacts\release\ZeitstrahlStudio-0.2.0-win-x64-portable.zip`
 - `artifacts\release\checksums.txt`
 
 ## Fehlerbehebung

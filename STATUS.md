@@ -414,3 +414,14 @@ Die folgenden Prüfungen können in dieser Entwicklungsumgebung nicht vollständ
 ## Nächster konkreter Arbeitsschritt
 
 Neue Version 0.2.0 installieren und visuelle Abnahme durchführen. Anschließend Phase 6 des UI-Redesigns beginnen: Ereigniskarten und Zeitstrahllayout überarbeiten.
+
+## Release-Audit 22.07.2026
+
+- Branch: `master`; geprüfter Ausgangscommit: `2ad58d0`; aktuelle Version: `0.2.0`.
+- Beispielprojekt: Generator und Referenzarchiv sind wieder semantisch synchron; 10 Ereignisse. Das versehentlich eingecheckte zusätzliche Ereignis „Test“ wurde durch Regeneration entfernt.
+- Verifikation: Debug und Release jeweils 0 Warnungen/0 Fehler, 62 Unit-Tests und 88 Integrationstests bestanden; Formatprüfung bestanden; self-contained win-x64-Publish erfolgreich.
+- PDB-Strategie: PDB-Dateien werden vor ZIP-Erzeugung entfernt und nicht vom Installer übernommen.
+- Lizenzstatus: drei lokal verfügbare Originaltexte werden unter `licenses/` gebündelt. Vollständige Originaltexte weiterer ausgelieferter Produktionskomponenten fehlen lokal und bleiben ein Release-Gate.
+- Offene manuelle Prüfungen: vollständige Checkliste, Installer-Build und portable ZIP aus dem aktuellen Publish.
+- Nächster Schritt: lokale Original-Lizenztexte vervollständigen, dann Portable ZIP und Installer erzeugen und manuell abnehmen.
+

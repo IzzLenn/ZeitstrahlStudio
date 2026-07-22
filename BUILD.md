@@ -13,7 +13,7 @@ Diese Anleitung beschreibt, wie Zeitstrahl Studio lokal gebaut, getestet und ver
 ## Schnellstart
 
 ```powershell
-.\build.ps1 -Task All -Version 0.1.0
+.\build.ps1 -Task All -Version 0.2.0
 ```
 
 Dieser Befehl führt aus:

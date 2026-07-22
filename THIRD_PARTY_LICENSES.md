@@ -1,6 +1,6 @@
 # Drittanbieterkomponenten und Lizenzen
 
-Stand: 19. Juli 2026. Produktionsabhängigkeiten werden nur eingeführt, wenn sie für einen umgesetzten Meilenstein technisch erforderlich sind.
+Stand: 22. Juli 2026. Produktionsabhängigkeiten werden nur eingeführt, wenn sie für einen umgesetzten Meilenstein technisch erforderlich sind.
 
 ## Produktionskomponenten
 
@@ -33,4 +33,4 @@ Stand: 19. Juli 2026. Produktionsabhängigkeiten werden nur eingeführt, wenn si
 | xunit.runner.visualstudio | 2.5.3 | Testadapter, nur Entwicklung/Test | Apache-2.0 |
 | coverlet.collector | 6.0.0 | optionale Codeabdeckung, nur Entwicklung/Test | MIT |
 
-Die Paketnamen, Versionen und Lizenzangaben wurden aus den lokal wiederhergestellten NuGet-Paketmetadaten beziehungsweise den veröffentlichten Assemblyinformationen übernommen. Lizenztexte der ausgelieferten Produktionskomponenten werden vor dem Release in das Veröffentlichungsverzeichnis kopiert.
+Die Paketnamen, Versionen und Lizenzangaben wurden aus den lokal wiederhergestellten NuGet-Paketmetadaten beziehungsweise den veröffentlichten Assemblyinformationen übernommen. Die lokal verfügbaren Originaltexte werden beim Paketieren nach `licenses/` kopiert und in Portable ZIP sowie Installer ausgeliefert. Für die übrigen ausgelieferten Produktionskomponenten fehlen lokal noch vollständige Original-Lizenz- oder Copyrighttexte; vor einer Distribution muss dieses Bündel vervollständigt werden.
