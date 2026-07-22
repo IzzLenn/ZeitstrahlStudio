@@ -53,6 +53,7 @@ Source: "{#SourcePath}\..\artifacts\publish\win-x64\*.dat"; DestDir: "{app}"; Fl
 Source: "{#SourcePath}\..\artifacts\publish\win-x64\*.db"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#SourcePath}\..\artifacts\publish\win-x64\runtimes\*"; DestDir: "{app}\runtimes"; Flags: ignoreversion recursesubdirs skipifsourcedoesntexist
 Source: "{#SourcePath}\..\artifacts\publish\win-x64\samples\*"; DestDir: "{app}\samples"; Flags: ignoreversion recursesubdirs
+Source: "{#SourcePath}\..\artifacts\publish\win-x64\licenses\*"; DestDir: "{app}\licenses"; Flags: ignoreversion recursesubdirs
 Source: "{#SourcePath}\..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\..\PRIVACY.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\..\THIRD_PARTY_LICENSES.md"; DestDir: "{app}"; Flags: ignoreversion

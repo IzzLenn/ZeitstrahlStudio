@@ -64,6 +64,7 @@ $AppProject = Join-Path $RepoRoot "src\ZeitstrahlStudio.App\ZeitstrahlStudio.App
 $PublishDir = Join-Path $RepoRoot "artifacts\publish\win-x64"
 $ReleaseDir = Join-Path $RepoRoot "artifacts\release"
 $InstallerDir = Join-Path $RepoRoot "installer"
+$LicenseDir = Join-Path $RepoRoot "licenses"
 
 function Write-Step {
     param([string]$Message)
@@ -128,6 +129,8 @@ function Step-Publish {
     if (-not (Test-Path $exePath)) {
         throw "Veröffentlichte EXE nicht gefunden: $exePath"
     }
+
+    Get-ChildItem -Path $PublishDir -Filter "*.pdb" -File -Recurse | Remove-Item -Force
 }
 
 function Step-BuildInstaller {
@@ -184,6 +187,12 @@ function Step-PackagePortable {
             Copy-Item $source $PublishDir -Force
         }
     }
+
+    $licenseTarget = Join-Path $PublishDir "licenses"
+    if (Test-Path $licenseTarget) { Remove-Item -Recurse -Force $licenseTarget }
+    if (-not (Test-Path $LicenseDir)) { throw "Lizenzbündel fehlt: $LicenseDir" }
+    Copy-Item -Recurse $LicenseDir $licenseTarget -Force
+    Get-ChildItem -Path $PublishDir -Filter "*.pdb" -File -Recurse | Remove-Item -Force
 
     # Beispielprojekt in Unterverzeichnis kopieren
     $sampleSource = Join-Path $RepoRoot "samples"
