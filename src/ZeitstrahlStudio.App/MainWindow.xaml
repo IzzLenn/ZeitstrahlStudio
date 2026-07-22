@@ -33,18 +33,18 @@
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter" />
 
             <Style x:Key="ToolbarButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-                <Setter Property="MinWidth" Value="72" />
-                <Setter Property="Height" Value="32" />
-                <Setter Property="Margin" Value="0,0,6,0" />
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="Margin" Value="1" />
                 <Setter Property="Padding" Value="10,0" />
                 <Setter Property="FontSize" Value="{StaticResource FontSizeSm}" />
             </Style>
 
             <Style x:Key="ToolbarPrimaryButtonStyle" TargetType="Button" BasedOn="{StaticResource PrimaryButtonStyle}">
-                <Setter Property="MinWidth" Value="72" />
-                <Setter Property="Height" Value="32" />
-                <Setter Property="Margin" Value="0,0,6,0" />
-                <Setter Property="Padding" Value="10,0" />
+                <Setter Property="MinWidth" Value="0" />
+                <Setter Property="Height" Value="36" />
+                <Setter Property="Margin" Value="1" />
+                <Setter Property="Padding" Value="12,0" />
                 <Setter Property="FontSize" Value="{StaticResource FontSizeSm}" />
             </Style>
 
@@ -54,21 +54,46 @@
                 <Setter Property="Background" Value="{DynamicResource ToolbarSeparatorBrush}" />
             </Style>
 
+            <Style x:Key="CommandGroupStyle" TargetType="Border">
+                <Setter Property="Margin" Value="0,0,8,0" />
+                <Setter Property="Padding" Value="3" />
+                <Setter Property="Background" Value="{DynamicResource CommandGroupBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
+                <Setter Property="BorderThickness" Value="1" />
+                <Setter Property="CornerRadius" Value="6" />
+            </Style>
+
             <Style x:Key="CompactButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
                 <Setter Property="MinWidth" Value="64" />
-                <Setter Property="Height" Value="28" />
+                <Setter Property="Height" Value="30" />
                 <Setter Property="Margin" Value="0,0,5,0" />
                 <Setter Property="Padding" Value="8,0" />
                 <Setter Property="FontSize" Value="{StaticResource FontSizeSm}" />
             </Style>
 
-            <Style x:Key="SidebarToggleButtonStyle" TargetType="Button" BasedOn="{StaticResource BaseButtonStyle}">
-                <Setter Property="Width" Value="28" />
-                <Setter Property="Height" Value="28" />
-                <Setter Property="Padding" Value="0" />
-                <Setter Property="FontSize" Value="16" />
-                <Setter Property="Content" Value="☰" />
-                <Setter Property="ToolTip" Value="Seitenleiste ein-/ausblenden" />
+            <Style x:Key="SidebarToggleButtonStyle" TargetType="Button" BasedOn="{StaticResource ToolbarButtonStyle}">
+                <Setter Property="Content" Value="Navigation" />
+                <Setter Property="ToolTip" Value="Linke Projektnavigation ein- oder ausblenden" />
+            </Style>
+
+            <Style x:Key="HorizontalOrientationButtonStyle" TargetType="Button" BasedOn="{StaticResource ToolbarButtonStyle}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding TimelineViewOrientation}" Value="Horizontal">
+                        <Setter Property="Foreground" Value="{DynamicResource NavigationSelectedForegroundBrush}" />
+                        <Setter Property="Background" Value="{DynamicResource NavigationSelectedBackgroundBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource SelectedBorderBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
+            </Style>
+
+            <Style x:Key="VerticalOrientationButtonStyle" TargetType="Button" BasedOn="{StaticResource ToolbarButtonStyle}">
+                <Style.Triggers>
+                    <DataTrigger Binding="{Binding TimelineViewOrientation}" Value="Vertical">
+                        <Setter Property="Foreground" Value="{DynamicResource NavigationSelectedForegroundBrush}" />
+                        <Setter Property="Background" Value="{DynamicResource NavigationSelectedBackgroundBrush}" />
+                        <Setter Property="BorderBrush" Value="{DynamicResource SelectedBorderBrush}" />
+                    </DataTrigger>
+                </Style.Triggers>
             </Style>
         </ResourceDictionary>
     </Window.Resources>
@@ -76,94 +101,199 @@
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Hauptnavigation -->
+        <!-- Menüleiste -->
         <Border Grid.Row="0"
-                Padding="14,10"
-                Background="{DynamicResource HeaderBackgroundBrush}"
-                BorderBrush="{DynamicResource BorderBrush}"
+                Background="{DynamicResource MenuBackgroundBrush}"
+                BorderBrush="{DynamicResource DividerBrush}"
                 BorderThickness="0,0,0,1">
             <DockPanel LastChildFill="True">
                 <StackPanel DockPanel.Dock="Left"
-                            Margin="0,0,18,0"
+                            Margin="14,0,14,0"
                             VerticalAlignment="Center"
                             Orientation="Horizontal">
-                    <Button x:Name="SidebarToggleButton"
-                            Style="{StaticResource SidebarToggleButtonStyle}"
-                            Click="SidebarToggle_Click"
-                            AutomationProperties.Name="Seitenleiste umschalten" />
-                    <StackPanel Margin="12,0,0,0" VerticalAlignment="Center">
-                        <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
-                                   FontSize="{StaticResource FontSize2Xl}"
+                    <Border Width="24"
+                            Height="24"
+                            Margin="0,0,9,0"
+                            Background="{DynamicResource AccentBrush}"
+                            CornerRadius="4">
+                        <TextBlock HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource OnAccentTextBrush}"
+                                   FontSize="11"
                                    FontWeight="Bold"
-                                   Text="Zeitstrahl Studio" />
-                        <TextBlock Foreground="{DynamicResource HeaderMutedBrush}"
-                                   FontSize="{StaticResource FontSizeXs}"
-                                   Text="Lokale Projektchroniken" />
-                    </StackPanel>
+                                   Text="ZS" />
+                    </Border>
+                    <TextBlock VerticalAlignment="Center"
+                               Foreground="{DynamicResource MenuForegroundBrush}"
+                               FontWeight="SemiBold"
+                               Text="Zeitstrahl Studio" />
                 </StackPanel>
 
-                <StackPanel DockPanel.Dock="Right"
-                            VerticalAlignment="Center"
-                            Orientation="Horizontal">
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding SettingsCommand}"
-                            ToolTip="Projekteinstellungen"
-                            Content="Einstellungen" />
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding ManageBackupsCommand}"
-                            ToolTip="Lokale Sicherungen verwalten"
-                            Content="Sicherungen" />
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding ShowAuditLogCommand}"
-                            ToolTip="Änderungsprotokoll anzeigen"
-                            Content="Protokoll" />
-                </StackPanel>
-
-                <WrapPanel VerticalAlignment="Center" Orientation="Horizontal">
-                    <Button Style="{StaticResource ToolbarPrimaryButtonStyle}"
-                            Command="{Binding NewProjectCommand}"
-                            ToolTip="Neues Projekt (Strg+N)"
-                            Content="Neu" />
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding OpenProjectCommand}"
-                            Content="Öffnen" />
-                    <Border Style="{StaticResource ToolbarSeparatorStyle}" />
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding SaveCommand}"
-                            ToolTip="Projekt speichern (Strg+S)"
-                            Content="Speichern" />
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding SaveAsCommand}"
-                            Content="Speichern unter" />
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding DuplicateCommand}"
-                            Content="Duplizieren" />
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding CloseProjectCommand}"
-                            Content="Schließen" />
-                    <Border Style="{StaticResource ToolbarSeparatorStyle}" />
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding UndoCommand}"
-                            ToolTip="Rückgängig (Strg+Z)"
-                            Content="Rückgängig" />
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Command="{Binding RedoCommand}"
-                            ToolTip="Wiederholen (Strg+Y)"
-                            Content="Wiederholen" />
-                    <Button Style="{StaticResource ToolbarButtonStyle}"
-                            Click="SearchFocus_Click"
-                            ToolTip="Suche fokussieren (Strg+F)"
-                            Content="Suchen" />
-                </WrapPanel>
+                <Menu x:Name="MainMenu"
+                      AutomationProperties.Name="Hauptmenü">
+                    <MenuItem Header="_Datei">
+                        <MenuItem Header="_Neues Projekt" Command="{Binding NewProjectCommand}" InputGestureText="Strg+N" />
+                        <MenuItem Header="Projekt _öffnen" Command="{Binding OpenProjectCommand}" />
+                        <Separator />
+                        <MenuItem Header="_Speichern" Command="{Binding SaveCommand}" InputGestureText="Strg+S" />
+                        <MenuItem Header="Speichern _unter" Command="{Binding SaveAsCommand}" />
+                        <MenuItem Header="_Duplizieren" Command="{Binding DuplicateCommand}" />
+                        <Separator />
+                        <MenuItem Header="Projekt s_chließen" Command="{Binding CloseProjectCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="_Bearbeiten">
+                        <MenuItem Header="_Rückgängig" Command="{Binding UndoCommand}" InputGestureText="Strg+Z" />
+                        <MenuItem Header="_Wiederholen" Command="{Binding RedoCommand}" InputGestureText="Strg+Y" />
+                    </MenuItem>
+                    <MenuItem Header="_Ansicht">
+                        <MenuItem Header="_Horizontal" Command="{Binding SetHorizontalTimelineCommand}" />
+                        <MenuItem Header="_Vertikal" Command="{Binding SetVerticalTimelineCommand}" />
+                        <MenuItem Header="_Lücken komprimieren" Command="{Binding ToggleGapCompressionCommand}" />
+                        <Separator />
+                        <MenuItem Header="Gesamtprojekt anzeigen" Click="TimelineShowAll_Click" />
+                        <MenuItem Header="Auswahl zentrieren" Click="TimelineCenterSelection_Click" />
+                        <MenuItem Header="Timeline-Ansicht zurücksetzen" Click="TimelineResetView_Click" />
+                        <Separator />
+                        <MenuItem Header="_Navigation ein-/ausblenden" Click="SidebarToggle_Click" />
+                        <MenuItem Header="Projekt_einstellungen" Command="{Binding SettingsCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="_Ereignis">
+                        <MenuItem Header="_Hinzufügen" Command="{Binding AddEventCommand}" InputGestureText="Strg+N" />
+                        <MenuItem Header="_Bearbeiten" Command="{Binding EditEventCommand}" />
+                        <MenuItem Header="Nach _früher verschieben" Command="{Binding MoveEventEarlierCommand}" />
+                        <MenuItem Header="Nach _später verschieben" Command="{Binding MoveEventLaterCommand}" />
+                        <MenuItem Header="_Löschen" Command="{Binding DeleteEventCommand}" InputGestureText="Entf" />
+                        <Separator />
+                        <MenuItem Header="Anhänge hinzufügen" Command="{Binding AddAttachmentsCommand}" />
+                        <MenuItem Header="Anhang öffnen" Command="{Binding OpenAttachmentCommand}" />
+                        <MenuItem Header="Anhang entfernen" Command="{Binding RemoveAttachmentCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="_Werkzeuge">
+                        <MenuItem Header="_Suchen" Click="SearchFocus_Click" InputGestureText="Strg+F" />
+                        <MenuItem Header="Dokumente _analysieren" Command="{Binding AnalyzeAttachmentsCommand}" />
+                        <MenuItem Header="Analyse anzeigen" Command="{Binding ShowAttachmentAnalysisCommand}" />
+                        <MenuItem Header="Bildvorschau" Command="{Binding PreviewImageCommand}" />
+                        <MenuItem Header="PDF-Vorschau" Command="{Binding PreviewPdfCommand}" />
+                        <Separator />
+                        <MenuItem Header="_Sicherungen" Command="{Binding ManageBackupsCommand}" />
+                        <MenuItem Header="_Protokoll" Command="{Binding ShowAuditLogCommand}" />
+                        <Separator />
+                        <MenuItem Header="Als _PDF exportieren" Command="{Binding PdfExportCommand}" />
+                        <MenuItem Header="Als _HTML exportieren" Command="{Binding HtmlExportCommand}" />
+                    </MenuItem>
+                    <MenuItem Header="_Hilfe">
+                        <MenuItem Header="Info zu Zeitstrahl Studio" Click="About_Click" />
+                    </MenuItem>
+                </Menu>
             </DockPanel>
         </Border>
 
+        <!-- Globale Befehlsleiste -->
+        <Border x:Name="GlobalCommandBar"
+                Grid.Row="1"
+                Padding="12,7"
+                AutomationProperties.Name="Globale Befehlsleiste"
+                Background="{DynamicResource CommandBarBackgroundBrush}"
+                BorderBrush="{DynamicResource DividerBrush}"
+                BorderThickness="0,0,0,1">
+            <DockPanel LastChildFill="True">
+                <Button DockPanel.Dock="Right"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Command="{Binding SettingsCommand}"
+                        AutomationProperties.Name="Projekteinstellungen"
+                        ToolTip="Projekteinstellungen öffnen"
+                        Content="Einstellungen" />
+
+                <StackPanel Orientation="Horizontal">
+                    <Border Style="{StaticResource CommandGroupStyle}">
+                        <Button x:Name="SidebarToggleButton"
+                                Style="{StaticResource SidebarToggleButtonStyle}"
+                                Click="SidebarToggle_Click"
+                                AutomationProperties.Name="Linke Navigation umschalten" />
+                    </Border>
+                    <Border Style="{StaticResource CommandGroupStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource ToolbarPrimaryButtonStyle}"
+                                    Command="{Binding NewProjectCommand}"
+                                    AutomationProperties.Name="Neues Projekt"
+                                    ToolTip="Neues Projekt erstellen"
+                                    Content="Neu" />
+                            <Button Style="{StaticResource ToolbarButtonStyle}"
+                                    Command="{Binding OpenProjectCommand}"
+                                    AutomationProperties.Name="Projekt öffnen"
+                                    ToolTip="Vorhandenes Zeitstrahlprojekt öffnen"
+                                    Content="Öffnen" />
+                            <Button Style="{StaticResource ToolbarButtonStyle}"
+                                    Command="{Binding SaveCommand}"
+                                    AutomationProperties.Name="Projekt speichern"
+                                    ToolTip="Projekt speichern (Strg+S)"
+                                    Content="Speichern" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CommandGroupStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource ToolbarButtonStyle}"
+                                    Command="{Binding UndoCommand}"
+                                    ToolTip="Rückgängig (Strg+Z)"
+                                    Content="Rückgängig" />
+                            <Button Style="{StaticResource ToolbarButtonStyle}"
+                                    Command="{Binding RedoCommand}"
+                                    ToolTip="Wiederholen (Strg+Y)"
+                                    Content="Wiederholen" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CommandGroupStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource HorizontalOrientationButtonStyle}"
+                                    Command="{Binding SetHorizontalTimelineCommand}"
+                                    AutomationProperties.Name="Horizontale Zeitstrahlansicht"
+                                    ToolTip="Horizontalen Zeitstrahl anzeigen"
+                                    Content="Horizontal" />
+                            <Button Style="{StaticResource VerticalOrientationButtonStyle}"
+                                    Command="{Binding SetVerticalTimelineCommand}"
+                                    AutomationProperties.Name="Vertikale Zeitstrahlansicht"
+                                    ToolTip="Vertikalen Zeitstrahl anzeigen"
+                                    Content="Vertikal" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CommandGroupStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource ToolbarButtonStyle}"
+                                    Click="SearchFocus_Click"
+                                    AutomationProperties.Name="Projekt durchsuchen"
+                                    ToolTip="Suche fokussieren (Strg+F)"
+                                    Content="Suchen" />
+                            <Button Style="{StaticResource ToolbarButtonStyle}"
+                                    Command="{Binding AnalyzeAttachmentsCommand}"
+                                    AutomationProperties.Name="Dokumente analysieren"
+                                    ToolTip="Anhänge des ausgewählten Ereignisses lokal analysieren"
+                                    Content="Analysieren" />
+                        </StackPanel>
+                    </Border>
+                    <Border Style="{StaticResource CommandGroupStyle}">
+                        <StackPanel Orientation="Horizontal">
+                            <Button Style="{StaticResource ToolbarButtonStyle}"
+                                    Command="{Binding PdfExportCommand}"
+                                    AutomationProperties.Name="PDF exportieren"
+                                    ToolTip="Zeitstrahl als PDF exportieren"
+                                    Content="PDF" />
+                            <Button Style="{StaticResource ToolbarButtonStyle}"
+                                    Command="{Binding HtmlExportCommand}"
+                                    AutomationProperties.Name="HTML exportieren"
+                                    ToolTip="Zeitstrahl als eigenständige HTML-Datei exportieren"
+                                    Content="HTML" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </DockPanel>
+        </Border>
         <!-- Hauptbereich -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition x:Name="SidebarColumn" Width="320" MinWidth="260" MaxWidth="420" />
                 <ColumnDefinition Width="Auto" />
@@ -878,7 +1008,7 @@
         </Grid>
 
         <!-- Statusleiste -->
-        <Border Grid.Row="2"
+        <Border Grid.Row="3"
                 Padding="14,8"
                 Background="{DynamicResource SurfaceAltBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"

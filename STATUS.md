@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung - UI-Redesign 0.3.0, Phase 1 abgeschlossen; Phase 2 als Nächstes
+Status: In Entwicklung - UI-Redesign 0.3.0, Phase 2 abgeschlossen; Phase 3 als Nächstes
 
 Letzte Aktualisierung: 22.07.2026
 
 ## Aktuelle Phase
 
-Auf Branch `ui/redesign-0.3.0` läuft der klar abgegrenzte UI-Auftrag für Phase 0 bis 3. Phase 0 ist dokumentiert, committed und gepusht. Phase 1 stellt einen identischen semantischen Schlüsselvertrag für Hell/Dunkel bereit, hebt die Typografieskala an, ergänzt zentrale WPF-Zustände und entfernt die feste Light-Theme-Übersteuerung aus Hauptfenster und elf Dialogen. Der Phase-1-Debug-Build ist mit 0 Warnungen/0 Fehlern erfolgreich; 17 gezielte Theme-, Hauptfenster- und Dialog-Integrationstests bestehen. Phase 2 ist der nächste Schritt.
+Auf Branch `ui/redesign-0.3.0` läuft der klar abgegrenzte UI-Auftrag für Phase 0 bis 3. Phase 0 und Phase 1 sind dokumentiert, committed und gepusht. Phase 2 ersetzt den alten einzeiligen Header durch ein normales Hauptmenü und eine kompakte, gruppierte, textbasierte Befehlsleiste. Alle bestehenden Funktionsgruppen bleiben erreichbar; die aktive Orientierung besitzt einen ausgewählten statt deaktivierten Zustand. Der Debug-Build ist mit 0 Warnungen/0 Fehlern erfolgreich; 11 gezielte MainWindow-/Theme-Tests bestehen. Eine lokale UI-Automation-Laufzeitprüfung bestätigt Hauptmenü und 13 vollständig sichtbare Befehlsleistenaktionen bei 1280×760. Phase 3 ist der nächste Schritt.
 
 Die Phasen 4 bis 8, vollständige Endverifikation, Publish, Installer, Versionsänderung und Releasevorbereitung sind ausdrücklich nicht Bestandteil dieses Laufs. Die vorhandene Benutzeränderung an samples/ZeitstrahlStudio-Beispiel.zeitprojekt bleibt unangetastet und wird nicht committed.
 
@@ -22,6 +22,18 @@ Die Phasen 4 bis 8, vollständige Endverifikation, Publish, Installer, Versions�
 - Vor Arbeitsbeginn waren keine Build-/Testprotokolle vorhanden
 
 ## Abgeschlossene Arbeiten
+
+### UI-Redesign 0.3.0 - Phase 2 Globale Navigation
+
+- normales Hauptmenü mit `Datei`, `Bearbeiten`, `Ansicht`, `Ereignis`, `Werkzeuge` und `Hilfe` eingeführt
+- bestehende Projekt-, Ereignis-, Timeline-, Anhangs-, Sicherungs-, Protokoll- und Exportbefehle vollständig den Menüs zugeordnet
+- priorisierte textbasierte Befehlsleiste für Navigation, Neu/Öffnen/Speichern, Undo/Redo, Horizontal/Vertikal, Suchen/Analysieren, PDF/HTML und Einstellungen umgesetzt
+- aktiver Orientierungszustand über semantische Selected-Ressourcen dargestellt; erneutes Ausführen der aktiven Orientierung bleibt ein vorhandener No-op
+- Unicode-Hamburger aus der globalen Navigation entfernt; keine neuen Icon-Assets oder provisorischen Symbole eingeführt
+- lokaler Info-Menüpunkt ohne Netzwerkzugriff ergänzt
+- `MainWindowAccessibilityTests` um Menüstruktur, Kernbefehle, Symbolfreiheit, aktive Orientierung und 1280-DIP-Grenzen erweitert
+- Debug-Build erfolgreich, 0 Warnungen/0 Fehler; 11 gezielte MainWindow-/Theme-Tests bestanden
+- WPF-Anwendung erfolgreich gestartet; Screenshot `artifacts/ui-redesign/phase-2-navigation.png` erzeugt; UI-Automation bestätigt Hauptmenü und 13 vollständig sichtbare Befehlsleistenbuttons bei 1280×760
 
 ### UI-Redesign 0.3.0 - Phase 1 Designsystem und Themes
 

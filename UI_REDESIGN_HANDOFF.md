@@ -1,14 +1,14 @@
 # UI-Redesign - Übergabeprotokoll
 
-- Letzte Aktualisierung: 2026-07-22 13:40:27 +02:00
+- Letzte Aktualisierung: 2026-07-22 13:58:14 +02:00
 - Repository: `C:\Projekte\ZeitstrahlStudio`
 - Branch: `ui/redesign-0.3.0`
 - Remote: `origin` (`https://github.com/IzzLenn/ZeitstrahlStudio.git`)
 - Ausgangs-Commit: `38d94282bc6bbe3ecf96bf40a5efb36976d89dd1`
-- Aktueller HEAD: `41511b136060c6c1ea4f4781a183f578a50da3b0`
-- Stand von `origin/ui/redesign-0.3.0`: `41511b136060c6c1ea4f4781a183f578a50da3b0` (identisch mit lokalem HEAD)
+- Aktueller HEAD: `e30489f10c5d3a1f284453bd575ff0ee2114a84e`
+- Stand von `origin/ui/redesign-0.3.0`: `e30489f10c5d3a1f284453bd575ff0ee2114a84e` (identisch mit lokalem HEAD)
 - Ausführendes Modell: Codex auf Basis von GPT-5; eine separate Reasoning-Konfiguration wird von dieser Laufzeit nicht ausgewiesen.
-- Aktuell bearbeitete Phase: Phase 1 abgeschlossen und zur Sicherung bereit; als Nächstes Phase 2.
+- Aktuell bearbeitete Phase: Phase 2 abgeschlossen und zur Sicherung bereit; als Nächstes Phase 3.
 
 ## Verbindlicher Umfang dieses Laufs
 
@@ -37,6 +37,16 @@ Ausgeschlossen sind insbesondere Startansicht und Dialogüberarbeitung (Phase 4)
 - `ThemeResourceTests.cs` prüft Schlüsselvertrag, kritische Kontraste, Typografieskala und fehlende lokale Theme-Festlegung.
 - Debug-Build erfolgreich mit 0 Warnungen/0 Fehlern; 17 gezielte Tests bestanden.
 
+### Phase 2 - Globale Navigation
+
+- Hauptmenü mit `Datei`, `Bearbeiten`, `Ansicht`, `Ereignis`, `Werkzeuge` und `Hilfe` ergänzt und vorhandene Commands vollständig zugeordnet.
+- Gruppierte Befehlsleiste mit Navigation, Neu/Öffnen/Speichern, Undo/Redo, Horizontal/Vertikal, Suchen/Analysieren, PDF/HTML und Einstellungen umgesetzt.
+- Unicode-Hamburger entfernt; Navigation bleibt gemäß Icon-Gate textbasiert.
+- Aktive Timelineorientierung über Selected-Ressourcen dargestellt; beide Orientierungscommands bleiben ausführbar, identische Auswahl ist weiterhin ein No-op.
+- Lokalen Info-Menüpunkt ergänzt und Navigationstest für Struktur, Befehle, Symbolfreiheit und 1280-DIP-Grenzen hinzugefügt.
+- Debug-Build erfolgreich mit 0 Warnungen/0 Fehlern; 11 gezielte MainWindow-/Theme-Tests bestanden.
+- Laufzeit-UI-Automation bestätigt Hauptmenü und 13 sichtbare Befehlsleistenbuttons innerhalb des 1280×760-Fensters.
+
 ## Bildreferenzen und Priorität
 
 1. `01_IST_0.2.1_Hell_Horizontal.png` - tatsächlicher heller horizontaler 0.2.1-Stand, nur IST.
@@ -61,6 +71,7 @@ Die vollständige Zuordnungstabelle steht in `UI_AUDIT_0.2.1.md`.
 
 - `20bf4c6` - `docs: UI-Ausgangszustand und Redesignplan dokumentieren`
 - `41511b1` - `docs: Phase-0-Übergabe protokollieren`
+- `e30489f` - `feat(ui): Designsystem und Themes vereinheitlichen`
 
 ## Betroffene Dateien
 
@@ -75,20 +86,27 @@ Die vollständige Zuordnungstabelle steht in `UI_AUDIT_0.2.1.md`.
 - `src/ZeitstrahlStudio.App/Themes/ControlStyles.xaml` - gemeinsame Zustände und Menüstile.
 - `src/ZeitstrahlStudio.App/MainWindow.xaml` und elf `*Dialog.xaml` - lokale Light-Theme-Übersteuerung entfernt.
 - `tests/ZeitstrahlStudio.IntegrationTests/ThemeResourceTests.cs` - Phase-1-Vertragstests.
+- `src/ZeitstrahlStudio.App/MainWindow.xaml` - Menü- und Befehlsleiste.
+- `src/ZeitstrahlStudio.App/MainWindow.xaml.cs` - lokaler Info-Dialog.
+- `src/ZeitstrahlStudio.App/MainWindowViewModel.cs` - ausführbare Orientierungssegmente mit vorhandenem No-op.
+- `tests/ZeitstrahlStudio.IntegrationTests/MainWindowAccessibilityTests.cs` - Navigations- und Breitenvertrag.
 
 ## Tatsächlich sichtbare Änderungen
 
-Hell- und Dunkelmodus besitzen nun denselben semantischen Ressourcenvertrag. Hauptfenster und Dialoge übernehmen das aktive Anwendungstheme konsistent; Meta-/Grundtexte und Überschriften sind größer, und gemeinsame Bedienelemente zeigen klarere Zustände für Fokus, Auswahl, Deaktiviert, Nur-Lesen und Fehler.
+Hell- und Dunkelmodus besitzen nun denselben semantischen Ressourcenvertrag. Hauptfenster und Dialoge übernehmen das aktive Anwendungstheme konsistent; Meta-/Grundtexte und Überschriften sind größer. Die globale Navigation besteht nun aus einem normalen sechsgruppigen Hauptmenü und einer kompakten Befehlsleiste mit 13 textbasierten Kernaktionen; der aktive Orientierungszustand wird ausgewählt statt deaktiviert dargestellt.
 
 ## Build- und Testergebnisse
 
 - `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore`: erfolgreich, 0 Warnungen, 0 Fehler.
 - Gezielte Debug-Integrationstests mit Filter auf `MainWindowAccessibilityTests`, `TimelineViewTests`, `ProjectSettingsDialogViewModelTests`, `BackupManagerDialogTests` und `PdfExportDialogTests`: 17/17 bestanden.
 - Phase 1: erneuter Debug-Build erfolgreich, 0 Warnungen/0 Fehler; 17/17 gezielte Tests einschließlich `ThemeResourceTests` bestanden.
+- Phase 2: Debug-Build erfolgreich, 0 Warnungen/0 Fehler; nach Korrektur der nichtanzeigenden WPF-Messmethode 1/1 Einzeltest und 11/11 gezielte MainWindow-/Theme-Tests bestanden.
 
 ## Aktuelle Screenshots
 
 Die sechs Gesprächsanhänge wurden vollständig ausgewertet. Der gebaute Phase-1-Stand wurde mit dem Beispielprojekt erfolgreich gestartet und als `artifacts/ui-redesign/phase-1-theme.png` aufgenommen. Die direkte Bildanzeige scheiterte zweimal am Timeout des Windows-Sandbox-Bildhelpers; ein alternativer In-Memory-Versuch konnte das PNG ebenfalls nicht rendern.
+
+Phase 2 wurde als `artifacts/ui-redesign/phase-2-navigation.png` aufgenommen. Der lokale Bildhelper scheiterte erneut am Timeout; die ergänzende UI-Automation-Prüfung bestätigte das sichtbare Hauptmenü und alle 13 Befehle innerhalb des Fensterrechtecks.
 
 ## Technische Entscheidungen
 
@@ -102,14 +120,15 @@ Die sechs Gesprächsanhänge wurden vollständig ausgewertet. Der gebaute Phase-
 
 - Keine Abweichung vom korrigierten Umfang: Phase 4 bis 8 wurden nicht begonnen.
 - Keine neuen Laufzeitfehler in der Baseline ermittelt.
+- Der neue Navigationstest scheiterte zunächst zweimal an `ActualWidth`/`DesiredSize` eines nicht angezeigten `Window`; nach Umstellung auf das bereits verwendete direkte Messen von `window.Content` bestand der Einzeltest und anschließend der vollständige gezielte Filter.
 - Die vorhandene Änderung am Beispielarchiv ist eine fremde Arbeitsbaumänderung und bleibt geschützt.
 - `apply_patch` wird entsprechend der Werkzeugvorgabe in diesem Chat nicht verwendet.
 
 ## Arbeitsbaum und Push-Status
 
 - Vorhandene fremde Änderung: `M samples/ZeitstrahlStudio-Beispiel.zeitprojekt`.
-- Eigene Phase-1-Änderungen betreffen Themes, gemeinsame Styles, Theme-Vererbung, `ThemeResourceTests.cs`, `STATUS.md` und dieses Handoff; sie sind geprüft, aber noch nicht committed.
-- Lokaler HEAD und `origin/ui/redesign-0.3.0` stehen beide auf `41511b136060c6c1ea4f4781a183f578a50da3b0`.
+- Eigene Phase-2-Änderungen betreffen `MainWindow.xaml`, `MainWindow.xaml.cs`, `MainWindowViewModel.cs`, `MainWindowAccessibilityTests.cs`, `STATUS.md` und dieses Handoff; sie sind geprüft, aber noch nicht committed.
+- Lokaler HEAD und `origin/ui/redesign-0.3.0` stehen beide auf `e30489f10c5d3a1f284453bd575ff0ee2114a84e`.
 
 ## Fehlende Icons und Iconanforderungsstatus
 
@@ -120,8 +139,8 @@ Im App-Projekt existiert kein verwendbarer Icon-/Asset-Satz für die geforderte 
 ### Aktueller Auftrag
 
 - Phase 0 abgeschlossen: dokumentiert, getestet, committed und gepusht.
-- Phase 1 abgeschlossen: Designsystem und Themes implementiert, gebaut und gezielt getestet; Commit/Push folgen.
-- Phase 2 umsetzen: globale Navigation.
+- Phase 1 abgeschlossen: Designsystem und Themes implementiert, gebaut, gezielt getestet, committed und gepusht.
+- Phase 2 abgeschlossen: globale Navigation implementiert, gebaut, gezielt getestet und zur Sicherung bereit.
 - Phase 3 umsetzen: responsive Hauptansicht.
 - Build, gezielte Tests, Commit, Push und Übergabe durchführen.
 - Nach Phase 3 diesen Auftrag beenden.
@@ -143,7 +162,7 @@ Im App-Projekt existiert kein verwendbarer Icon-/Asset-Satz für die geforderte 
 
 ## Nächster atomarer Arbeitsschritt
 
-Ausschließlich die Phase-1-Dateien und diese fortlaufende Dokumentation stagen, das Beispielarchiv ausschließen, den geprüften Stand committen und pushen. Danach Phase 2 mit der globalen Navigation beginnen.
+Ausschließlich die Phase-2-Dateien und diese Dokumentation stagen, das Beispielarchiv ausschließen, committen und pushen. Danach Phase 3 mit der responsiven Hauptansicht beginnen.
 
 ## Exakter Fortsetzungsprompt für einen nachfolgenden Chat
 

@@ -134,10 +134,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             CanReorderEvent);
         SetHorizontalTimelineCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(() => SetTimelineOrientationAsync(TimelineOrientation.Horizontal)),
-            () => !IsBusy && HasProject && TimelineViewOrientation != TimelineOrientation.Horizontal);
+            () => !IsBusy && HasProject);
         SetVerticalTimelineCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(() => SetTimelineOrientationAsync(TimelineOrientation.Vertical)),
-            () => !IsBusy && HasProject && TimelineViewOrientation != TimelineOrientation.Vertical);
+            () => !IsBusy && HasProject);
         ToggleGapCompressionCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ToggleGapCompressionAsync),
             () => !IsBusy && HasProject);

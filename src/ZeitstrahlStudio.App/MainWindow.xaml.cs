@@ -294,6 +294,14 @@ public partial class MainWindow : Window
 
     private void TimelineResetView_Click(object sender, RoutedEventArgs e) => TimelineControl.ResetView();
 
+    private void About_Click(object sender, RoutedEventArgs e) =>
+        MessageBox.Show(
+            this,
+            "Zeitstrahl Studio\nLokale Projektchroniken für Windows.",
+            "Info zu Zeitstrahl Studio",
+            MessageBoxButton.OK,
+            MessageBoxImage.Information);
+
     private void SearchFocus_Click(object sender, RoutedEventArgs e) => FocusSearch();
 
     private void CanFocusSearch(object sender, CanExecuteRoutedEventArgs e)

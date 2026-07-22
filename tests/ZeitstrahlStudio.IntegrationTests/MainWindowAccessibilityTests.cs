@@ -79,6 +79,67 @@ public sealed class MainWindowAccessibilityTests
         });
     }
 
+    [Fact]
+    public async Task MainWindow_ProvidesStructuredMenuAndCommandBarAtReferenceWidth()
+    {
+        await RunOnStaThread(() =>
+        {
+            var viewModel = CreateViewModelWithProject();
+            try
+            {
+                var window = new MainWindow(viewModel);
+                var content = Assert.IsAssignableFrom<FrameworkElement>(window.Content);
+                content.Measure(new Size(1_280, 760));
+                content.Arrange(new Rect(0, 0, 1_280, 760));
+                content.UpdateLayout();
+
+                var menu = Assert.IsType<Menu>(window.FindName("MainMenu"));
+                Assert.Equal(
+                    ["Datei", "Bearbeiten", "Ansicht", "Ereignis", "Werkzeuge", "Hilfe"],
+                    menu.Items.OfType<MenuItem>()
+                        .Select(item => (item.Header as string)?.Replace("_", string.Empty))
+                        .ToArray());
+
+                var commandBar = Assert.IsType<Border>(window.FindName("GlobalCommandBar"));
+                var buttons = FindLogicalDescendants<Button>(commandBar).ToArray();
+                var contents = buttons.Select(button => button.Content as string).ToArray();
+                foreach (var required in new[]
+                {
+                    "Navigation",
+                    "Neu",
+                    "Öffnen",
+                    "Speichern",
+                    "Rückgängig",
+                    "Wiederholen",
+                    "Horizontal",
+                    "Vertikal",
+                    "Suchen",
+                    "Analysieren",
+                    "PDF",
+                    "HTML",
+                    "Einstellungen",
+                })
+                {
+                    Assert.Contains(required, contents);
+                }
+
+                Assert.DoesNotContain(contents, content => content is "☰" or "＋" or "−" or "◀" or "▶");
+                Assert.All(buttons, button =>
+                {
+                    Assert.True(button.ActualWidth > 0);
+                    var rightEdge = button.TranslatePoint(new Point(button.ActualWidth, 0), commandBar).X;
+                    Assert.InRange(rightEdge, 0, commandBar.ActualWidth + 0.1);
+                });
+                Assert.True(viewModel.SetHorizontalTimelineCommand.CanExecute(null));
+                Assert.True(viewModel.SetVerticalTimelineCommand.CanExecute(null));
+            }
+            finally
+            {
+                DisposeViewModel(viewModel);
+            }
+        });
+    }
+
     [Theory]
     [InlineData(1.00)]
     [InlineData(1.25)]
