@@ -204,3 +204,10 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Umgesetzt: Der Dialog „Neues Projekt“ verwendet jetzt einen klar gegliederten Kopfbereich mit Erklärung, ein dauerhaft sichtbares Label, ein 36-DIP-Feld und eine getrennte Aktionsleiste. Der Projekteinstellungen-Dialog verwendet die semantische Dialogoberfläche, damit er sicher dem aktiven Theme folgt.
 - Technische Prüfung: `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore` erfolgreich (0 Warnungen, 0 Fehler); gezielte Dialog-/Hauptfenstertests 19/19 bestanden.
 - Verbleibend in Phase 4: Startansicht und die weiteren priorisierten Dialoge nach derselben Struktur überarbeiten, danach erst Phase 5 beginnen.
+
+### Commit und Push des Phase-4-Teilschritts
+
+- Commit: `71b363bc82a70a4ce932d2a8e1d35d644478fb48` – `ui: Dialogstart vereinheitlichen`.
+- Push: erfolgreich; lokaler und entfernter Feature-Branch stehen auf demselben Commit.
+- Stagingprüfung vor Commit: ausschließlich `STATUS.md`, `UI_REDESIGN_HANDOFF.md`, `NewProjectDialog.xaml` und `ProjectSettingsDialog.xaml`; das Beispielarchiv war nicht enthalten.
+- Verbleibende Phasen dieses Auftrags: Phase 4 vollständig abschließen, danach Phase 5 und 6; Phase 7 und 8 bleiben ausdrücklich ausgenommen.
