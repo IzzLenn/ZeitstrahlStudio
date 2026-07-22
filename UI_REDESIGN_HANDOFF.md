@@ -1,11 +1,12 @@
 # UI-Redesign - Übergabeprotokoll
 
-- Letzte Aktualisierung: 2026-07-22 14:25:27 +02:00
+- Letzte Aktualisierung: 2026-07-22 14:27:54 +02:00
 - Repository: `C:\Projekte\ZeitstrahlStudio`
 - Branch: `ui/redesign-0.3.0`
 - Remote: `origin` (`https://github.com/IzzLenn/ZeitstrahlStudio.git`)
 - Ausgangs-Commit: `38d94282bc6bbe3ecf96bf40a5efb36976d89dd1`
-- Commitstand: Die Phase-3-Änderungen einschließlich dieses Protokolls werden gemeinsam committed und auf `origin/ui/redesign-0.3.0` gepusht.
+- Phase-3-Funktionscommit: `bf5901b` (`feat(ui): responsive Hauptansicht mit Detailinspektor umsetzen`).
+- Remote-Status: Phase-3-Funktionscommit und dieses abschließende Protokoll sind auf `origin/ui/redesign-0.3.0` enthalten.
 - Ausführendes Modell: Codex auf Basis von GPT-5; eine separate Reasoning-Konfiguration wird von dieser Laufzeit nicht ausgewiesen.
 - Aktuell bearbeitete Phase: Phase 3 abgeschlossen; der Auftrag endet hier.
 
@@ -83,6 +84,7 @@ Die vollständige Zuordnungstabelle steht in `UI_AUDIT_0.2.1.md`.
 - `41511b1` - `docs: Phase-0-Übergabe protokollieren`
 - `e30489f` - `feat(ui): Designsystem und Themes vereinheitlichen`
 - `78bd82a` - `feat(ui): globale Navigation neu ordnen`
+- `bf5901b` - `feat(ui): responsive Hauptansicht mit Detailinspektor umsetzen`
 
 ## Betroffene Dateien
 
@@ -144,8 +146,9 @@ Phase 3 wurde als `artifacts/ui-redesign/phase-3-main-window.png` bei 1280×720 
 ## Arbeitsbaum und Push-Status
 
 - Vorhandene fremde Änderung: `M samples/ZeitstrahlStudio-Beispiel.zeitprojekt`; sie wurde nicht verändert, gestaged oder committed.
-- Die Phase-3-Quelldateien, Tests, `STATUS.md` und dieses Handoff bilden den abschließenden Commit dieses Auftrags.
-- Der abschließende Commit wird auf `origin/ui/redesign-0.3.0` gepusht; danach verbleibt ausschließlich die geschützte Benutzeränderung am Beispielarchiv im Arbeitsbaum.
+- Phase 3 ist in `bf5901b` committed und auf `origin/ui/redesign-0.3.0` gepusht.
+- Dieses nach dem Push aktualisierte Handoff wird als separater Dokumentationsabschluss committed und gepusht.
+- Danach verbleibt ausschließlich die geschützte Benutzeränderung am Beispielarchiv im Arbeitsbaum.
 
 ## Fehlende Icons und Iconanforderungsstatus
 
