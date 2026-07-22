@@ -1,14 +1,14 @@
 # UI-Redesign - Übergabeprotokoll
 
-- Letzte Aktualisierung: 2026-07-22 13:22:48 +02:00
+- Letzte Aktualisierung: 2026-07-22 13:24:53 +02:00
 - Repository: `C:\Projekte\ZeitstrahlStudio`
 - Branch: `ui/redesign-0.3.0`
 - Remote: `origin` (`https://github.com/Chisaga/ZeitstrahlStudio.git`)
 - Ausgangs-Commit: `38d94282bc6bbe3ecf96bf40a5efb36976d89dd1`
-- Aktueller HEAD vor dem Phase-0-Commit: `38d94282bc6bbe3ecf96bf40a5efb36976d89dd1`
+- Aktueller HEAD: `20bf4c6` (`docs: UI-Ausgangszustand und Redesignplan dokumentieren`)
 - Stand von `origin/ui/redesign-0.3.0`: `38d94282bc6bbe3ecf96bf40a5efb36976d89dd1`
 - Ausführendes Modell: Codex auf Basis von GPT-5; eine separate Reasoning-Konfiguration wird von dieser Laufzeit nicht ausgewiesen.
-- Aktuell bearbeitete Phase: Phase 0 abgeschlossen und zur Sicherung bereit; als Nächstes Phase 1.
+- Aktuell bearbeitete Phase: Phase 0 abgeschlossen und committed; als Nächstes Phase 1.
 
 ## Verbindlicher Umfang dieses Laufs
 
@@ -50,7 +50,7 @@ Die vollständige Zuordnungstabelle steht in `UI_AUDIT_0.2.1.md`.
 
 ## Vorhandene UI-Commits
 
-Noch keine Commits dieses Redesign-Auftrags; der Phase-0-Dokumentationscommit ist der nächste Schritt.
+- `20bf4c6` - `docs: UI-Ausgangszustand und Redesignplan dokumentieren`
 
 ## Betroffene Dateien
 
@@ -92,7 +92,7 @@ Die sechs Gesprächsanhänge wurden vollständig ausgewertet. Eigene Laufzeitscr
 ## Arbeitsbaum und Push-Status
 
 - Vorhandene fremde Änderung: `M samples/ZeitstrahlStudio-Beispiel.zeitprojekt`.
-- Eigene, noch nicht committed Phase-0-Dateien: `STATUS.md`, `DECISIONS.md`, `UI_AUDIT_0.2.1.md`, `UI_REDESIGN_PLAN.md`, `ICON_REQUIREMENTS.md`, `UI_REDESIGN_HANDOFF.md`.
+- Eigene Phase-0-Dateien sind in `20bf4c6` committed; nur diese Protokollfortschreibung ist vor dem Push noch uncommitted.
 - `origin/ui/redesign-0.3.0` steht noch auf dem Ausgangs-Commit; Push folgt nach dem geprüften Phase-0-Commit.
 
 ## Fehlende Icons und Iconanforderungsstatus
@@ -103,7 +103,7 @@ Im App-Projekt existiert kein verwendbarer Icon-/Asset-Satz für die geforderte 
 
 ### Aktueller Auftrag
 
-- Phase 0 abschließen: Dokumente committen und pushen.
+- Phase 0 abschließen: Commitstand im Übergabeprotokoll sichern und pushen.
 - Phase 1 umsetzen: Designsystem und Themes.
 - Phase 2 umsetzen: globale Navigation.
 - Phase 3 umsetzen: responsive Hauptansicht.
@@ -127,7 +127,7 @@ Im App-Projekt existiert kein verwendbarer Icon-/Asset-Satz für die geforderte 
 
 ## Nächster atomarer Arbeitsschritt
 
-Die sechs Phase-0-Dokumentationsdateien gezielt stagen, dabei `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` ausschließen, den Diff prüfen, als `docs: UI-Ausgangszustand und Redesignplan dokumentieren` committen und auf `origin/ui/redesign-0.3.0` pushen. Danach Phase 1 mit den globalen Theme-Ressourcen beginnen.
+Diese Protokollfortschreibung committen und zusammen mit `20bf4c6` auf `origin/ui/redesign-0.3.0` pushen. Danach Phase 1 mit den globalen Theme-Ressourcen beginnen.
 
 ## Exakter Fortsetzungsprompt für einen nachfolgenden Chat
 
