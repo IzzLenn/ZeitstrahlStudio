@@ -425,3 +425,11 @@ Neue Version 0.2.0 installieren und visuelle Abnahme durchführen. Anschließend
 - Offene manuelle Prüfungen: vollständige Checkliste, Installer-Build und portable ZIP aus dem aktuellen Publish.
 - Nächster Schritt: lokale Original-Lizenztexte vervollständigen, dann Portable ZIP und Installer erzeugen und manuell abnehmen.
 
+
+## Releaseartefakte 22.07.2026
+
+- Portable ZIP: `artifacts\\release\\ZeitstrahlStudio-0.2.0-win-x64-portable.zip`, 90.388.403 Bytes, SHA-256 `0DEAB8B522B3C13D60630F781263328BF3791FCB9715353413BB9CDDEED90A95`.
+- Installer: `ZeitstrahlStudio-0.2.0-win-x64-setup.exe`, 62.718.761 Bytes, SHA-256 `47AD63677C702EC47D241861D145E63D770D12996CED9B49AD66FAB1208C384E`; Inno Setup 6.7.3 erfolgreich kompiliert.
+- Nach dem finalen Installer-Fix wurde der vollständige Verifikationsbefehl gestartet, aber durch das Ausführungszeitlimit abgebrochen; keine neue vollständige Ergebnisangabe daraus ableiten.
+- Der verbleibende zwingende Release-Gate ist die Vervollständigung der Original-Lizenztexte für alle ausgelieferten Komponenten.
+

@@ -46,7 +46,6 @@ Name: "fileassoc"; Description: "Dateien mit der Erweiterung .zeitprojekt mit Ze
 Source: "{#SourcePath}\..\artifacts\publish\win-x64\{#MyAppExeName}"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\..\artifacts\publish\win-x64\*.dll"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs
 Source: "{#SourcePath}\..\artifacts\publish\win-x64\*.json"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#SourcePath}\..\artifacts\publish\win-x64\*.pdb"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\..\artifacts\publish\win-x64\*.xml"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#SourcePath}\..\artifacts\publish\win-x64\*.config"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
 Source: "{#SourcePath}\..\artifacts\publish\win-x64\*.dat"; DestDir: "{app}"; Flags: ignoreversion skipifsourcedoesntexist
