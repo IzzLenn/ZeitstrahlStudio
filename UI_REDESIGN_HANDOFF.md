@@ -187,3 +187,20 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 ## Exakter Fortsetzungsprompt für einen nachfolgenden Chat
 
 > Öffne `C:\Projekte\ZeitstrahlStudio`, arbeite ausschließlich auf Branch `ui/redesign-0.3.0` und lies `SPEC.md`, `STATUS.md`, `DECISIONS.md`, `UI_AUDIT_0.2.1.md`, `UI_REDESIGN_PLAN.md`, `ICON_REQUIREMENTS.md` und `UI_REDESIGN_HANDOFF.md` vollständig. Bewahre die nicht zu diesem Auftrag gehörende Änderung an `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` unverändert und außerhalb aller Commits. Beginne ausschließlich nach ausdrücklicher Freigabe mit Phase 4. Die Phasen 5 bis 8 bleiben bis zu ihrer jeweiligen Freigabe unangetastet. Führe weder Publish noch Installer, Versionsänderung, Releasevorbereitung, Merge, Tag oder Force-Push aus.
+
+## Fortsetzungslauf Phase 4–6 – 22.07.2026
+
+- Modell/Reasoning: GPT-5 Codex, Standard.
+- Ausgangs-HEAD: `afce53472e28b435a283343d563a20db921cc366` (`origin/ui/redesign-0.3.0` identisch).
+- Computer Use: aktiviert; Initialisierung und Sicherheitsleitfaden wurden gelesen. Sichtprüfung erfolgt ausschließlich damit.
+- Aktuelle Phase: 4 (Startansicht und Dialoge).
+- Arbeitsbaum zu Beginn: ausschließlich die geschützte, fremde Änderung `M samples/ZeitstrahlStudio-Beispiel.zeitprojekt`; nichts gestaged.
+- Sichtbare Baseline: Phase-3-Drei-Bereichs-Hauptansicht gemäß Übergabe vorhanden; die aktuellen SOLL-Referenzen und die gesamte Phase-4–6-Anweisung wurden geprüft.
+- Nächster atomarer Arbeitsschritt: bestehende Startansicht, Dialoge, TimelineView und Layouttests vollständig lesen und den Phase-4-Umfang ableiten.
+
+### Zwischenstand Phase 4
+
+- Computer-Use-Prüfung: aktueller Debug-EXE-Pfad `src/ZeitstrahlStudio.App/bin/Debug/net8.0-windows10.0.19041.0/win-x64/ZeitstrahlStudio.App.exe`, Commit `afce53472e28b435a283343d563a20db921cc366`. Start und Fenstererkennung waren erfolgreich; die notwendige Zustandsaufnahme schlägt reproduzierbar mit `SetIsBorderRequired failed: Schnittstelle nicht unterstützt (0x80004002)` fehl. Daher keine visuelle Abnahme und keine Screenshots; dies ist ein technischer Computer-Use-Blocker.
+- Umgesetzt: Der Dialog „Neues Projekt“ verwendet jetzt einen klar gegliederten Kopfbereich mit Erklärung, ein dauerhaft sichtbares Label, ein 36-DIP-Feld und eine getrennte Aktionsleiste. Der Projekteinstellungen-Dialog verwendet die semantische Dialogoberfläche, damit er sicher dem aktiven Theme folgt.
+- Technische Prüfung: `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore` erfolgreich (0 Warnungen, 0 Fehler); gezielte Dialog-/Hauptfenstertests 19/19 bestanden.
+- Verbleibend in Phase 4: Startansicht und die weiteren priorisierten Dialoge nach derselben Struktur überarbeiten, danach erst Phase 5 beginnen.

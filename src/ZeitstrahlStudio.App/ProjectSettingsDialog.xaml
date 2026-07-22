@@ -8,7 +8,7 @@
         MinHeight="580"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource SurfaceBrush}">
+        Background="{DynamicResource DialogBackgroundBrush}">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung - UI-Redesign 0.3.0, Phase 2 abgeschlossen; Phase 3 als Nächstes
+Status: In Entwicklung - UI-Redesign 0.3.0, Phase 4 begonnen; Dialog-Teilschritt abgeschlossen
 
 Letzte Aktualisierung: 22.07.2026
 
 ## Aktuelle Phase
 
-Auf Branch `ui/redesign-0.3.0` läuft der klar abgegrenzte UI-Auftrag für Phase 0 bis 3. Phase 0 und Phase 1 sind dokumentiert, committed und gepusht. Phase 2 ersetzt den alten einzeiligen Header durch ein normales Hauptmenü und eine kompakte, gruppierte, textbasierte Befehlsleiste. Alle bestehenden Funktionsgruppen bleiben erreichbar; die aktive Orientierung besitzt einen ausgewählten statt deaktivierten Zustand. Der Debug-Build ist mit 0 Warnungen/0 Fehlern erfolgreich; 11 gezielte MainWindow-/Theme-Tests bestehen. Eine lokale UI-Automation-Laufzeitprüfung bestätigt Hauptmenü und 13 vollständig sichtbare Befehlsleistenaktionen bei 1280×760. Phase 3 ist der nächste Schritt.
+Auf Branch `ui/redesign-0.3.0` läuft der klar abgegrenzte UI-Auftrag für Phase 0 bis 3. Phase 0 und Phase 1 sind dokumentiert, committed und gepusht. Phase 2 ersetzt den alten einzeiligen Header durch ein normales Hauptmenü und eine kompakte, gruppierte, textbasierte Befehlsleiste. Alle bestehenden Funktionsgruppen bleiben erreichbar; die aktive Orientierung besitzt einen ausgewählten statt deaktivierten Zustand. Der Debug-Build ist mit 0 Warnungen/0 Fehlern erfolgreich; 11 gezielte MainWindow-/Theme-Tests bestehen. Eine lokale UI-Automation-Laufzeitprüfung bestätigt Hauptmenü und 13 vollständig sichtbare Befehlsleistenaktionen bei 1280×760. Phase 4 ist begonnen. Der Dialog „Neues Projekt“ und die Themeoberfläche der Projekteinstellungen wurden modernisiert; die übrigen Dialoge, Phase 5 und Phase 6 bleiben offen.
 
 Die Phasen 4 bis 8, vollständige Endverifikation, Publish, Installer, Versionsänderung und Releasevorbereitung sind ausdrücklich nicht Bestandteil dieses Laufs. Die vorhandene Benutzeränderung an samples/ZeitstrahlStudio-Beispiel.zeitprojekt bleibt unangetastet und wird nicht committed.
 
