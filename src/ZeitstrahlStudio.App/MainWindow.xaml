@@ -10,6 +10,9 @@
         AutomationProperties.Name="Zeitstrahl Studio Hauptfenster"
         WindowStartupLocation="CenterScreen"
         Closing="Window_Closing"
+        Loaded="Window_Loaded"
+        Closed="Window_Closed"
+        SizeChanged="Window_SizeChanged"
         AllowDrop="True"
         DragOver="Window_DragOver"
         Drop="Window_Drop"
@@ -160,6 +163,7 @@
                         <MenuItem Header="Timeline-Ansicht zurücksetzen" Click="TimelineResetView_Click" />
                         <Separator />
                         <MenuItem Header="_Navigation ein-/ausblenden" Click="SidebarToggle_Click" />
+                        <MenuItem Header="_Details ein-/ausblenden" Click="InspectorToggle_Click" />
                         <MenuItem Header="Projekt_einstellungen" Command="{Binding SettingsCommand}" />
                     </MenuItem>
                     <MenuItem Header="_Ereignis">
@@ -208,6 +212,14 @@
                         AutomationProperties.Name="Projekteinstellungen"
                         ToolTip="Projekteinstellungen öffnen"
                         Content="Einstellungen" />
+                <Button x:Name="InspectorToggleButton"
+                        DockPanel.Dock="Right"
+                        Margin="0,0,7,0"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        Click="InspectorToggle_Click"
+                        AutomationProperties.Name="Ereignisdetails umschalten"
+                        ToolTip="Rechten Ereignisinspektor ein- oder ausblenden"
+                        Content="Details" />
 
                 <StackPanel Orientation="Horizontal">
                     <Border Style="{StaticResource CommandGroupStyle}">
@@ -295,298 +307,205 @@
         <!-- Hauptbereich -->
         <Grid Grid.Row="2">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition x:Name="SidebarColumn" Width="320" MinWidth="260" MaxWidth="420" />
+                <ColumnDefinition x:Name="SidebarColumn" Width="310" MinWidth="0" MaxWidth="380" />
                 <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" MinWidth="280" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition x:Name="InspectorColumn" Width="0" MinWidth="0" MaxWidth="380" />
             </Grid.ColumnDefinitions>
 
-            <!-- Linke Seitenleiste -->
-            <Border Grid.Column="0"
+            <!-- Linke Projektnavigation -->
+            <Border x:Name="SidebarPanel"
+                    Grid.Column="0"
+                    MinWidth="260"
                     Padding="16"
-                    Background="{DynamicResource SurfaceBrush}"
-                    BorderBrush="{DynamicResource BorderBrush}"
+                    AutomationProperties.Name="Projekt- und Ereignisnavigation"
+                    Background="{DynamicResource NavigationBackgroundBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}"
                     BorderThickness="0,0,1,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
-                    <StackPanel>
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Visibility="{Binding HasProject, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="AKTUELLES PROJEKT" />
-                        <TextBlock Margin="0,7,0,0"
-                                   FontSize="{StaticResource FontSize2Xl}"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource PrimaryTextBrush}"
-                                   Text="{Binding ProjectName}"
-                                   TextWrapping="Wrap" />
-                        <TextBlock Margin="0,4,0,0"
-                                   Foreground="{DynamicResource SubtleTextBrush}"
-                                   Text="{Binding ProjectDescription}"
-                                   TextWrapping="Wrap" />
-                        <TextBlock Margin="0,5,0,0"
-                                   Foreground="{DynamicResource MutedTextBrush}"
-                                   FontSize="{StaticResource FontSizeXs}"
-                                   Text="{Binding ProjectArchivePath}"
-                                   TextWrapping="Wrap" />
-
-                        <Expander x:Name="SearchExpander"
-                                  Margin="0,22,0,0"
-                                  IsExpanded="True"
-                                  IsEnabled="{Binding HasProject}">
-                            <Expander.Header>
-                                <DockPanel Width="270">
-                                    <TextBlock DockPanel.Dock="Left"
-                                               Foreground="{DynamicResource AccentTextBrush}"
-                                               FontSize="{StaticResource FontSizeXs}"
-                                               FontWeight="Bold"
-                                               Text="SUCHE UND FILTER" />
-                                    <TextBlock DockPanel.Dock="Right"
-                                               Foreground="{DynamicResource MutedTextBrush}"
-                                               FontSize="{StaticResource FontSizeXs}"
-                                               Text="{Binding ActiveFilterText}" />
-                                </DockPanel>
-                            </Expander.Header>
-                            <StackPanel Margin="0,10,0,0">
-                                <TextBox x:Name="SearchQueryTextBox"
-                                         Padding="8,6"
-                                         AutomationProperties.Name="Volltextsuche"
-                                         ToolTip="Projektdaten, Ereignisse, Dateinamen, Links und extrahierte Dokumenttexte durchsuchen"
-                                         Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" />
-                                <Grid Margin="0,8,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="10" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <DatePicker Grid.Column="0"
-                                                AutomationProperties.Name="Suchzeitraum von"
-                                                ToolTip="Zeitraum ab"
-                                                SelectedDate="{Binding SearchFrom, UpdateSourceTrigger=PropertyChanged}" />
-                                    <DatePicker Grid.Column="2"
-                                                AutomationProperties.Name="Suchzeitraum bis"
-                                                ToolTip="Zeitraum bis"
-                                                SelectedDate="{Binding SearchUntil, UpdateSourceTrigger=PropertyChanged}" />
-                                </Grid>
-                                <ComboBox Margin="0,7,0,0"
-                                          AutomationProperties.Name="Datumsart filtern"
-                                          ItemsSource="{Binding SearchPrecisionOptions}"
-                                          DisplayMemberPath="Label"
-                                          SelectedValuePath="Value"
-                                          SelectedValue="{Binding SearchPrecision}" />
-                                <Grid Margin="0,7,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="7" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <ComboBox Grid.Column="0"
-                                              AutomationProperties.Name="Nach vorhandener Frist filtern"
-                                              ItemsSource="{Binding SearchDeadlinePresenceOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SearchHasDeadline}" />
-                                    <ComboBox Grid.Column="2"
-                                              AutomationProperties.Name="Nach Friststatus filtern"
-                                              ItemsSource="{Binding SearchDeadlineStatusOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SearchDeadlineStatus}" />
-                                </Grid>
-                                <Grid Margin="0,7,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="7" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <ComboBox Grid.Column="0"
-                                              AutomationProperties.Name="Nach Priorität filtern"
-                                              ItemsSource="{Binding SearchPriorityOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SearchPriority}" />
-                                    <ComboBox Grid.Column="2"
-                                              AutomationProperties.Name="Nach Farbe filtern"
-                                              ItemsSource="{Binding SearchColorOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SearchColor}" />
-                                </Grid>
-                                <Grid Margin="0,7,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="7" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <ComboBox Grid.Column="0"
-                                              AutomationProperties.Name="Nach Schlagwort filtern"
-                                              ItemsSource="{Binding SearchTagOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SearchTag}" />
-                                    <ComboBox Grid.Column="2"
-                                              AutomationProperties.Name="Nach Dateityp filtern"
-                                              ItemsSource="{Binding SearchMediaTypeOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SearchMediaType}" />
-                                </Grid>
-                                <Grid Margin="0,7,0,0">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="7" />
-                                        <ColumnDefinition Width="*" />
-                                    </Grid.ColumnDefinitions>
-                                    <ComboBox Grid.Column="0"
-                                              AutomationProperties.Name="Nach vorhandenen Anhängen filtern"
-                                              ItemsSource="{Binding SearchAttachmentPresenceOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SearchHasAttachment}" />
-                                    <ComboBox Grid.Column="2"
-                                              AutomationProperties.Name="Nach vorhandenen PDF-Dateien filtern"
-                                              ItemsSource="{Binding SearchPdfPresenceOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SearchHasPdf}" />
-                                </Grid>
-                                <DockPanel Margin="0,8,0,6">
-                                    <Button DockPanel.Dock="Right"
-                                            Style="{StaticResource LinkButtonStyle}"
-                                            Command="{Binding ResetSearchFiltersCommand}"
-                                            Content="Alle zurücksetzen" />
-                                    <ComboBox Width="105"
-                                              DockPanel.Dock="Left"
-                                              AutomationProperties.Name="Suchergebnisse sortieren"
-                                              ItemsSource="{Binding SearchSortOptions}"
-                                              DisplayMemberPath="Label"
-                                              SelectedValuePath="Value"
-                                              SelectedValue="{Binding SearchSortMode}" />
-                                    <TextBlock Margin="8,0,0,0"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource MutedTextBrush}"
-                                               FontSize="{StaticResource FontSizeXs}"
-                                               Text="{Binding SearchSummaryText}" />
-                                </DockPanel>
-                                <ListBox Height="330"
-                                         AutomationProperties.Name="Suchergebnisse"
-                                         ItemsSource="{Binding SearchResults}"
-                                         Background="{DynamicResource RaisedSurfaceBrush}"
-                                         BorderBrush="{DynamicResource BorderBrush}"
-                                         BorderThickness="1"
-                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                         VirtualizingPanel.IsVirtualizing="True"
-                                         VirtualizingPanel.VirtualizationMode="Recycling">
-                                    <ListBox.ItemContainerStyle>
-                                        <Style TargetType="ListBoxItem">
-                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                            <Setter Property="Padding" Value="0" />
-                                        </Style>
-                                    </ListBox.ItemContainerStyle>
-                                    <ListBox.ItemTemplate>
-                                        <DataTemplate>
-                                            <Button Padding="9"
-                                                    HorizontalContentAlignment="Stretch"
-                                                    Background="Transparent"
-                                                    BorderThickness="0"
-                                                    Command="{Binding DataContext.SelectSearchResultCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}">
-                                                <StackPanel>
-                                                    <DockPanel>
-                                                        <TextBlock DockPanel.Dock="Right"
-                                                                   Margin="8,0,0,0"
-                                                                   Foreground="{DynamicResource MutedTextBrush}"
-                                                                   FontSize="{StaticResource FontSizeXs}"
-                                                                   Text="{Binding Date}" />
-                                                        <TextBlock FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource PrimaryTextBrush}"
-                                                                   Text="{Binding EventTitle}"
-                                                                   TextWrapping="Wrap" />
-                                                    </DockPanel>
-                                                    <ItemsControl Margin="0,4,0,0" ItemsSource="{Binding Highlights}">
-                                                        <ItemsControl.ItemTemplate>
-                                                            <DataTemplate>
-                                                                <local:HighlightedTextBlock Margin="0,2,0,0"
-                                                                                            Foreground="{DynamicResource SubtleTextBrush}"
-                                                                                            FontSize="{StaticResource FontSizeXs}"
-                                                                                            HighlightedText="{Binding}" />
-                                                            </DataTemplate>
-                                                        </ItemsControl.ItemTemplate>
-                                                    </ItemsControl>
-                                                </StackPanel>
-                                            </Button>
-                                        </DataTemplate>
-                                    </ListBox.ItemTemplate>
-                                </ListBox>
-                            </StackPanel>
-                        </Expander>
-
-                        <Grid Margin="0,28,0,10">
-                            <TextBlock VerticalAlignment="Center"
-                                       Foreground="{DynamicResource MutedTextBrush}"
-                                       FontSize="{StaticResource FontSizeXs}"
-                                       FontWeight="Bold"
-                                       Text="ZULETZT VERWENDET" />
-                            <Button HorizontalAlignment="Right"
-                                    Style="{StaticResource LinkButtonStyle}"
-                                    Command="{Binding RefreshCommand}"
-                                    Content="Aktualisieren" />
-                        </Grid>
-                        <ItemsControl ItemsSource="{Binding RecentProjects}">
-                            <ItemsControl.ItemTemplate>
+                        <TextBlock Margin="0,7,0,0" FontSize="{StaticResource FontSize2Xl}" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource NavigationForegroundBrush}" Text="{Binding ProjectName}" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource SubtleTextBrush}"
+                                   Text="{Binding ProjectDescription}" TextWrapping="Wrap" />
+                        <TextBlock Margin="0,5,0,0" Foreground="{DynamicResource MutedTextBrush}"
+                                   FontSize="{StaticResource FontSizeXs}" Text="{Binding ProjectArchivePath}"
+                                   TextTrimming="CharacterEllipsis" ToolTip="{Binding ProjectArchivePath}" />
+                    </StackPanel>
+                    <Expander x:Name="SearchExpander" Grid.Row="1" Margin="0,18,0,10" IsExpanded="True"
+                              Visibility="{Binding HasProject, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Expander.Header>
+                            <DockPanel Width="270">
+                                <TextBlock DockPanel.Dock="Left" Style="{StaticResource SectionHeaderStyle}" Text="SUCHE UND FILTER" />
+                                <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="{StaticResource FontSizeXs}" Text="{Binding ActiveFilterText}" />
+                            </DockPanel>
+                        </Expander.Header>
+                        <StackPanel Margin="0,10,0,0">
+                            <TextBox x:Name="SearchQueryTextBox" AutomationProperties.Name="Volltextsuche"
+                                     ToolTip="Projektdaten, Ereignisse, Dateinamen, Links und extrahierte Dokumenttexte durchsuchen"
+                                     Text="{Binding SearchQuery, UpdateSourceTrigger=PropertyChanged}" />
+                            <DockPanel Margin="0,8,0,0">
+                                <Button DockPanel.Dock="Right" Style="{StaticResource LinkButtonStyle}"
+                                        Command="{Binding ResetSearchFiltersCommand}" Content="Alle zurücksetzen" />
+                                <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}"
+                                           FontSize="{StaticResource FontSizeXs}" Text="{Binding SearchSummaryText}" />
+                            </DockPanel>
+                            <Expander Margin="0,9,0,0" IsExpanded="True" Header="Schnellfilter">
+                                <StackPanel Margin="0,7,0,0">
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Priorität" />
+                                    <ComboBox Margin="0,4,0,0" AutomationProperties.Name="Nach Priorität filtern"
+                                              ItemsSource="{Binding SearchPriorityOptions}" DisplayMemberPath="Label"
+                                              SelectedValuePath="Value" SelectedValue="{Binding SearchPriority}" />
+                                    <TextBlock Margin="0,7,0,0" Style="{StaticResource LabelStyle}" Text="Schlagwort" />
+                                    <ComboBox Margin="0,4,0,0" AutomationProperties.Name="Nach Schlagwort filtern"
+                                              ItemsSource="{Binding SearchTagOptions}" DisplayMemberPath="Label"
+                                              SelectedValuePath="Value" SelectedValue="{Binding SearchTag}" />
+                                    <TextBlock Margin="0,7,0,0" Style="{StaticResource LabelStyle}" Text="Anhänge" />
+                                    <ComboBox Margin="0,4,0,0" AutomationProperties.Name="Nach vorhandenen Anhängen filtern"
+                                              ItemsSource="{Binding SearchAttachmentPresenceOptions}" DisplayMemberPath="Label"
+                                              SelectedValuePath="Value" SelectedValue="{Binding SearchHasAttachment}" />
+                                </StackPanel>
+                            </Expander>
+                            <Expander Margin="0,7,0,0" Header="Erweiterte Filter">
+                                <StackPanel Margin="0,7,0,0">
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Zeitraum" />
+                                    <Grid Margin="0,4,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="8" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <DatePicker Grid.Column="0" AutomationProperties.Name="Suchzeitraum von"
+                                                    SelectedDate="{Binding SearchFrom, UpdateSourceTrigger=PropertyChanged}" />
+                                        <DatePicker Grid.Column="2" AutomationProperties.Name="Suchzeitraum bis"
+                                                    SelectedDate="{Binding SearchUntil, UpdateSourceTrigger=PropertyChanged}" />
+                                    </Grid>
+                                    <TextBlock Margin="0,7,0,0" Style="{StaticResource LabelStyle}" Text="Datumsart" />
+                                    <ComboBox Margin="0,4,0,0" AutomationProperties.Name="Datumsart filtern"
+                                              ItemsSource="{Binding SearchPrecisionOptions}" DisplayMemberPath="Label"
+                                              SelectedValuePath="Value" SelectedValue="{Binding SearchPrecision}" />
+                                    <Grid Margin="0,7,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" /><ColumnDefinition Width="7" /><ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <ComboBox Grid.Column="0" AutomationProperties.Name="Nach vorhandener Frist filtern"
+                                                  ItemsSource="{Binding SearchDeadlinePresenceOptions}" DisplayMemberPath="Label"
+                                                  SelectedValuePath="Value" SelectedValue="{Binding SearchHasDeadline}" />
+                                        <ComboBox Grid.Column="2" AutomationProperties.Name="Nach Friststatus filtern"
+                                                  ItemsSource="{Binding SearchDeadlineStatusOptions}" DisplayMemberPath="Label"
+                                                  SelectedValuePath="Value" SelectedValue="{Binding SearchDeadlineStatus}" />
+                                    </Grid>
+                                    <Grid Margin="0,7,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" /><ColumnDefinition Width="7" /><ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <ComboBox Grid.Column="0" AutomationProperties.Name="Nach Farbe filtern"
+                                                  ItemsSource="{Binding SearchColorOptions}" DisplayMemberPath="Label"
+                                                  SelectedValuePath="Value" SelectedValue="{Binding SearchColor}" />
+                                        <ComboBox Grid.Column="2" AutomationProperties.Name="Nach Dateityp filtern"
+                                                  ItemsSource="{Binding SearchMediaTypeOptions}" DisplayMemberPath="Label"
+                                                  SelectedValuePath="Value" SelectedValue="{Binding SearchMediaType}" />
+                                    </Grid>
+                                    <Grid Margin="0,7,0,0">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" /><ColumnDefinition Width="7" /><ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <ComboBox Grid.Column="0" AutomationProperties.Name="Nach vorhandenen PDF-Dateien filtern"
+                                                  ItemsSource="{Binding SearchPdfPresenceOptions}" DisplayMemberPath="Label"
+                                                  SelectedValuePath="Value" SelectedValue="{Binding SearchHasPdf}" />
+                                        <ComboBox Grid.Column="2" AutomationProperties.Name="Suchergebnisse sortieren"
+                                                  ItemsSource="{Binding SearchSortOptions}" DisplayMemberPath="Label"
+                                                  SelectedValuePath="Value" SelectedValue="{Binding SearchSortMode}" />
+                                    </Grid>
+                                </StackPanel>
+                            </Expander>
+                        </StackPanel>
+                    </Expander>
+                    <Grid Grid.Row="2" Visibility="{Binding HasProject, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /></Grid.RowDefinitions>
+                        <DockPanel Margin="0,0,0,7">
+                            <TextBlock DockPanel.Dock="Left" Style="{StaticResource SectionHeaderStyle}" Text="EREIGNISSE" />
+                            <TextBlock DockPanel.Dock="Right" Foreground="{DynamicResource MutedTextBrush}"
+                                       FontSize="{StaticResource FontSizeXs}" Text="{Binding SearchSummaryText}" />
+                        </DockPanel>
+                        <ListBox Grid.Row="1" AutomationProperties.Name="Suchergebnisse" ItemsSource="{Binding SearchResults}"
+                                 Background="{DynamicResource CardSurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                                 BorderThickness="1" ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                 ScrollViewer.VerticalScrollBarVisibility="Auto" VirtualizingPanel.IsVirtualizing="True"
+                                 VirtualizingPanel.VirtualizationMode="Recycling">
+                            <ListBox.ItemContainerStyle>
+                                <Style TargetType="ListBoxItem"><Setter Property="HorizontalContentAlignment" Value="Stretch" /><Setter Property="Padding" Value="0" /></Style>
+                            </ListBox.ItemContainerStyle>
+                            <ListBox.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Margin="0,0,0,8"
-                                            Padding="11"
-                                            Background="{DynamicResource RaisedSurfaceBrush}"
-                                            BorderBrush="{DynamicResource BorderBrush}"
-                                            BorderThickness="1"
-                                            CornerRadius="{DynamicResource CardCornerRadius}">
+                                    <Button Padding="9" HorizontalContentAlignment="Stretch" Background="Transparent" BorderThickness="0"
+                                            Command="{Binding DataContext.SelectSearchResultCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                            CommandParameter="{Binding}">
                                         <StackPanel>
-                                            <Button Style="{StaticResource LinkButtonStyle}"
-                                                    Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                    CommandParameter="{Binding}"
-                                                    ToolTip="{Binding ArchivePath}"
-                                                    Content="{Binding ProjectName}" />
-                                            <TextBlock Margin="0,4,0,0"
-                                                       Foreground="{DynamicResource MutedTextBrush}"
-                                                       FontSize="{StaticResource FontSizeXs}"
-                                                       Text="{Binding LastOpenedAtUtc, StringFormat='Zuletzt geöffnet: {0:g}'}" />
+                                            <DockPanel>
+                                                <TextBlock DockPanel.Dock="Right" Margin="8,0,0,0" Foreground="{DynamicResource MutedTextBrush}"
+                                                           FontSize="{StaticResource FontSizeXs}" Text="{Binding Date}" />
+                                                <TextBlock FontWeight="SemiBold" Foreground="{DynamicResource PrimaryTextBrush}"
+                                                           Text="{Binding EventTitle}" TextWrapping="Wrap" />
+                                            </DockPanel>
+                                            <ItemsControl Margin="0,3,0,0" ItemsSource="{Binding Highlights}">
+                                                <ItemsControl.ItemTemplate><DataTemplate><local:HighlightedTextBlock Margin="0,2,0,0"
+                                                    Foreground="{DynamicResource SubtleTextBrush}" FontSize="{StaticResource FontSizeXs}"
+                                                    HighlightedText="{Binding}" /></DataTemplate></ItemsControl.ItemTemplate>
+                                            </ItemsControl>
                                         </StackPanel>
-                                    </Border>
+                                    </Button>
                                 </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-
-                        <StackPanel Margin="0,22,0,0">
-                            <TextBlock Margin="0,0,0,10"
-                                       Foreground="{DynamicResource WarningTextBrush}"
-                                       FontSize="{StaticResource FontSizeXs}"
-                                       FontWeight="Bold"
-                                       Text="WIEDERHERSTELLUNG" />
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                    </Grid>
+                    <ScrollViewer Grid.Row="0" Grid.RowSpan="3" VerticalScrollBarVisibility="Auto"
+                                  Visibility="{Binding HasNoProject, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <StackPanel>
+                            <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="PROJEKTE" />
+                            <Grid Margin="0,10,0,10">
+                                <TextBlock VerticalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}" FontWeight="Bold" Text="ZULETZT VERWENDET" />
+                                <Button HorizontalAlignment="Right" Style="{StaticResource LinkButtonStyle}" Command="{Binding RefreshCommand}" Content="Aktualisieren" />
+                            </Grid>
+                            <ItemsControl ItemsSource="{Binding RecentProjects}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Margin="0,0,0,8" Padding="11" Background="{DynamicResource CardSurfaceBrush}"
+                                                BorderBrush="{DynamicResource BorderBrush}" BorderThickness="1" CornerRadius="{DynamicResource CardCornerRadius}">
+                                            <StackPanel>
+                                                <Button Style="{StaticResource LinkButtonStyle}" Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                        CommandParameter="{Binding}" ToolTip="{Binding ArchivePath}" Content="{Binding ProjectName}" />
+                                                <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource MutedTextBrush}" FontSize="{StaticResource FontSizeXs}"
+                                                           Text="{Binding LastOpenedAtUtc, StringFormat='Zuletzt geöffnet: {0:g}'}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                            <TextBlock Margin="0,18,0,10" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Bold" Text="WIEDERHERSTELLUNG" />
                             <ItemsControl ItemsSource="{Binding RecoveryCandidates}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Margin="0,0,0,8"
-                                                Padding="11"
-                                                Background="{DynamicResource WarningLightBrush}"
-                                                BorderBrush="{DynamicResource WarningBrush}"
-                                                BorderThickness="1"
-                                                CornerRadius="{DynamicResource CardCornerRadius}">
+                                        <Border Margin="0,0,0,8" Padding="11" Background="{DynamicResource WarningLightBrush}"
+                                                BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1" CornerRadius="{DynamicResource CardCornerRadius}">
                                             <StackPanel>
-                                                <TextBlock FontWeight="SemiBold"
-                                                           Foreground="{DynamicResource PrimaryTextBrush}"
-                                                           Text="{Binding ProjectName}"
-                                                           TextWrapping="Wrap" />
-                                                <TextBlock Margin="0,3,0,8"
-                                                           Foreground="{DynamicResource WarningTextBrush}"
-                                                           FontSize="{StaticResource FontSizeXs}"
-                                                           Text="Nicht ordnungsgemäß geschlossen" />
+                                                <TextBlock FontWeight="SemiBold" Text="{Binding ProjectName}" TextWrapping="Wrap" />
+                                                <TextBlock Margin="0,3,0,8" Foreground="{DynamicResource WarningTextBrush}" Text="Nicht ordnungsgemäß geschlossen" />
                                                 <StackPanel Orientation="Horizontal">
-                                                    <Button Margin="0,0,12,0"
-                                                            Style="{StaticResource LinkButtonStyle}"
+                                                    <Button Margin="0,0,12,0" Style="{StaticResource LinkButtonStyle}"
                                                             Command="{Binding DataContext.RecoverCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            CommandParameter="{Binding}"
-                                                            Content="Wiederherstellen" />
-                                                    <Button Style="{StaticResource LinkButtonStyle}"
-                                                            Foreground="{DynamicResource DangerTextBrush}"
+                                                            CommandParameter="{Binding}" Content="Wiederherstellen" />
+                                                    <Button Style="{StaticResource LinkButtonStyle}" Foreground="{DynamicResource DangerTextBrush}"
                                                             Command="{Binding DataContext.DiscardRecoveryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            CommandParameter="{Binding}"
-                                                            Content="Verwerfen" />
+                                                            CommandParameter="{Binding}" Content="Verwerfen" />
                                                 </StackPanel>
                                             </StackPanel>
                                         </Border>
@@ -594,18 +513,13 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                         </StackPanel>
-                    </StackPanel>
-                </ScrollViewer>
+                    </ScrollViewer>
+                </Grid>
             </Border>
-
-            <GridSplitter Grid.Column="1"
-                          Width="5"
-                          HorizontalAlignment="Stretch"
-                          Background="Transparent"
-                          ShowsPreview="False" />
-
+            <GridSplitter x:Name="SidebarSplitter" Grid.Column="1" Width="5" HorizontalAlignment="Stretch"
+                          Background="Transparent" ShowsPreview="False" />
             <!-- Hauptarbeitsbereich -->
-            <Grid Grid.Column="2" Background="{DynamicResource RaisedSurfaceBrush}">
+            <Grid Grid.Column="2" Background="{DynamicResource WorkspaceBackgroundBrush}">
                 <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Visibility="{Binding HasNoProject, Converter={StaticResource BooleanToVisibilityConverter}}">
@@ -830,181 +744,171 @@
                             </Grid>
                         </TabItem>
                         <TabItem Header="Ereignisliste">
-                            <Grid Background="{DynamicResource SurfaceBrush}">
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="310" />
-                                </Grid.ColumnDefinitions>
-                                <Border Grid.Column="0" CornerRadius="{DynamicResource CardCornerRadius}">
-                                    <ListBox x:Name="EventList"
-                                             Margin="12"
-                                             AutomationProperties.Name="Chronologische Ereignisliste"
-                                             ItemsSource="{Binding Events}"
-                                             SelectedItem="{Binding SelectedEvent}"
-                                             Background="Transparent"
-                                             BorderThickness="0"
-                                             AllowDrop="True"
-                                             PreviewMouseLeftButtonDown="EventList_PreviewMouseLeftButtonDown"
-                                             PreviewMouseMove="EventList_PreviewMouseMove"
-                                             DragOver="EventList_DragOver"
-                                             DragLeave="EventList_DragLeave"
-                                             Drop="EventList_Drop"
-                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                             ScrollViewer.VerticalScrollBarVisibility="Auto"
-                                             ToolTip="Ereignis innerhalb derselben Datumsgruppe ziehen; Dateien auf das gewünschte Ereignis ablegen">
-                                        <ListBox.ItemContainerStyle>
-                                            <Style TargetType="ListBoxItem">
-                                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                                <Setter Property="Padding" Value="8" />
-                                                <Setter Property="BorderBrush" Value="Transparent" />
-                                                <Setter Property="BorderThickness" Value="0" />
-                                                <Style.Triggers>
-                                                    <Trigger Property="Tag" Value="Before">
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                                                        <Setter Property="BorderThickness" Value="0,3,0,0" />
-                                                    </Trigger>
-                                                    <Trigger Property="Tag" Value="After">
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                                                        <Setter Property="BorderThickness" Value="0,0,0,3" />
-                                                    </Trigger>
-                                                    <Trigger Property="Tag" Value="DropFiles">
-                                                        <Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" />
-                                                        <Setter Property="BorderThickness" Value="2" />
-                                                    </Trigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ListBox.ItemContainerStyle>
-                                        <ListBox.ItemTemplate>
-                                            <DataTemplate>
-                                                <Grid Margin="0,3">
-                                                    <Grid.ColumnDefinitions>
-                                                        <ColumnDefinition Width="150" />
-                                                        <ColumnDefinition Width="18" />
-                                                        <ColumnDefinition Width="*" />
-                                                    </Grid.ColumnDefinitions>
-                                                    <TextBlock VerticalAlignment="Top"
-                                                               Foreground="{DynamicResource AccentTextBrush}"
-                                                               FontSize="{StaticResource FontSizeLg}"
-                                                               FontWeight="Bold"
-                                                               Text="{Binding Date}" />
-                                                    <Border Grid.Column="1"
-                                                            Width="10"
-                                                            Height="10"
-                                                            Margin="0,4,0,0"
-                                                            VerticalAlignment="Top"
-                                                            Background="{DynamicResource AccentBrush}"
-                                                            CornerRadius="5" />
-                                                    <StackPanel Grid.Column="2">
-                                                        <TextBlock FontSize="{StaticResource FontSizeXl}"
-                                                                   FontWeight="SemiBold"
-                                                                   Foreground="{DynamicResource PrimaryTextBrush}"
-                                                                   Text="{Binding Title}"
-                                                                   TextWrapping="Wrap" />
-                                                        <TextBlock Margin="0,3,0,0"
-                                                                   Foreground="{DynamicResource MutedTextBrush}"
-                                                                   Text="{Binding InfoText}"
-                                                                   TextWrapping="Wrap" />
-                                                        <TextBlock Margin="0,4,0,0"
-                                                                   Foreground="{DynamicResource SubtleTextBrush}"
-                                                                   FontSize="{StaticResource FontSizeXs}"
-                                                                   Text="{Binding Attachments.Count, StringFormat={}{0} Anhänge}" />
-                                                    </StackPanel>
-                                                </Grid>
-                                            </DataTemplate>
-                                        </ListBox.ItemTemplate>
-                                    </ListBox>
-                                </Border>
-                                <Border x:Name="AttachmentDropZone"
-                                        Grid.Column="1"
-                                        Margin="0,12,12,12"
-                                        Padding="16"
-                                        Background="{DynamicResource RaisedSurfaceBrush}"
-                                        BorderBrush="{DynamicResource BorderBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="{DynamicResource CardCornerRadius}"
-                                        AllowDrop="True"
-                                        AutomationProperties.Name="Anhangsbereich des ausgewählten Ereignisses"
-                                        DragOver="AttachmentDropZone_DragOver"
-                                        Drop="AttachmentDropZone_Drop"
-                                        ToolTip="Eine oder mehrere lokale Dateien hier ablegen">
-                                    <Grid>
-                                        <Grid.RowDefinitions>
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="Auto" />
-                                            <RowDefinition Height="*" />
-                                            <RowDefinition Height="Auto" />
-                                        </Grid.RowDefinitions>
-                                        <TextBlock Foreground="{DynamicResource AccentTextBrush}"
-                                                   FontSize="{StaticResource FontSizeXs}"
-                                                   FontWeight="Bold"
-                                                   Text="ANHÄNGE DES EREIGNISSES" />
-                                        <StackPanel Grid.Row="1" Margin="0,7,0,12">
-                                            <TextBlock FontSize="{StaticResource FontSizeXl}"
-                                                       FontWeight="SemiBold"
-                                                       Foreground="{DynamicResource PrimaryTextBrush}"
-                                                       Text="{Binding SelectedEvent.Title, TargetNullValue='Ereignis auswählen'}"
-                                                       TextWrapping="Wrap" />
-                                            <TextBlock Margin="0,4,0,0"
-                                                       Foreground="{DynamicResource MutedTextBrush}"
-                                                       FontSize="{StaticResource FontSizeXs}"
-                                                       Text="Dateien hier ablegen oder über die Schaltfläche auswählen. Mehrfachauswahl wird vollständig verarbeitet."
-                                                       TextWrapping="Wrap" />
-                                        </StackPanel>
-                                        <ListBox Grid.Row="2"
-                                                 AutomationProperties.Name="Anhänge des ausgewählten Ereignisses"
-                                                 ItemsSource="{Binding SelectedEvent.Attachments}"
-                                                 BorderThickness="0"
-                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                                 VirtualizingPanel.IsVirtualizing="True"
-                                                 VirtualizingPanel.VirtualizationMode="Recycling">
-                                            <ListBox.ItemTemplate>
-                                                <DataTemplate>
-                                                    <Border Margin="0,0,0,6"
-                                                            Padding="8"
-                                                            Background="{DynamicResource SurfaceAltBrush}"
-                                                            CornerRadius="{DynamicResource ControlCornerRadius}">
-                                                        <StackPanel>
-                                                            <TextBlock FontWeight="SemiBold"
-                                                                       Foreground="{DynamicResource PrimaryTextBrush}"
-                                                                       Text="{Binding OriginalFileName}"
-                                                                       TextTrimming="CharacterEllipsis" />
-                                                            <DockPanel Margin="0,3,0,0">
-                                                                <TextBlock DockPanel.Dock="Right"
-                                                                           Foreground="{DynamicResource MutedTextBrush}"
-                                                                           FontSize="{StaticResource FontSizeXs}"
-                                                                           Text="{Binding State}" />
-                                                                <TextBlock Foreground="{DynamicResource MutedTextBrush}"
-                                                                           FontSize="{StaticResource FontSizeXs}"
-                                                                           Text="{Binding MediaType}" />
-                                                            </DockPanel>
-                                                        </StackPanel>
-                                                    </Border>
-                                                </DataTemplate>
-                                            </ListBox.ItemTemplate>
-                                        </ListBox>
-                                        <StackPanel Grid.Row="3" Margin="0,12,0,0">
-                                            <Button Style="{StaticResource PrimaryButtonStyle}"
-                                                    Command="{Binding AddAttachmentsCommand}"
-                                                    Content="Dateien hinzufügen" />
-                                            <WrapPanel Margin="0,7,0,0">
-                                                <Button Style="{StaticResource CompactButtonStyle}"
-                                                        Command="{Binding PreviewImageCommand}"
-                                                        Content="Bild" />
-                                                <Button Style="{StaticResource CompactButtonStyle}"
-                                                        Command="{Binding PreviewPdfCommand}"
-                                                        Content="PDF" />
-                                                <Button Style="{StaticResource CompactButtonStyle}"
-                                                        Command="{Binding ShowAttachmentAnalysisCommand}"
-                                                        Content="Analyse" />
-                                            </WrapPanel>
-                                        </StackPanel>
-                                    </Grid>
-                                </Border>
-                            </Grid>
+                            <ListBox x:Name="EventList"
+                                     Margin="12"
+                                     AutomationProperties.Name="Chronologische Ereignisliste"
+                                     ItemsSource="{Binding Events}"
+                                     SelectedItem="{Binding SelectedEvent}"
+                                     Background="Transparent"
+                                     BorderThickness="0"
+                                     AllowDrop="True"
+                                     PreviewMouseLeftButtonDown="EventList_PreviewMouseLeftButtonDown"
+                                     PreviewMouseMove="EventList_PreviewMouseMove"
+                                     DragOver="EventList_DragOver"
+                                     DragLeave="EventList_DragLeave"
+                                     Drop="EventList_Drop"
+                                     ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                     ScrollViewer.VerticalScrollBarVisibility="Auto"
+                                     ToolTip="Ereignis innerhalb derselben Datumsgruppe ziehen; Dateien auf das gewünschte Ereignis ablegen">
+                                <ListBox.ItemContainerStyle>
+                                    <Style TargetType="ListBoxItem">
+                                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                        <Setter Property="Padding" Value="8" />
+                                        <Setter Property="BorderBrush" Value="Transparent" />
+                                        <Setter Property="BorderThickness" Value="0" />
+                                        <Style.Triggers>
+                                            <Trigger Property="Tag" Value="Before"><Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" /><Setter Property="BorderThickness" Value="0,3,0,0" /></Trigger>
+                                            <Trigger Property="Tag" Value="After"><Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" /><Setter Property="BorderThickness" Value="0,0,0,3" /></Trigger>
+                                            <Trigger Property="Tag" Value="DropFiles"><Setter Property="BorderBrush" Value="{DynamicResource AccentBrush}" /><Setter Property="BorderThickness" Value="2" /></Trigger>
+                                        </Style.Triggers>
+                                    </Style>
+                                </ListBox.ItemContainerStyle>
+                                <ListBox.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,3">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="150" />
+                                                <ColumnDefinition Width="18" />
+                                                <ColumnDefinition Width="*" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock VerticalAlignment="Top" Foreground="{DynamicResource AccentTextBrush}"
+                                                       FontSize="{StaticResource FontSizeLg}" FontWeight="Bold" Text="{Binding Date}" />
+                                            <Border Grid.Column="1" Width="10" Height="10" Margin="0,4,0,0" VerticalAlignment="Top"
+                                                    Background="{DynamicResource AccentBrush}" CornerRadius="5" />
+                                            <StackPanel Grid.Column="2">
+                                                <TextBlock FontSize="{StaticResource FontSizeXl}" FontWeight="SemiBold"
+                                                           Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding Title}" TextWrapping="Wrap" />
+                                                <TextBlock Margin="0,3,0,0" Foreground="{DynamicResource MutedTextBrush}"
+                                                           Text="{Binding InfoText}" TextWrapping="Wrap" />
+                                                <TextBlock Margin="0,4,0,0" Foreground="{DynamicResource SubtleTextBrush}"
+                                                           FontSize="{StaticResource FontSizeXs}" Text="{Binding Attachments.Count, StringFormat={}{0} Anhänge}" />
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ListBox.ItemTemplate>
+                            </ListBox>
                         </TabItem>
                     </TabControl>
                 </Grid>
             </Grid>
+            <GridSplitter x:Name="InspectorSplitter" Grid.Column="3" Width="5" HorizontalAlignment="Stretch"
+                          Background="Transparent" ShowsPreview="False" Visibility="Collapsed" />
+            <Border x:Name="InspectorPanel" Grid.Column="4" MinWidth="280" Padding="16"
+                    AutomationProperties.Name="Detailinspektor"
+                    Background="{DynamicResource InspectorBackgroundBrush}"
+                    BorderBrush="{DynamicResource DividerBrush}" BorderThickness="1,0,0,0"
+                    Visibility="Collapsed">
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Style="{StaticResource LinkButtonStyle}"
+                                Click="InspectorToggle_Click" AutomationProperties.Name="Details ausblenden"
+                                ToolTip="Detailinspektor ausblenden" Content="Schließen" />
+                        <TextBlock Style="{StaticResource SectionHeaderStyle}" Text="DETAILS" />
+                    </DockPanel>
+                    <StackPanel Grid.Row="1" Margin="0,15,0,12"
+                                Visibility="{Binding HasSelectedEvent, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock Foreground="{DynamicResource AccentTextBrush}" FontSize="{StaticResource FontSizeSm}"
+                                   Text="{Binding SelectedEventDateText}" />
+                        <TextBlock Margin="0,5,0,0" FontSize="{StaticResource FontSizeXl}" FontWeight="SemiBold"
+                                   Foreground="{DynamicResource PrimaryTextBrush}" Text="{Binding SelectedEvent.Title}" TextWrapping="Wrap" />
+                    </StackPanel>
+                    <TextBlock Grid.Row="2" VerticalAlignment="Center" TextAlignment="Center" TextWrapping="Wrap"
+                               Foreground="{DynamicResource MutedTextBrush}" Text="Wählen Sie ein Ereignis aus, um seine Details anzuzeigen."
+                               Visibility="{Binding HasNoSelectedEvent, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    <TabControl Grid.Row="2" Visibility="{Binding HasSelectedEvent, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TabItem Header="Allgemein">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <StackPanel Margin="4,12,4,4">
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Beschreibung" />
+                                    <TextBlock Margin="0,5,0,12" Padding="9" MinHeight="64" TextWrapping="Wrap"
+                                               Background="{DynamicResource InputBackgroundBrush}" Foreground="{DynamicResource PrimaryTextBrush}"
+                                               Text="{Binding SelectedEventDescriptionText}" />
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Priorität" />
+                                    <TextBlock Margin="0,5,0,12" Text="{Binding SelectedEventPriorityText}" />
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Status" />
+                                    <TextBlock Margin="0,5,0,12" Text="{Binding SelectedEventStatusText}" />
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Schlagwörter" />
+                                    <TextBlock Margin="0,5,0,12" Text="{Binding SelectedEventTagsText}" TextWrapping="Wrap" />
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Frist" />
+                                    <TextBlock Margin="0,5,0,12" Text="{Binding SelectedEventDeadlineText}" TextWrapping="Wrap" />
+                                    <TextBlock Style="{StaticResource LabelStyle}" Text="Zusatzinformation" />
+                                    <TextBlock Margin="0,5,0,12" Text="{Binding SelectedEventInfoText}" TextWrapping="Wrap" />
+                                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="{StaticResource FontSizeXs}"
+                                               Text="{Binding SelectedEventAuditText}" TextWrapping="Wrap" />
+                                </StackPanel>
+                            </ScrollViewer>
+                        </TabItem>
+                        <TabItem Header="Anhänge">
+                            <Border x:Name="AttachmentDropZone" Margin="4,12,4,4" Padding="10"
+                                    AutomationProperties.Name="Anhangsbereich des ausgewählten Ereignisses"
+                                    AllowDrop="True" DragOver="AttachmentDropZone_DragOver" Drop="AttachmentDropZone_Drop"
+                                    Background="{DynamicResource RaisedSurfaceBrush}" BorderBrush="{DynamicResource BorderBrush}"
+                                    BorderThickness="1" CornerRadius="{DynamicResource CardCornerRadius}"
+                                    ToolTip="Eine oder mehrere lokale Dateien hier ablegen">
+                                <Grid>
+                                    <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
+                                    <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="{StaticResource FontSizeXs}"
+                                               Text="Dateien hier ablegen oder auswählen." />
+                                    <ListBox Grid.Row="1" Margin="0,9" AutomationProperties.Name="Anhänge des ausgewählten Ereignisses"
+                                             ItemsSource="{Binding SelectedEvent.Attachments}" BorderThickness="0"
+                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                                        <ListBox.ItemTemplate>
+                                            <DataTemplate>
+                                                <Border Margin="0,0,0,6" Padding="8" Background="{DynamicResource SurfaceAltBrush}"
+                                                        CornerRadius="{DynamicResource ControlCornerRadius}">
+                                                    <StackPanel>
+                                                        <TextBlock FontWeight="SemiBold" Text="{Binding OriginalFileName}" TextTrimming="CharacterEllipsis" />
+                                                        <TextBlock Margin="0,3,0,0" Foreground="{DynamicResource MutedTextBrush}"
+                                                                   FontSize="{StaticResource FontSizeXs}" Text="{Binding MediaType}" />
+                                                    </StackPanel>
+                                                </Border>
+                                            </DataTemplate>
+                                        </ListBox.ItemTemplate>
+                                    </ListBox>
+                                    <StackPanel Grid.Row="2">
+                                        <Button Style="{StaticResource PrimaryButtonStyle}" Command="{Binding AddAttachmentsCommand}" Content="Dateien hinzufügen" />
+                                        <WrapPanel Margin="0,7,0,0">
+                                            <Button Style="{StaticResource CompactButtonStyle}" Command="{Binding OpenAttachmentCommand}" Content="Öffnen" />
+                                            <Button Style="{StaticResource CompactButtonStyle}" Command="{Binding PreviewImageCommand}" Content="Bild" />
+                                            <Button Style="{StaticResource CompactButtonStyle}" Command="{Binding PreviewPdfCommand}" Content="PDF" />
+                                            <Button Style="{StaticResource CompactButtonStyle}" Command="{Binding ShowAttachmentAnalysisCommand}" Content="Analyse" />
+                                            <Button Style="{StaticResource CompactButtonStyle}" Command="{Binding RemoveAttachmentCommand}" Content="Entfernen" />
+                                        </WrapPanel>
+                                    </StackPanel>
+                                </Grid>
+                            </Border>
+                        </TabItem>
+                        <TabItem Header="Notizen">
+                            <ScrollViewer VerticalScrollBarVisibility="Auto">
+                                <TextBlock Margin="8,12" Padding="9" MinHeight="96" TextWrapping="Wrap"
+                                           Background="{DynamicResource InputBackgroundBrush}" Text="{Binding SelectedEventNotesText}" />
+                            </ScrollViewer>
+                        </TabItem>
+                    </TabControl>
+                    <StackPanel Grid.Row="3" Margin="0,12,0,0" HorizontalAlignment="Right" Orientation="Horizontal"
+                                Visibility="{Binding HasSelectedEvent, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <Button Margin="0,0,7,0" Style="{StaticResource BaseButtonStyle}"
+                                Command="{Binding EditEventCommand}" Content="Bearbeiten" />
+                        <Button Style="{StaticResource BaseButtonStyle}" Command="{Binding DeleteEventCommand}" Content="Löschen" />
+                    </StackPanel>
+                </Grid>
+            </Border>
         </Grid>
 
         <!-- Statusleiste -->

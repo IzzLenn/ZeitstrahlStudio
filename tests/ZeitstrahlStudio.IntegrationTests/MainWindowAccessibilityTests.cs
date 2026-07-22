@@ -179,6 +179,90 @@ public sealed class MainWindowAccessibilityTests
         });
     }
 
+    [Theory]
+    [InlineData(1280, 720)]
+    [InlineData(1366, 768)]
+    [InlineData(1600, 900)]
+    [InlineData(1920, 1080)]
+    [InlineData(2560, 1440)]
+    public async Task MainWindow_KeepsThreePaneWorkspaceInsideSupportedWindowSizes(
+        double width,
+        double height)
+    {
+        await RunOnStaThread(() =>
+        {
+            var viewModel = CreateViewModelWithProject();
+            try
+            {
+                var window = new MainWindow(viewModel);
+                Layout(window, width, height);
+
+                var content = Assert.IsAssignableFrom<FrameworkElement>(window.Content);
+                var sidebar = Assert.IsType<Border>(window.FindName("SidebarPanel"));
+                var inspector = Assert.IsType<Border>(window.FindName("InspectorPanel"));
+                var timeline = Assert.IsType<TimelineView>(window.FindName("TimelineControl"));
+
+                Assert.Equal(Visibility.Visible, sidebar.Visibility);
+                Assert.Equal(Visibility.Visible, inspector.Visibility);
+                Assert.InRange(sidebar.ActualWidth, 260, 380);
+                Assert.InRange(inspector.ActualWidth, 280, 380);
+                Assert.True(timeline.ActualWidth > 0);
+                Assert.True(timeline.ActualHeight > 0);
+                Assert.InRange(content.DesiredSize.Width, 1, width + 0.1);
+                Assert.InRange(content.DesiredSize.Height, 1, height + 0.1);
+                AssertInside(content, sidebar);
+                AssertInside(content, timeline);
+                AssertInside(content, inspector);
+            }
+            finally
+            {
+                DisposeViewModel(viewModel);
+            }
+        });
+    }
+
+    [Fact]
+    public async Task MainWindow_AllowsBothSidePanelsToBeCollapsedAndRestored()
+    {
+        await RunOnStaThread(() =>
+        {
+            var viewModel = CreateViewModelWithProject();
+            try
+            {
+                var window = new MainWindow(viewModel);
+                Layout(window, 1_280, 760);
+                var sidebar = Assert.IsType<Border>(window.FindName("SidebarPanel"));
+                var inspector = Assert.IsType<Border>(window.FindName("InspectorPanel"));
+                var sidebarToggle = Assert.IsType<Button>(window.FindName("SidebarToggleButton"));
+                var inspectorToggle = Assert.IsType<Button>(window.FindName("InspectorToggleButton"));
+
+                Assert.Equal(Visibility.Visible, sidebar.Visibility);
+                Assert.Equal(Visibility.Visible, inspector.Visibility);
+                sidebarToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                inspectorToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Assert.Equal(Visibility.Collapsed, sidebar.Visibility);
+                Assert.Equal(Visibility.Collapsed, inspector.Visibility);
+
+                sidebarToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                inspectorToggle.RaiseEvent(new RoutedEventArgs(Button.ClickEvent));
+                Assert.Equal(Visibility.Visible, sidebar.Visibility);
+                Assert.Equal(Visibility.Visible, inspector.Visibility);
+            }
+            finally
+            {
+                DisposeViewModel(viewModel);
+            }
+        });
+    }
+
+    private static void AssertInside(FrameworkElement container, FrameworkElement element)
+    {
+        var topLeft = element.TranslatePoint(new Point(0, 0), container);
+        Assert.InRange(topLeft.X, -0.1, container.ActualWidth + 0.1);
+        Assert.InRange(topLeft.Y, -0.1, container.ActualHeight + 0.1);
+        Assert.InRange(topLeft.X + element.ActualWidth, 0, container.ActualWidth + 0.1);
+        Assert.InRange(topLeft.Y + element.ActualHeight, 0, container.ActualHeight + 0.1);
+    }
     private static MainWindowViewModel CreateViewModelWithProject()
     {
         var project = TimelineProject.Create(Guid.NewGuid(), "Zugänglichkeitstest", Timestamp);
@@ -240,9 +324,10 @@ public sealed class MainWindowAccessibilityTests
 
     private static void Layout(MainWindow window, double width, double height)
     {
-        window.Measure(new Size(width, height));
-        window.Arrange(new Rect(0, 0, width, height));
-        window.UpdateLayout();
+        var content = Assert.IsAssignableFrom<FrameworkElement>(window.Content);
+        content.Measure(new Size(width, height));
+        content.Arrange(new Rect(0, 0, width, height));
+        content.UpdateLayout();
     }
 
     private static void AssertGesture(

@@ -467,3 +467,27 @@ Neue Version 0.2.1 installieren und visuelle Abnahme durchführen. Anschließend
 - Nach dem finalen Installer-Fix wurde der vollständige Verifikationsbefehl gestartet, aber durch das Ausführungszeitlimit abgebrochen; keine neue vollständige Ergebnisangabe daraus ableiten.
 - Der verbleibende zwingende Release-Gate ist die Vervollständigung der Original-Lizenztexte für alle ausgelieferten Komponenten.
 
+## UI-Redesign 0.3.0 – Phasen 0 bis 3 (22.07.2026)
+
+### Aktueller Stand
+
+- Phase 0 abgeschlossen: sechs Bildanhänge eindeutig als drei IST- und drei SOLL-Referenzen dokumentiert; `04_SOLL_Hauptansicht_Hell.png` ist die primäre Referenz, Bild 05 und 06 sind analysiert und für spätere Arbeiten zurückgestellt.
+- Phase 1 abgeschlossen: globales semantisches Hell-/Dunkel-Designsystem, lesbare Typografieskala und gemeinsame Interaktionszustände eingeführt; lokale Light-Theme-Übersteuerungen entfernt.
+- Phase 2 abgeschlossen: Hauptmenü und gruppierte textbasierte Befehlsleiste mit klarer Orientierungsauswahl umgesetzt.
+- Phase 3 abgeschlossen: adaptive Drei-Spalten-Hauptansicht mit Projekt-/Filterleiste, zentraler Arbeitsfläche und rechtem Detailinspektor umgesetzt. Beide Seitenbereiche lassen sich ein- und ausblenden; der Inspektor verwendet ausschließlich vorhandene MVVM-Befehle und verändert keine Dialog- oder Timeline-Logik.
+- Die Ereignisliste nutzt die zentrale Arbeitsfläche; Anhangsansicht und -aktionen sind ohne Funktionsverlust in den kontextbezogenen Inspektor verlagert.
+- Fünf automatisierte Referenzgrößen (1280×720, 1366×768, 1600×900, 1920×1080 und 2560×1440) prüfen sichtbare Seitenbereiche, nutzbare Timeline und fehlenden horizontalen Überlauf.
+- Laufzeitprüfung bei 1280×720: Timeline sichtbar, 45 Schaltflächen erkannt, keine Schaltfläche außerhalb des Fensterrechtecks. Screenshot: `artifacts/ui-redesign/phase-3-main-window.png` (ignoriertes Prüfartefakt).
+
+### Verifikation
+
+```powershell
+dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet test tests\ZeitstrahlStudio.IntegrationTests\ZeitstrahlStudio.IntegrationTests.csproj -c Debug --no-restore --no-build --filter "FullyQualifiedName~MainWindowAccessibilityTests|FullyQualifiedName~ThemeResourceTests"
+```
+
+Ergebnis: Debug-Build mit 0 Warnungen und 0 Fehlern; 17/17 gezielte MainWindow-/Theme-Integrationstests bestanden. Die fünf neuen Größenfälle bestanden zusätzlich einzeln mit 5/5 Tests.
+
+### Umfangsgrenze und nächster Schritt
+
+Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifikation, vollständiger Release-Prüfzyklus, Publish, Vorschauinstaller, Versionsänderungen und Releasevorbereitung wurden nicht begonnen. Ein späterer Auftrag beginnt frühestens mit Phase 4 und liest zuvor `UI_REDESIGN_HANDOFF.md`.

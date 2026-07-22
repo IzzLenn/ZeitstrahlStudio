@@ -28,18 +28,25 @@ public partial class MainWindow : Window
         typeof(MainWindow));
 
     private const string EventDragDataFormat = "ZeitstrahlStudio.EventId";
+    private const double SidebarBreakpoint = 1040;
+    private const double InspectorBreakpoint = 1180;
+    private static readonly GridLength DefaultSidebarWidth = new(310);
+    private static readonly GridLength DefaultInspectorWidth = new(300);
     private readonly MainWindowViewModel viewModel;
     private bool closeApproved;
     private bool closeInProgress;
     private Point eventDragStart;
     private TimelineEvent? eventDragSource;
     private ListBoxItem? eventDropIndicator;
+    private bool? sidebarVisibilityOverride;
+    private bool? inspectorVisibilityOverride;
 
     public MainWindow(MainWindowViewModel viewModel)
     {
         this.viewModel = viewModel;
         InitializeComponent();
         DataContext = viewModel;
+        viewModel.PropertyChanged += ViewModel_PropertyChanged;
         CommandBindings.Add(new CommandBinding(
             FocusSearchCommand,
             ExecuteFocusSearch,
@@ -52,6 +59,7 @@ public partial class MainWindow : Window
             DeleteSelectionCommand,
             ExecuteDeleteSelection,
             CanDeleteSelection));
+        UpdateResponsiveLayout(Width);
     }
 
     private async void Window_Closing(object? sender, CancelEventArgs e)
@@ -349,28 +357,64 @@ public partial class MainWindow : Window
         }
     }
 
+    private void Window_Loaded(object sender, RoutedEventArgs e) => UpdateResponsiveLayout(ActualWidth);
+
+    private void Window_Closed(object? sender, EventArgs e) =>
+        viewModel.PropertyChanged -= ViewModel_PropertyChanged;
+
+    private void Window_SizeChanged(object sender, SizeChangedEventArgs e) =>
+        UpdateResponsiveLayout(e.NewSize.Width);
+
+    private void ViewModel_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(MainWindowViewModel.HasProject))
+        {
+            inspectorVisibilityOverride = null;
+            UpdateResponsiveLayout(ActualWidth);
+        }
+    }
+
     private void FocusSearch()
     {
+        sidebarVisibilityOverride = true;
+        UpdateResponsiveLayout(ActualWidth);
         SearchExpander.IsExpanded = true;
-        if (SidebarColumn.Width.Value < 1)
-        {
-            SidebarColumn.Width = new GridLength(320);
-        }
-
         SearchQueryTextBox.Focus();
         SearchQueryTextBox.SelectAll();
     }
 
     private void SidebarToggle_Click(object sender, RoutedEventArgs e)
     {
-        if (SidebarColumn.Width.Value < 1)
-        {
-            SidebarColumn.Width = new GridLength(320);
-        }
-        else
-        {
-            SidebarColumn.Width = new GridLength(0);
-        }
+        sidebarVisibilityOverride = SidebarPanel.Visibility != Visibility.Visible;
+        UpdateResponsiveLayout(ActualWidth);
+    }
+
+    private void InspectorToggle_Click(object sender, RoutedEventArgs e)
+    {
+        inspectorVisibilityOverride = InspectorPanel.Visibility != Visibility.Visible;
+        UpdateResponsiveLayout(ActualWidth);
+    }
+
+    private void UpdateResponsiveLayout(double availableWidth)
+    {
+        var width = availableWidth > 0 ? availableWidth : Width;
+        var showSidebar = sidebarVisibilityOverride ?? width >= SidebarBreakpoint;
+        var showInspector = viewModel.HasProject && (inspectorVisibilityOverride ?? width >= InspectorBreakpoint);
+
+        SetPanelVisibility(SidebarPanel, SidebarSplitter, SidebarColumn, showSidebar, DefaultSidebarWidth);
+        SetPanelVisibility(InspectorPanel, InspectorSplitter, InspectorColumn, showInspector, DefaultInspectorWidth);
+    }
+
+    private static void SetPanelVisibility(
+        FrameworkElement panel,
+        FrameworkElement splitter,
+        ColumnDefinition column,
+        bool visible,
+        GridLength visibleWidth)
+    {
+        panel.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        splitter.Visibility = visible ? Visibility.Visible : Visibility.Collapsed;
+        column.Width = visible ? visibleWidth : new GridLength(0);
     }
 
     private static bool IsTextEditingElement(IInputElement? inputElement)

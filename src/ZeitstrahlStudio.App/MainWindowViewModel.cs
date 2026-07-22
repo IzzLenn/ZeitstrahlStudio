@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using System.IO;
 using ZeitstrahlStudio.Application;
 using ZeitstrahlStudio.Domain;
@@ -8,6 +9,7 @@ namespace ZeitstrahlStudio.App;
 /// <summary>Orchestriert die verbundene Projektverwaltung des Hauptfensters.</summary>
 public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDisposable
 {
+    private static readonly CultureInfo GermanCulture = CultureInfo.GetCultureInfo("de-DE");
     private readonly IProjectWorkspaceService workspaceService;
     private readonly IRecentProjectsService recentProjectsService;
     private readonly IProjectRecoveryService recoveryService;
@@ -356,10 +358,82 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
                 OpenAttachmentCommand.RaiseCanExecuteChanged();
                 RemoveAttachmentCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(CanAcceptDroppedFiles));
+                OnPropertyChanged(nameof(HasSelectedEvent));
+                OnPropertyChanged(nameof(HasNoSelectedEvent));
+                OnPropertyChanged(nameof(SelectedEventDateText));
+                OnPropertyChanged(nameof(SelectedEventDescriptionText));
+                OnPropertyChanged(nameof(SelectedEventInfoText));
+                OnPropertyChanged(nameof(SelectedEventPriorityText));
+                OnPropertyChanged(nameof(SelectedEventStatusText));
+                OnPropertyChanged(nameof(SelectedEventTagsText));
+                OnPropertyChanged(nameof(SelectedEventDeadlineText));
+                OnPropertyChanged(nameof(SelectedEventNotesText));
+                OnPropertyChanged(nameof(SelectedEventAuditText));
             }
         }
     }
 
+    public bool HasSelectedEvent => SelectedEvent is not null;
+
+    public bool HasNoSelectedEvent => SelectedEvent is null;
+
+    public string SelectedEventDateText => SelectedEvent?.Date.ToDisplayString(GermanCulture) ?? string.Empty;
+
+    public string SelectedEventDescriptionText =>
+        SelectedEvent?.Description ?? "Keine Beschreibung vorhanden.";
+
+    public string SelectedEventInfoText =>
+        SelectedEvent?.InfoText ?? "Keine Zusatzinformation vorhanden.";
+
+    public string SelectedEventPriorityText => SelectedEvent?.Priority switch
+    {
+        EventPriority.Low => "Niedrig",
+        EventPriority.Normal => "Normal",
+        EventPriority.High => "Hoch",
+        EventPriority.Critical => "Kritisch",
+        _ => "–",
+    };
+
+    public string SelectedEventStatusText => SelectedEvent?.Status switch
+    {
+        EventStatus.Active => "Offen",
+        EventStatus.Completed => "Abgeschlossen",
+        EventStatus.Archived => "Archiviert",
+        _ => "–",
+    };
+
+    public string SelectedEventTagsText => SelectedEvent is { Tags.Count: > 0 } timelineEvent
+        ? string.Join(", ", timelineEvent.Tags.Order(StringComparer.CurrentCultureIgnoreCase))
+        : "Keine Schlagwörter";
+
+    public string SelectedEventDeadlineText => SelectedEvent?.Deadline is { } deadline
+        ? FormatDeadline(deadline)
+        : "Keine Frist";
+
+    public string SelectedEventNotesText => SelectedEvent?.Notes ?? "Keine Notizen vorhanden.";
+
+    public string SelectedEventAuditText => SelectedEvent is { } timelineEvent
+        ? $"Erstellt {timelineEvent.CreatedAtUtc.ToLocalTime().ToString("g", GermanCulture)} · Geändert {timelineEvent.ModifiedAtUtc.ToLocalTime().ToString("g", GermanCulture)}"
+        : string.Empty;
+
+    private static string FormatDeadline(Deadline deadline)
+    {
+        var dueAt = deadline.DueDate.ToString("d", GermanCulture);
+        if (deadline.DueTime is { } time)
+        {
+            dueAt += $" {time:HH\\:mm}";
+        }
+
+        var status = deadline.Status switch
+        {
+            DeadlineStatus.Open => "offen",
+            DeadlineStatus.Completed => "abgeschlossen",
+            DeadlineStatus.Cancelled => "entfallen",
+            _ => string.Empty,
+        };
+        var label = deadline.Label is { Length: > 0 } ? $" · {deadline.Label}" : string.Empty;
+        return $"{dueAt} · {status}{label}";
+    }
     public string StatusMessage
     {
         get => statusMessage;
