@@ -2,6 +2,14 @@
 
 Alle wichtigen Änderungen an Zeitstrahl Studio werden in dieser Datei dokumentiert.
 
+## [0.2.1] - 2026-07-22
+
+### Geändert
+
+- Beispielprojekt und Akzeptanzvertrag auf zehn Ereignisse synchronisiert
+- PDB-Dateien aus Endnutzerpaketen ausgeschlossen und Lizenzbündelung verbessert
+- Releaseartefakte für den korrigierten Patchstand vorbereitet
+
 ## [0.2.0] - 2026-07-21
 
 ### Geändert

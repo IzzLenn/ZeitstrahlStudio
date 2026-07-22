@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung – UI-Redesign Phase 5 in master gemergt, Release 0.2.0 erzeugt
+Status: In Entwicklung – UI-Redesign Phase 5 in master gemergt, Release 0.2.1 erzeugt
 
 Letzte Aktualisierung: 21.07.2026
 
 ## Aktuelle Phase
 
-UI-Redesign-Änderungen wurden von Branch `kimi-k3-fertigstellung` in `master` gemergt. Version 0.2.0 wurde gebaut, getestet und als Installer sowie portable ZIP veröffentlicht. Die installierte Version 0.1.0 enthielt das Redesign nicht, weil die Änderungen auf einem separaten Branch lagen und der Publish-Ordner einen alten Stand enthielt.
+UI-Redesign-Änderungen wurden von Branch `kimi-k3-fertigstellung` in `master` gemergt. Version 0.2.1 wurde gebaut, getestet und als Installer sowie portable ZIP veröffentlicht. Die installierte Version 0.1.0 enthielt das Redesign nicht, weil die Änderungen auf einem separaten Branch lagen und der Publish-Ordner einen alten Stand enthielt.
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -344,14 +344,14 @@ UI-Redesign-Änderungen wurden von Branch `kimi-k3-fertigstellung` in `master` g
 Am 21.07.2026 erfolgreich ausgeführt:
 
 ```powershell
-.\build.ps1 -Task All -Version 0.2.0
+.\build.ps1 -Task All -Version 0.2.1
 ```
 
 Ergebnis: 0 Warnungen, 0 Fehler; 62 Unit-Tests bestanden; 88 Integrationstests bestanden; Formatprüfung bestanden; Publish und Installer erfolgreich.
 
 Artefakte:
-- `ZeitstrahlStudio-0.2.0-win-x64-setup.exe` (62.815.324 Bytes)
-- `artifacts\release\ZeitstrahlStudio-0.2.0-win-x64-portable.zip` (87.695.616 Bytes)
+- `ZeitstrahlStudio-0.2.1-win-x64-setup.exe` (62.815.324 Bytes)
+- `artifacts\release\ZeitstrahlStudio-0.2.1-win-x64-portable.zip` (87.695.616 Bytes)
 
 Vorherige vollständige Matrix am 19.07.2026 erfolgreich ausgeführt:
 
@@ -413,11 +413,11 @@ Die folgenden Prüfungen können in dieser Entwicklungsumgebung nicht vollständ
 
 ## Nächster konkreter Arbeitsschritt
 
-Neue Version 0.2.0 installieren und visuelle Abnahme durchführen. Anschließend Phase 6 des UI-Redesigns beginnen: Ereigniskarten und Zeitstrahllayout überarbeiten.
+Neue Version 0.2.1 installieren und visuelle Abnahme durchführen. Anschließend Phase 6 des UI-Redesigns beginnen: Ereigniskarten und Zeitstrahllayout überarbeiten.
 
 ## Release-Audit 22.07.2026
 
-- Branch: `master`; geprüfter Ausgangscommit: `2ad58d0`; aktuelle Version: `0.2.0`.
+- Branch: `master`; geprüfter Ausgangscommit: `2ad58d0`; aktuelle Version: `0.2.1`.
 - Beispielprojekt: Generator und Referenzarchiv sind wieder semantisch synchron; 10 Ereignisse. Das versehentlich eingecheckte zusätzliche Ereignis „Test“ wurde durch Regeneration entfernt.
 - Verifikation: Debug und Release jeweils 0 Warnungen/0 Fehler, 62 Unit-Tests und 88 Integrationstests bestanden; Formatprüfung bestanden; self-contained win-x64-Publish erfolgreich.
 - PDB-Strategie: PDB-Dateien werden vor ZIP-Erzeugung entfernt und nicht vom Installer übernommen.
@@ -428,8 +428,8 @@ Neue Version 0.2.0 installieren und visuelle Abnahme durchführen. Anschließend
 
 ## Releaseartefakte 22.07.2026
 
-- Portable ZIP: `artifacts\\release\\ZeitstrahlStudio-0.2.0-win-x64-portable.zip`, 90.388.403 Bytes, SHA-256 `0DEAB8B522B3C13D60630F781263328BF3791FCB9715353413BB9CDDEED90A95`.
-- Installer: `ZeitstrahlStudio-0.2.0-win-x64-setup.exe`, 62.718.761 Bytes, SHA-256 `47AD63677C702EC47D241861D145E63D770D12996CED9B49AD66FAB1208C384E`; Inno Setup 6.7.3 erfolgreich kompiliert.
+- Portable ZIP: `artifacts\\release\\ZeitstrahlStudio-0.2.1-win-x64-portable.zip`, 90.388.403 Bytes, SHA-256 `0DEAB8B522B3C13D60630F781263328BF3791FCB9715353413BB9CDDEED90A95`.
+- Installer: `ZeitstrahlStudio-0.2.1-win-x64-setup.exe`, 62.718.761 Bytes, SHA-256 `47AD63677C702EC47D241861D145E63D770D12996CED9B49AD66FAB1208C384E`; Inno Setup 6.7.3 erfolgreich kompiliert.
 - Nach dem finalen Installer-Fix wurde der vollständige Verifikationsbefehl gestartet, aber durch das Ausführungszeitlimit abgebrochen; keine neue vollständige Ergebnisangabe daraus ableiten.
 - Der verbleibende zwingende Release-Gate ist die Vervollständigung der Original-Lizenztexte für alle ausgelieferten Komponenten.
 

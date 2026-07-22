@@ -26,7 +26,7 @@
     Build-Konfiguration für Build-/Testaufgaben (Debug oder Release).
 
 .PARAMETER Version
-    Versionsnummer für Release-Artefakte (z. B. "0.1.0").
+    Versionsnummer für Release-Artefakte (z. B. "0.2.1").
 
 .EXAMPLE
     .\build.ps1 -Task All -Version 0.1.0
@@ -43,7 +43,7 @@ param(
     [string]$Configuration = "Release",
 
     [Parameter(Mandatory = $false)]
-    [string]$Version = "0.1.0"
+    [string]$Version = "0.2.1"
 )
 
 $ErrorActionPreference = "Stop"
