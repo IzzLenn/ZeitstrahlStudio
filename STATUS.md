@@ -1,12 +1,14 @@
 # Projektstatus
 
-Status: In Entwicklung – UI-Redesign Phase 5 in master gemergt, Release 0.2.1 erzeugt
+Status: In Entwicklung - UI-Redesign 0.3.0, Phase 0 in Abschluss
 
-Letzte Aktualisierung: 21.07.2026
+Letzte Aktualisierung: 22.07.2026
 
 ## Aktuelle Phase
 
-UI-Redesign-Änderungen wurden von Branch `kimi-k3-fertigstellung` in `master` gemergt. Version 0.2.1 wurde gebaut, getestet und als Installer sowie portable ZIP veröffentlicht. Die installierte Version 0.1.0 enthielt das Redesign nicht, weil die Änderungen auf einem separaten Branch lagen und der Publish-Ordner einen alten Stand enthielt.
+Auf Branch ui/redesign-0.3.0 läuft der klar abgegrenzte UI-Auftrag für Phase 0 bis 3. Phase 0 hat den tatsächlichen 0.2.1-Stand gegen sechs eindeutig zugeordnete IST-/SOLL-Screenshots geprüft. UI_AUDIT_0.2.1.md, UI_REDESIGN_PLAN.md, ICON_REQUIREMENTS.md und das fortlaufende UI_REDESIGN_HANDOFF.md sind angelegt. Der Baseline-Debug-Build ist mit 0 Warnungen/0 Fehlern erfolgreich; 17 gezielte UI-, Theme-, Dialog- und Timeline-Integrationstests bestehen.
+
+Die Phasen 4 bis 8, vollständige Endverifikation, Publish, Installer, Versionsänderung und Releasevorbereitung sind ausdrücklich nicht Bestandteil dieses Laufs. Die vorhandene Benutzeränderung an samples/ZeitstrahlStudio-Beispiel.zeitprojekt bleibt unangetastet und wird nicht committed.
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -20,6 +22,15 @@ UI-Redesign-Änderungen wurden von Branch `kimi-k3-fertigstellung` in `master` g
 - Vor Arbeitsbeginn waren keine Build-/Testprotokolle vorhanden
 
 ## Abgeschlossene Arbeiten
+
+### UI-Redesign 0.3.0 - Phase 0 Bestandsaufnahme
+
+- alle sechs Bildanhänge als drei IST- und drei SOLL-Referenzen eindeutig dokumentiert
+- tatsächlichen XAML-/C#-Stand, Ressourcen, Typografie, Breiten, Scrollbereiche, Dialoge, Timelinekarten, Kollisionsmodell, Icons und UI-Tests geprüft
+- kritische lokale Theme.Light-Übersteuerung in Hauptfenster und Dialogen als Ursache der Mischdarstellung belegt
+- konkrete Umsetzung für Designsystem, Navigation und responsive Drei-Bereichs-Hauptansicht den Dateien zugeordnet
+- vollständiges Icon-Gate für textbasierte Umsetzung ohne neu erzeugte Assets dokumentiert
+- Baseline: Debug-Build erfolgreich, 0 Warnungen/0 Fehler; 17 gezielte Integrationstests bestanden
 
 ### Meilenstein 1 – Solution und Architektur
 
