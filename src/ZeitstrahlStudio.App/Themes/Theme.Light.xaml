@@ -9,6 +9,29 @@
     <SolidColorBrush x:Key="InputBackgroundBrush" Color="#FFFFFF" />
     <SolidColorBrush x:Key="OverlayBackgroundBrush" Color="#F8FAFC" />
 
+    <!-- Semantische Oberflächen -->
+    <SolidColorBrush x:Key="NavigationBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="NavigationForegroundBrush" Color="#0F172A" />
+    <SolidColorBrush x:Key="NavigationSelectedBackgroundBrush" Color="#DBEAFE" />
+    <SolidColorBrush x:Key="NavigationSelectedForegroundBrush" Color="#1D4ED8" />
+    <SolidColorBrush x:Key="CommandBarBackgroundBrush" Color="#F8FAFC" />
+    <SolidColorBrush x:Key="CommandGroupBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="WorkspaceBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="CardSurfaceBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="ElevatedSurfaceBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="InspectorBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="DialogBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="MenuBackgroundBrush" Color="#FFFFFF" />
+    <SolidColorBrush x:Key="MenuForegroundBrush" Color="#0F172A" />
+    <SolidColorBrush x:Key="ReadOnlyBackgroundBrush" Color="#F1F5F9" />
+    <SolidColorBrush x:Key="ReadOnlyForegroundBrush" Color="#475569" />
+    <SolidColorBrush x:Key="PressedBackgroundBrush" Color="#E2E8F0" />
+    <SolidColorBrush x:Key="SelectedForegroundBrush" Color="#1D4ED8" />
+    <SolidColorBrush x:Key="InvalidBackgroundBrush" Color="#FEF2F2" />
+    <SolidColorBrush x:Key="InvalidBorderBrush" Color="#DC2626" />
+    <SolidColorBrush x:Key="ToolTipBackgroundBrush" Color="#0F172A" />
+    <SolidColorBrush x:Key="ToolTipForegroundBrush" Color="#FFFFFF" />
+
     <!-- Text -->
     <SolidColorBrush x:Key="PrimaryTextBrush" Color="#0F172A" />
     <SolidColorBrush x:Key="SecondaryTextBrush" Color="#334155" />

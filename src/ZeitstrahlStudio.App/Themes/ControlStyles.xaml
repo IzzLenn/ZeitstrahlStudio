@@ -47,7 +47,7 @@
                             <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource StrongBorderBrush}" />
                         </Trigger>
                         <Trigger Property="IsPressed" Value="True">
-                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource SurfaceAltBrush}" />
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource PressedBackgroundBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Border" Property="Background" Value="{DynamicResource DisabledBackgroundBrush}" />
@@ -175,6 +175,15 @@
                             <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource FocusBorderBrush}" />
                             <Setter TargetName="Border" Property="BorderThickness" Value="{DynamicResource FocusBorderThickness}" />
                         </Trigger>
+                        <Trigger Property="IsReadOnly" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource ReadOnlyBackgroundBrush}" />
+                            <Setter Property="Foreground" Value="{DynamicResource ReadOnlyForegroundBrush}" />
+                        </Trigger>
+                        <Trigger Property="Validation.HasError" Value="True">
+                            <Setter TargetName="Border" Property="Background" Value="{DynamicResource InvalidBackgroundBrush}" />
+                            <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource InvalidBorderBrush}" />
+                            <Setter TargetName="Border" Property="BorderThickness" Value="{DynamicResource FocusBorderThickness}" />
+                        </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter TargetName="Border" Property="Background" Value="{DynamicResource DisabledBackgroundBrush}" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource DisabledBorderBrush}" />
@@ -197,6 +206,21 @@
         <Setter Property="FontFamily" Value="{StaticResource UiFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeBase}" />
         <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource FocusBorderBrush}" />
+                <Setter Property="BorderThickness" Value="{DynamicResource FocusBorderThickness}" />
+            </Trigger>
+            <Trigger Property="Validation.HasError" Value="True">
+                <Setter Property="Background" Value="{DynamicResource InvalidBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource InvalidBorderBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" Value="{DynamicResource DisabledBackgroundBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource DisabledForegroundBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource DisabledBorderBrush}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- DatePicker -->
@@ -208,6 +232,21 @@
         <Setter Property="MinHeight" Value="32" />
         <Setter Property="FontFamily" Value="{StaticResource UiFontFamily}" />
         <Setter Property="FontSize" Value="{StaticResource FontSizeBase}" />
+        <Style.Triggers>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource FocusBorderBrush}" />
+                <Setter Property="BorderThickness" Value="{DynamicResource FocusBorderThickness}" />
+            </Trigger>
+            <Trigger Property="Validation.HasError" Value="True">
+                <Setter Property="Background" Value="{DynamicResource InvalidBackgroundBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource InvalidBorderBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Background" Value="{DynamicResource DisabledBackgroundBrush}" />
+                <Setter Property="Foreground" Value="{DynamicResource DisabledForegroundBrush}" />
+                <Setter Property="BorderBrush" Value="{DynamicResource DisabledBorderBrush}" />
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <!-- CheckBox -->
@@ -256,6 +295,7 @@
                             <Setter TargetName="Border" Property="Background" Value="{DynamicResource SelectedBackgroundBrush}" />
                             <Setter TargetName="Border" Property="BorderBrush" Value="{DynamicResource SelectedBorderBrush}" />
                             <Setter TargetName="Border" Property="BorderThickness" Value="1" />
+                            <Setter Property="Foreground" Value="{DynamicResource SelectedForegroundBrush}" />
                         </Trigger>
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="{DynamicResource DisabledForegroundBrush}" />
@@ -333,10 +373,42 @@
         <Setter Property="BorderThickness" Value="0" />
     </Style>
 
+    <!-- Menü -->
+    <Style TargetType="Menu">
+        <Setter Property="Foreground" Value="{DynamicResource MenuForegroundBrush}" />
+        <Setter Property="Background" Value="{DynamicResource MenuBackgroundBrush}" />
+        <Setter Property="FontFamily" Value="{StaticResource UiFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource FontSizeBase}" />
+        <Setter Property="Padding" Value="8,0" />
+    </Style>
+
+    <Style TargetType="MenuItem">
+        <Setter Property="Foreground" Value="{DynamicResource MenuForegroundBrush}" />
+        <Setter Property="Background" Value="{DynamicResource MenuBackgroundBrush}" />
+        <Setter Property="Padding" Value="10,7" />
+        <Setter Property="MinHeight" Value="32" />
+        <Style.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource SelectedForegroundBrush}" />
+                <Setter Property="Background" Value="{DynamicResource HoverBackgroundBrush}" />
+            </Trigger>
+            <Trigger Property="IsSubmenuOpen" Value="True">
+                <Setter Property="Foreground" Value="{DynamicResource NavigationSelectedForegroundBrush}" />
+                <Setter Property="Background" Value="{DynamicResource NavigationSelectedBackgroundBrush}" />
+            </Trigger>
+            <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                <Setter Property="Background" Value="{DynamicResource SelectedBackgroundBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+                <Setter Property="Foreground" Value="{DynamicResource DisabledForegroundBrush}" />
+            </Trigger>
+        </Style.Triggers>
+    </Style>
+
     <!-- ToolTip -->
     <Style TargetType="ToolTip">
-        <Setter Property="Foreground" Value="{DynamicResource PrimaryTextBrush}" />
-        <Setter Property="Background" Value="{DynamicResource RaisedSurfaceBrush}" />
+        <Setter Property="Foreground" Value="{DynamicResource ToolTipForegroundBrush}" />
+        <Setter Property="Background" Value="{DynamicResource ToolTipBackgroundBrush}" />
         <Setter Property="BorderBrush" Value="{DynamicResource BorderBrush}" />
         <Setter Property="BorderThickness" Value="1" />
         <Setter Property="Padding" Value="8,6" />

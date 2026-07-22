@@ -1,12 +1,12 @@
 # Projektstatus
 
-Status: In Entwicklung - UI-Redesign 0.3.0, Phase 0 in Abschluss
+Status: In Entwicklung - UI-Redesign 0.3.0, Phase 1 abgeschlossen; Phase 2 als Nächstes
 
 Letzte Aktualisierung: 22.07.2026
 
 ## Aktuelle Phase
 
-Auf Branch ui/redesign-0.3.0 läuft der klar abgegrenzte UI-Auftrag für Phase 0 bis 3. Phase 0 hat den tatsächlichen 0.2.1-Stand gegen sechs eindeutig zugeordnete IST-/SOLL-Screenshots geprüft. UI_AUDIT_0.2.1.md, UI_REDESIGN_PLAN.md, ICON_REQUIREMENTS.md und das fortlaufende UI_REDESIGN_HANDOFF.md sind angelegt. Der Baseline-Debug-Build ist mit 0 Warnungen/0 Fehlern erfolgreich; 17 gezielte UI-, Theme-, Dialog- und Timeline-Integrationstests bestehen.
+Auf Branch `ui/redesign-0.3.0` läuft der klar abgegrenzte UI-Auftrag für Phase 0 bis 3. Phase 0 ist dokumentiert, committed und gepusht. Phase 1 stellt einen identischen semantischen Schlüsselvertrag für Hell/Dunkel bereit, hebt die Typografieskala an, ergänzt zentrale WPF-Zustände und entfernt die feste Light-Theme-Übersteuerung aus Hauptfenster und elf Dialogen. Der Phase-1-Debug-Build ist mit 0 Warnungen/0 Fehlern erfolgreich; 17 gezielte Theme-, Hauptfenster- und Dialog-Integrationstests bestehen. Phase 2 ist der nächste Schritt.
 
 Die Phasen 4 bis 8, vollständige Endverifikation, Publish, Installer, Versionsänderung und Releasevorbereitung sind ausdrücklich nicht Bestandteil dieses Laufs. Die vorhandene Benutzeränderung an samples/ZeitstrahlStudio-Beispiel.zeitprojekt bleibt unangetastet und wird nicht committed.
 
@@ -22,6 +22,17 @@ Die Phasen 4 bis 8, vollständige Endverifikation, Publish, Installer, Versions�
 - Vor Arbeitsbeginn waren keine Build-/Testprotokolle vorhanden
 
 ## Abgeschlossene Arbeiten
+
+### UI-Redesign 0.3.0 - Phase 1 Designsystem und Themes
+
+- 21 zusätzliche semantische Brush-Ressourcen identisch in hellem und dunklem Theme eingeführt
+- Typografieskala auf 12 DIP für Meta-/Labeltexte, 13 DIP Grundtext, 14/16 DIP Abschnitte sowie 20/24 DIP Überschriften angehoben
+- gemeinsame Zustände für Hover, Pressed, Fokus, Auswahl, Deaktiviert, Nur-Lesen und Validierungsfehler ergänzt
+- themefähige Menü- und Tooltip-Stile vorbereitet
+- lokale `Theme.Light.xaml`-Einbindung aus `MainWindow` und allen elf Dialogen entfernt; `App.xaml` ist die einzige globale Theme-Quelle
+- neue `ThemeResourceTests` prüfen Schlüsselgleichheit, WCAG-Kontrast von sechs kritischen Farbpaaren, Typografieskala und fehlende lokale Theme-Festlegungen
+- Debug-Build erfolgreich, 0 Warnungen/0 Fehler; 17 gezielte Theme-/Hauptfenster-/Dialogtests bestanden
+- WPF-Anwendung aus dem Debug-Build mit dem Beispielprojekt erfolgreich gestartet; Screenshot unter `artifacts/ui-redesign/phase-1-theme.png` erzeugt, direkte Bildanzeige jedoch durch wiederholten Timeout des lokalen Sandbox-Bildhelpers blockiert
 
 ### UI-Redesign 0.3.0 - Phase 0 Bestandsaufnahme
 

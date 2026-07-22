@@ -1,14 +1,14 @@
 # UI-Redesign - Übergabeprotokoll
 
-- Letzte Aktualisierung: 2026-07-22 13:24:53 +02:00
+- Letzte Aktualisierung: 2026-07-22 13:40:27 +02:00
 - Repository: `C:\Projekte\ZeitstrahlStudio`
 - Branch: `ui/redesign-0.3.0`
-- Remote: `origin` (`https://github.com/Chisaga/ZeitstrahlStudio.git`)
+- Remote: `origin` (`https://github.com/IzzLenn/ZeitstrahlStudio.git`)
 - Ausgangs-Commit: `38d94282bc6bbe3ecf96bf40a5efb36976d89dd1`
-- Aktueller HEAD: `20bf4c6` (`docs: UI-Ausgangszustand und Redesignplan dokumentieren`)
-- Stand von `origin/ui/redesign-0.3.0`: `38d94282bc6bbe3ecf96bf40a5efb36976d89dd1`
+- Aktueller HEAD: `41511b136060c6c1ea4f4781a183f578a50da3b0`
+- Stand von `origin/ui/redesign-0.3.0`: `41511b136060c6c1ea4f4781a183f578a50da3b0` (identisch mit lokalem HEAD)
 - Ausführendes Modell: Codex auf Basis von GPT-5; eine separate Reasoning-Konfiguration wird von dieser Laufzeit nicht ausgewiesen.
-- Aktuell bearbeitete Phase: Phase 0 abgeschlossen und committed; als Nächstes Phase 1.
+- Aktuell bearbeitete Phase: Phase 1 abgeschlossen und zur Sicherung bereit; als Nächstes Phase 2.
 
 ## Verbindlicher Umfang dieses Laufs
 
@@ -27,6 +27,15 @@ Ausgeschlossen sind insbesondere Startansicht und Dialogüberarbeitung (Phase 4)
 - Umsetzungsplan für die sichtbaren Arbeiten der Phasen 1 bis 3 konkreten Dateien und Komponenten zugeordnet.
 - Icon-Gate abgeschlossen: keine geeigneten App-Assets vorhanden; klare Textbeschriftungen werden bis zur Lieferung freigegebener WPF-Assets verwendet.
 - Baseline gebaut und mit gezielten Tests verifiziert.
+
+### Phase 1 - Designsystem und Themes
+
+- In beiden Themes 21 identische semantische Ressourcen für Navigation, Befehlsleiste, Arbeitsfläche, Karten, Inspektor, Dialoge, Menüs, Nur-Lesen, Fehler und Zustände ergänzt.
+- Typografieskala auf 12/13/14/16 DIP für Meta-, Grund- und Abschnittstexte sowie 20/24 DIP für Überschriften angehoben.
+- Gemeinsame Steuerungsstile für Pressed, Fokus, Auswahl, Deaktiviert, Nur-Lesen und Invalid erweitert; Menü-/Tooltip-Stile vorbereitet.
+- Feste `Theme.Light.xaml`-Einbindung aus `MainWindow.xaml` und elf Dialogen entfernt; nur `App.xaml` hält das globale Starttheme.
+- `ThemeResourceTests.cs` prüft Schlüsselvertrag, kritische Kontraste, Typografieskala und fehlende lokale Theme-Festlegung.
+- Debug-Build erfolgreich mit 0 Warnungen/0 Fehlern; 17 gezielte Tests bestanden.
 
 ## Bildreferenzen und Priorität
 
@@ -51,6 +60,7 @@ Die vollständige Zuordnungstabelle steht in `UI_AUDIT_0.2.1.md`.
 ## Vorhandene UI-Commits
 
 - `20bf4c6` - `docs: UI-Ausgangszustand und Redesignplan dokumentieren`
+- `41511b1` - `docs: Phase-0-Übergabe protokollieren`
 
 ## Betroffene Dateien
 
@@ -60,19 +70,25 @@ Die vollständige Zuordnungstabelle steht in `UI_AUDIT_0.2.1.md`.
 - `UI_REDESIGN_HANDOFF.md` - dieses fortlaufende Protokoll.
 - `STATUS.md` - aktueller Redesignstand und Phase-0-Ergebnis.
 - `DECISIONS.md` - ADR-037 zur Theme-Vererbung, Navigation und adaptiven Präsentationsschale.
+- `src/ZeitstrahlStudio.App/Themes/Theme.Light.xaml` und `Theme.Dark.xaml` - semantischer Hell-/Dunkelvertrag.
+- `src/ZeitstrahlStudio.App/Themes/Typography.xaml` - lesbare Skala.
+- `src/ZeitstrahlStudio.App/Themes/ControlStyles.xaml` - gemeinsame Zustände und Menüstile.
+- `src/ZeitstrahlStudio.App/MainWindow.xaml` und elf `*Dialog.xaml` - lokale Light-Theme-Übersteuerung entfernt.
+- `tests/ZeitstrahlStudio.IntegrationTests/ThemeResourceTests.cs` - Phase-1-Vertragstests.
 
 ## Tatsächlich sichtbare Änderungen
 
-Noch keine Änderungen an der laufenden Anwendung. Phase 0 verändert ausschließlich Dokumentation; sichtbare Implementierung beginnt mit Phase 1.
+Hell- und Dunkelmodus besitzen nun denselben semantischen Ressourcenvertrag. Hauptfenster und Dialoge übernehmen das aktive Anwendungstheme konsistent; Meta-/Grundtexte und Überschriften sind größer, und gemeinsame Bedienelemente zeigen klarere Zustände für Fokus, Auswahl, Deaktiviert, Nur-Lesen und Fehler.
 
 ## Build- und Testergebnisse
 
 - `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore`: erfolgreich, 0 Warnungen, 0 Fehler.
 - Gezielte Debug-Integrationstests mit Filter auf `MainWindowAccessibilityTests`, `TimelineViewTests`, `ProjectSettingsDialogViewModelTests`, `BackupManagerDialogTests` und `PdfExportDialogTests`: 17/17 bestanden.
+- Phase 1: erneuter Debug-Build erfolgreich, 0 Warnungen/0 Fehler; 17/17 gezielte Tests einschließlich `ThemeResourceTests` bestanden.
 
 ## Aktuelle Screenshots
 
-Die sechs Gesprächsanhänge wurden vollständig ausgewertet. Eigene Laufzeitscreenshots wurden in Phase 0 nicht erzeugt, weil noch keine sichtbare Implementierung vorliegt.
+Die sechs Gesprächsanhänge wurden vollständig ausgewertet. Der gebaute Phase-1-Stand wurde mit dem Beispielprojekt erfolgreich gestartet und als `artifacts/ui-redesign/phase-1-theme.png` aufgenommen. Die direkte Bildanzeige scheiterte zweimal am Timeout des Windows-Sandbox-Bildhelpers; ein alternativer In-Memory-Versuch konnte das PNG ebenfalls nicht rendern.
 
 ## Technische Entscheidungen
 
@@ -92,8 +108,8 @@ Die sechs Gesprächsanhänge wurden vollständig ausgewertet. Eigene Laufzeitscr
 ## Arbeitsbaum und Push-Status
 
 - Vorhandene fremde Änderung: `M samples/ZeitstrahlStudio-Beispiel.zeitprojekt`.
-- Eigene Phase-0-Dateien sind in `20bf4c6` committed; nur diese Protokollfortschreibung ist vor dem Push noch uncommitted.
-- `origin/ui/redesign-0.3.0` steht noch auf dem Ausgangs-Commit; Push folgt nach dem geprüften Phase-0-Commit.
+- Eigene Phase-1-Änderungen betreffen Themes, gemeinsame Styles, Theme-Vererbung, `ThemeResourceTests.cs`, `STATUS.md` und dieses Handoff; sie sind geprüft, aber noch nicht committed.
+- Lokaler HEAD und `origin/ui/redesign-0.3.0` stehen beide auf `41511b136060c6c1ea4f4781a183f578a50da3b0`.
 
 ## Fehlende Icons und Iconanforderungsstatus
 
@@ -103,8 +119,8 @@ Im App-Projekt existiert kein verwendbarer Icon-/Asset-Satz für die geforderte 
 
 ### Aktueller Auftrag
 
-- Phase 0 abschließen: Commitstand im Übergabeprotokoll sichern und pushen.
-- Phase 1 umsetzen: Designsystem und Themes.
+- Phase 0 abgeschlossen: dokumentiert, getestet, committed und gepusht.
+- Phase 1 abgeschlossen: Designsystem und Themes implementiert, gebaut und gezielt getestet; Commit/Push folgen.
 - Phase 2 umsetzen: globale Navigation.
 - Phase 3 umsetzen: responsive Hauptansicht.
 - Build, gezielte Tests, Commit, Push und Übergabe durchführen.
@@ -127,7 +143,7 @@ Im App-Projekt existiert kein verwendbarer Icon-/Asset-Satz für die geforderte 
 
 ## Nächster atomarer Arbeitsschritt
 
-Diese Protokollfortschreibung committen und zusammen mit `20bf4c6` auf `origin/ui/redesign-0.3.0` pushen. Danach Phase 1 mit den globalen Theme-Ressourcen beginnen.
+Ausschließlich die Phase-1-Dateien und diese fortlaufende Dokumentation stagen, das Beispielarchiv ausschließen, den geprüften Stand committen und pushen. Danach Phase 2 mit der globalen Navigation beginnen.
 
 ## Exakter Fortsetzungsprompt für einen nachfolgenden Chat
 
