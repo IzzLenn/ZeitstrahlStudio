@@ -253,3 +253,13 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Umsetzung: Die Werkzeugleiste ist als umbruchfähiges, beschriftetes Panel für Ansicht, Zoom, Orientierung und Layout strukturiert. Zoomschalter verwenden klare Texte anstelle von Unicode-Pseudo-Icons; alle vorhandenen Commands und Tooltips bleiben verbunden.
 - Test: `MainWindow_GroupsTimelineToolsWithoutHorizontalOverflow` ergänzt und bei 1280×720 bestanden; Debug-Build 0/0; gezielte MainWindow-/Timeline-Tests 18/18 bestanden.
 - Nächster atomarer Schritt: Karten-Renderer und Layoutengine auf vollständige Status-/Prioritäts-/Fristinformation und sichtbare manuelle Konflikte prüfen.
+
+### Pushstatus Phase 5 – Teilmeilenstein Timeline-Werkzeuge
+
+- Commit `bc7981fc9757abd63acc801018167cb0417cf4ca` (`ui: Timeline-Werkzeuge gruppieren`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht; lokaler und entfernter HEAD stimmten anschließend überein.
+
+### Phase 5/6 – Teilmeilenstein Karten- und Konfliktzustände
+
+- Umsetzung: Karten kommunizieren Priorität, Status, Frist, Anhänge und manuellen Zustand nun zusätzlich als Text. Das Layoutmodell erkennt Überschneidungen, an denen mindestens eine Karte manuell positioniert wurde; der Renderer markiert sie sichtbar und nicht ausschließlich durch Farbe.
+- Tests: neuer Unit-Test für manuelle Kartenüberschneidung; Debug-Build 0/0; Layoutengine-Tests 17/17, TimelineView-Tests 5/5 bestanden.
+- Nächster atomarer Schritt: Lücken-/Frist-/Tickbeschriftungen und vertikale Kollisionsbahnen gegen Sichtbereichsanforderungen prüfen; anschließend Phase 6 abschließen.

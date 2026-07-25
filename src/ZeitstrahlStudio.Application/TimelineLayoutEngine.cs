@@ -33,7 +33,8 @@ public sealed record TimelineCardLayout(
     double CrossLength,
     bool IsPositiveSide,
     int Lane,
-    bool HasManualPosition);
+    bool HasManualPosition,
+    bool HasManualConflict = false);
 
 /// <summary>Eindeutig beschriftete Kompression einer leeren Zeitspanne.</summary>
 public sealed record TimelineAxisBreak(
@@ -281,8 +282,40 @@ public sealed class TimelineLayoutEngine
                 hasManualPosition));
         }
 
+        MarkManualConflicts(result);
         return result;
     }
+
+    private static void MarkManualConflicts(List<TimelineCardLayout> cards)
+    {
+        if (!cards.Any(card => card.HasManualPosition))
+        {
+            return;
+        }
+
+        for (var first = 0; first < cards.Count; first++)
+        {
+            for (var second = first + 1; second < cards.Count; second++)
+            {
+                var left = cards[first];
+                var right = cards[second];
+                if ((!left.HasManualPosition && !right.HasManualPosition) ||
+                    !CardsOverlap(left, right))
+                {
+                    continue;
+                }
+
+                cards[first] = left with { HasManualConflict = true };
+                cards[second] = right with { HasManualConflict = true };
+            }
+        }
+    }
+
+    private static bool CardsOverlap(TimelineCardLayout first, TimelineCardLayout second) =>
+        Math.Abs(first.AxisPosition - second.AxisPosition) <
+            ((first.AxisLength + second.AxisLength) / 2) + CardSpacing &&
+        Math.Abs(first.CrossPosition - second.CrossPosition) <
+            ((first.CrossLength + second.CrossLength) / 2) + CardSpacing;
 
     private static int FindLane(List<double> laneEnds, double axisPosition, double cardAxisLength)
     {

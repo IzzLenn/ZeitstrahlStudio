@@ -1043,8 +1043,10 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         var selected = SelectedEvent?.Id == timelineEvent.Id;
         var isFileDropTarget = fileDropTargetEventId == timelineEvent.Id;
         var borderPen = CreatePen(
-            selected || isFileDropTarget ? SelectedBrush : color,
-            isFileDropTarget ? 4 : selected ? 3 : 2);
+            isFileDropTarget || selected
+                ? SelectedBrush
+                : card.HasManualConflict ? DeadlineBrush : color,
+            isFileDropTarget ? 4 : selected ? 3 : card.HasManualConflict ? 3 : 2);
         drawingContext.DrawRoundedRectangle(
             CardBrush,
             borderPen,
@@ -1098,7 +1100,11 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
                 primaryAttachment);
         }
 
-        var badges = new List<string> { GetPriorityText(timelineEvent.Priority) };
+        var badges = new List<string>
+        {
+            GetPriorityText(timelineEvent.Priority),
+            GetStatusText(timelineEvent.Status),
+        };
         if (timelineEvent.Deadline is not null)
         {
             badges.Add("Frist");
@@ -1112,6 +1118,11 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         if (card.HasManualPosition)
         {
             badges.Add("manuell");
+        }
+
+        if (card.HasManualConflict)
+        {
+            badges.Add("Konflikt");
         }
 
         DrawText(drawingContext, string.Join("  ·  ", badges), badgeFontSize, MutedTextBrush,
@@ -1648,6 +1659,14 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         EventPriority.High => "Hoch",
         EventPriority.Critical => "Kritisch",
         _ => "Priorität",
+    };
+
+    private static string GetStatusText(EventStatus status) => status switch
+    {
+        EventStatus.Active => "Aktiv",
+        EventStatus.Completed => "Abgeschlossen",
+        EventStatus.Archived => "Archiviert",
+        _ => "Status",
     };
 
     private static double CoerceOffset(double value, double extent, double viewport)

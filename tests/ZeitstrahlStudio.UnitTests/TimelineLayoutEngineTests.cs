@@ -134,6 +134,33 @@ public sealed class TimelineLayoutEngineTests
     }
 
     [Fact]
+    public void Create_MarksManualCardOverlapAsConflict()
+    {
+        var date = EventDate.Exact(new DateOnly(2026, 7, 19));
+        var project = CreateProject(date, date);
+        var automatic = engine.Create(
+            project,
+            new TimelineLayoutOptions(TimelineOrientation.Horizontal));
+        var first = automatic.Cards[0];
+        var second = automatic.Cards[1];
+        var secondEvent = project.Events[1];
+        project.SetLayoutPosition(
+            new LayoutPosition(
+                secondEvent.Id,
+                TimelineOrientation.Horizontal,
+                horizontalOffset: first.AxisPosition - second.AxisPosition,
+                verticalOffset: first.CrossPosition - second.CrossPosition),
+            Timestamp);
+
+        var adjusted = engine.Create(
+            project,
+            new TimelineLayoutOptions(TimelineOrientation.Horizontal));
+
+        Assert.All(adjusted.Cards, card => Assert.True(card.HasManualConflict));
+        Assert.Contains(adjusted.Cards, card => card.HasManualPosition);
+    }
+
+    [Fact]
     public void Create_ProducesIndependentDeadlineMarkerAndConnectionCoordinates()
     {
         var project = CreateProject(EventDate.Exact(new DateOnly(2026, 7, 1)));

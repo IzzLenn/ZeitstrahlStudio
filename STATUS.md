@@ -509,3 +509,9 @@ Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifi
 - Die Timeline-Werkzeuge sind in umbruchfähige Gruppen für Ansicht, Zoom, Orientierung und Layout gegliedert. Alle bestehenden Befehle bleiben erhalten; die Zoom-Pseudo-Icons wurden durch verständliche Textbefehle ersetzt.
 - Neuer automatisierter Vertrag: bei 1280×720 bleiben alle Werkzeugbuttons innerhalb der Werkzeugfläche; Unicode-Zoominhalte sind ausgeschlossen.
 - Verifikation: Debug-Build erfolgreich (0 Warnungen, 0 Fehler); 18 gezielte Hauptfenster- und Timeline-Integrationstests bestanden.
+
+## UI-Redesign 0.3.0 – Phase 5/6, Teilmeilenstein Karten- und Konfliktzustände (25.07.2026)
+
+- Ereigniskarten zeigen neben der Priorität nun immer den textualen Bearbeitungsstatus. Frist, Anhang, manueller Zustand und ein möglicher Layoutkonflikt werden ebenfalls textlich ausgewiesen.
+- Manuelle Kartenüberschneidungen werden layoutseitig erkannt und im Renderer durch verstärkten Warnrahmen sowie den Text „Konflikt“ sichtbar gemacht; fachliche Daten bleiben unverändert.
+- Verifikation: Debug-Build 0 Warnungen/0 Fehler; 17 Layoutengine-Unit-Tests und 5 Timeline-Renderer-Integrationstests bestanden.
