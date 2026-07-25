@@ -263,3 +263,16 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Umsetzung: Karten kommunizieren Priorität, Status, Frist, Anhänge und manuellen Zustand nun zusätzlich als Text. Das Layoutmodell erkennt Überschneidungen, an denen mindestens eine Karte manuell positioniert wurde; der Renderer markiert sie sichtbar und nicht ausschließlich durch Farbe.
 - Tests: neuer Unit-Test für manuelle Kartenüberschneidung; Debug-Build 0/0; Layoutengine-Tests 17/17, TimelineView-Tests 5/5 bestanden.
 - Nächster atomarer Schritt: Lücken-/Frist-/Tickbeschriftungen und vertikale Kollisionsbahnen gegen Sichtbereichsanforderungen prüfen; anschließend Phase 6 abschließen.
+
+### Pushstatus Phase 5/6 – Teilmeilenstein Karten- und Konfliktzustände
+
+- Commit `95896cfbff9a092836b2e0476e8a1bd9fbac83ef` (`ui: Kartenstatus und Layoutkonflikte anzeigen`) wurde am 25.07.2026 regulär nach `origin/ui/redesign-0.3.0` gepusht.
+- Lokaler und entfernter HEAD sind identisch: `95896cfbff9a092836b2e0476e8a1bd9fbac83ef`.
+- Arbeitsbaum: ausschließlich die weiterhin geschützten fremden Änderungen an `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html`; nichts gestaged.
+- Nächster atomarer Schritt: verbleibende Phase-6-Ansichts-/Beschriftungskollisionen anhand der vorhandenen Layout- und Renderer-Verträge prüfen und gezielt testen.
+
+### Phase 6 – Teilmeilenstein Achsenbeschriftungen
+
+- Umsetzung: Die Achse zeichnet weiterhin jede Markierung, zeigt Text aber nur bei ausreichendem Abstand und außerhalb des reservierten Bereichs einer Lückenbeschriftung. Das reduziert Überlagerungen ohne Zeitdaten oder Navigationsverhalten zu verändern.
+- Prüfung: Debug-Build 0/0; TimelineView-Tests 5/5 bestanden.
+- Nächster atomarer Schritt: Phase-4-Dialogrest und Phase-6-Viewport-/DPI-Abdeckung zusammenführen, dann Phase 7 beginnen.

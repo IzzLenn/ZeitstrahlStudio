@@ -515,3 +515,8 @@ Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifi
 - Ereigniskarten zeigen neben der Priorität nun immer den textualen Bearbeitungsstatus. Frist, Anhang, manueller Zustand und ein möglicher Layoutkonflikt werden ebenfalls textlich ausgewiesen.
 - Manuelle Kartenüberschneidungen werden layoutseitig erkannt und im Renderer durch verstärkten Warnrahmen sowie den Text „Konflikt“ sichtbar gemacht; fachliche Daten bleiben unverändert.
 - Verifikation: Debug-Build 0 Warnungen/0 Fehler; 17 Layoutengine-Unit-Tests und 5 Timeline-Renderer-Integrationstests bestanden.
+
+## UI-Redesign 0.3.0 – Phase 6, Teilmeilenstein Achsenbeschriftungen (25.07.2026)
+
+- Tickbeschriftungen respektieren jetzt einen Mindestabstand und werden nahe einer Lückenbeschriftung unterdrückt; alle Achsenmarken bleiben sichtbar.
+- Verifikation: Debug-Build erfolgreich (0 Warnungen, 0 Fehler); Timeline-Renderer-Tests 5/5 bestanden.

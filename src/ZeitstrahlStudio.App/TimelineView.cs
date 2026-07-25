@@ -856,14 +856,27 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         }
 
         var visible = GetVisibleContentRect(80);
-        foreach (var tick in layout!.Ticks)
+        var lastLabelPosition = double.NegativeInfinity;
+        var minimumLabelSpacing = Math.Max(72, AxisFontSize * 8);
+        var breakCenters = layout!.Breaks
+            .Select(axisBreak => (axisBreak.AxisStart + axisBreak.AxisEnd) / 2)
+            .ToArray();
+        foreach (var tick in layout.Ticks)
         {
             if (!IsAxisPositionVisible(tick.AxisPosition, visible))
             {
                 continue;
             }
 
-            DrawTick(drawingContext, tick, crossCenter);
+            var hasBreakLabelNearby = breakCenters.Any(center =>
+                Math.Abs(center - tick.AxisPosition) < 118);
+            var showLabel = !hasBreakLabelNearby &&
+                tick.AxisPosition - lastLabelPosition >= minimumLabelSpacing;
+            DrawTick(drawingContext, tick, crossCenter, showLabel);
+            if (showLabel)
+            {
+                lastLabelPosition = tick.AxisPosition;
+            }
         }
 
         foreach (var axisBreak in layout.Breaks)
@@ -877,7 +890,11 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         }
     }
 
-    private void DrawTick(DrawingContext drawingContext, TimelineAxisTick tick, double crossCenter)
+    private void DrawTick(
+        DrawingContext drawingContext,
+        TimelineAxisTick tick,
+        double crossCenter,
+        bool showLabel)
     {
         var length = tick.IsMajor ? 9 : 6;
         if (Orientation == TimelineOrientation.Horizontal)
@@ -886,8 +903,11 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
                 ConnectorPen,
                 new Point(tick.AxisPosition, crossCenter - length),
                 new Point(tick.AxisPosition, crossCenter + length));
-            DrawText(drawingContext, tick.Label, AxisFontSize, MutedTextBrush,
-                new Point(tick.AxisPosition - 48, crossCenter + 12), 96, AxisFontSize * 1.8, TextAlignment.Center, false);
+            if (showLabel)
+            {
+                DrawText(drawingContext, tick.Label, AxisFontSize, MutedTextBrush,
+                    new Point(tick.AxisPosition - 48, crossCenter + 12), 96, AxisFontSize * 1.8, TextAlignment.Center, false);
+            }
         }
         else
         {
@@ -895,8 +915,11 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
                 ConnectorPen,
                 new Point(crossCenter - length, tick.AxisPosition),
                 new Point(crossCenter + length, tick.AxisPosition));
-            DrawText(drawingContext, tick.Label, AxisFontSize, MutedTextBrush,
-                new Point(crossCenter + 12, tick.AxisPosition - (AxisFontSize * 0.9)), 104, AxisFontSize * 1.8, TextAlignment.Left, false);
+            if (showLabel)
+            {
+                DrawText(drawingContext, tick.Label, AxisFontSize, MutedTextBrush,
+                    new Point(crossCenter + 12, tick.AxisPosition - (AxisFontSize * 0.9)), 104, AxisFontSize * 1.8, TextAlignment.Left, false);
+            }
         }
     }
 
