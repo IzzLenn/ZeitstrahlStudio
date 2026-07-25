@@ -426,3 +426,9 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Verifikation: dotnet build ZeitstrahlStudio.sln -c Debug --no-restore erfolgreich (0 Warnungen, 0 Fehler); gezielte STA-Integrationstests MainWindowAccessibilityTests und TimelineViewTests 18/18 erfolgreich.
 - Keine Phase-6-Logik wurde verändert. Programmatische Screenshots und abschließende visuelle Prüfung stehen noch aus; Phase 5 wird daher nicht als vollständig abgeschlossen behauptet.
 - Pushstatus: adf7f3a00050f13a2b839d2fd87b37faec34bf3 ist auf origin/ui/redesign-0.3.0 veröffentlicht.
+
+
+## Phase 5 – Screenshot-Basistest (25.07.2026)
+- Frischer Prozess: PID 91284, Fensterhandle 1119152, Titel Zeitstrahl Studio; EXE: C:\Projekte\ZeitstrahlStudio\src\ZeitstrahlStudio.App\bin\Debug\net8.0-windows10.0.19041.0\win-x64\ZeitstrahlStudio.App.exe.
+- Methode: WPF/Win32 PrintWindow aus dem ignorierten temporären Aufnahmeprogramm; capture-baseline-test.png ist technisch VALID: 1280×760, 81027 Byte, SHA-256 3EB804394111E07972F05D18E026DDC8994FB8E7E77AA44FF25297C3D0CEE416, 281 Farbstichproben.
+- Vollständige Zustandsaufnahmen stehen noch aus; keine lokale visuelle Bewertung. Bilder müssen für die visuelle Abnahme als Chat-Anhänge hochgeladen werden.
