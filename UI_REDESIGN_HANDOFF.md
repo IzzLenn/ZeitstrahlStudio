@@ -230,3 +230,16 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Prüfung: Debug-Build erfolgreich (0 Warnungen/0 Fehler); gezielte Hauptfenster- und Dialogtests 19/19 bestanden.
 - UI-Automation: die bestehenden STA-Integrationstests decken Fensterstruktur, Automation-Namen, Fokus und Referenzgrößen ab; eine echte visuelle Abnahme ist weiterhin bis zum Screenshot-Rückgabeprozess aufgeschoben.
 - Nächster atomarer Schritt: Dialog-Header und Aktionsleisten der verbleibenden Export-, Sicherungs-, Vorschau- und Protokolldialoge auf den gemeinsamen SOLL-Vertrag abgleichen.
+
+### Pushstatus Phase 4 – Teilmeilenstein Startansicht
+
+- Commit `4f2febaed8e173f90cadccf87e09828e86c0d332` (`ui: Startansicht weiter vereinheitlichen`) wurde am 25.07.2026 regulär nach `origin/ui/redesign-0.3.0` gepusht.
+- Nach dem Push stimmen lokaler und entfernter HEAD überein: `4f2febaed8e173f90cadccf87e09828e86c0d332`.
+- Nicht gestaged und unverändert geschützt: `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` sowie die vorhandene fremde Änderung `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html`.
+- Nächster atomarer Schritt: verbleibende Dialoge auf gemeinsamen Kopf-/Inhalts-/Aktionsleistenvertrag prüfen und die gemeinsamen, rein präsentationalen Korrekturen umsetzen.
+
+### Phase 4 – Teilmeilenstein Ereignisdialog
+
+- Umsetzung: `EventEditorDialog.xaml` besitzt nun einen gemeinsamen semantischen Kopfbereich, einen scrollbar verbleibenden Inhaltsbereich und eine eindeutig getrennte Aktionsleiste. Fachlogik, Bindings, Validierung und Enter/Escape wurden nicht verändert.
+- Prüfung: Debug-Build erfolgreich (0 Warnungen/0 Fehler); gezielte Hauptfenster-/Dialogtests 19/19 bestanden.
+- Nächster atomarer Schritt: Vorschau-, Analyse- und Protokolldialoge auf fehlende Kopf-/Aktionsleisten und Unicode-Pseudo-Icons prüfen; danach Phase 4 abschließen.

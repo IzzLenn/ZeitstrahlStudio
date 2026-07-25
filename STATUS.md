@@ -498,3 +498,8 @@ Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifi
 - Der Bereich „Wiederherstellung“ erscheint nur noch, wenn tatsächlich Wiederherstellungskandidaten verfügbar sind.
 - Verifikation: `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore` erfolgreich (0 Warnungen, 0 Fehler); 19 gezielte Hauptfenster- und Dialogintegrationstests bestanden.
 - Noch offen: übrige Phase-4-Dialogabnahme sowie Phasen 5 bis 7 und das verbindliche Screenshot-Review-Gate.
+
+## UI-Redesign 0.3.0 – Phase 4, Teilmeilenstein Ereignisdialog (25.07.2026)
+
+- Der Ereignisdialog verwendet jetzt einen klaren, themefähigen Kopfbereich mit dauerhaftem Bearbeitungskontext; der Tab-Inhalt bleibt scrollbar, die Aktionsleiste ist getrennt und behält Enter/Escape.
+- Verifikation: Debug-Build erfolgreich (0 Warnungen, 0 Fehler); 19 gezielte Hauptfenster- und Dialogintegrationstests bestanden.
