@@ -391,3 +391,31 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 
 - Commit `5d99667` (`ui: Sicherungsverwaltung vereinheitlichen`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht.
 - Der Commit enthält ausschließlich die geprüften Sicherungs-/Wiederherstellungsoberflächen, den STA-Integrationstest und die zugehörige Statusdokumentation; die beiden geschützten Beispieldateien blieben ungestaged.
+## Phase 5 – Beginn und Bestandsaufnahme (25.07.2026)
+
+- Ausgangs-HEAD und bestätigter Remote-HEAD: `da0610855de10208008ea77b78d7bc685a7c6e5c` auf `ui/redesign-0.3.0`.
+- Arbeitsbaum vor Änderungen: ausschließlich die geschützten Benutzeränderungen `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt`; nichts gestaged. Beide Dateien bleiben vollständig außerhalb aller Tests, Änderungen und Commits.
+- Phase 4 ist abgeschlossen; dieser Auftrag bearbeitet ausschließlich Phase 5 (Timeline-Werkzeuge und Ereigniskarten).
+- Visuelle Referenzen wurden als echte Chat-Anhänge ausgewertet. Die lokalen, später erzeugten Validierungsscreenshots werden nicht visuell geöffnet; die nachfolgende visuelle Abnahme bleibt einem erneuten Chat-Anhang vorbehalten.
+
+### Vergleich visueller Referenzen
+
+| Bereich | aktueller Screenshot | SOLL-Referenz | belegte Abweichung | Änderung in Phase 5 |
+| --- | --- | --- | --- | --- |
+| Timeline-Werkzeuge | Werkzeuge mehrzeilig gruppiert, aber aktive Orientierung nur in der globalen Leiste | kompakte, klar gegliederte lokale Leiste mit deutlich aktivem Umschalter | lokale Orientierung ist nicht segmentiert; Gruppe `ORIENTIERUNG` enthält Ansichtsbefehle | lokalen segmentierten Umschalter und semantische Gruppen ergänzen |
+| Ereigniskarten | Datum, Titel, Kurztext, Metadaten, Auswahl und Konflikt sichtbar | dichte Karten mit lesbaren Metadaten, Auswahl-/Fokuszuständen und Miniaturen | Hover- und Fokuszustand der einzelnen Karte nicht getrennt belegbar | Karteninteraktion und Darstellung ohne Änderung der Layoutlogik ergänzen |
+| Helles/dunkles Theme | beide Themes vorhanden | in beiden Themes klare Konturen und Textkontrast | Status/Konflikt textlich vorhanden, Fokus/Hover noch nicht separat markiert | zustandsabhängige Kontur und Automation-Text ergänzen |
+
+### Phase-5-Bestandsaufnahme
+
+| Anforderung | Bereits umgesetzt | Beleg | Noch erforderlich |
+| --- | --- | --- | --- |
+| Werkzeuge gruppiert / kein 1280-Überlauf | Ja | `TimelineToolsPanel` ist ein `WrapPanel`; STA-Test bei 1280 × 720 | Gruppen semantisch korrigieren, aktive Orientierung lokal klar markieren |
+| Zoom, Zeitraum, Layout, Ansicht | überwiegend | Zoom-/Zeitraum-/Layoutbefehle und Tastenkürzel vorhanden | Tooltips und Automation-Namen für alle lokalen Befehle vereinheitlichen |
+| Segmentierter Umschalter | teilweise | globale Leiste hat Styles; lokale Leiste besitzt zwei normale Buttons | lokale segmentierte aktive Darstellung |
+| Datum, Titel, Kurztext, Miniatur, Metadaten | Ja | `TimelineView.DrawCard` | keine Layoutlogik ändern |
+| Priorität, Status, Frist, Anhänge, manuell, Konflikt | Ja | textliche Badges seit `95896cf` | Fokus/Hover/Dragzustand getrennt und zugänglich machen |
+| Lange Titel / optionale Daten | teilweise | Titelfeld besitzt feste Zwei-Zeilenhöhe; optionale Kurzinfo wird aktuell leer gezeichnet | leere Kurzinfo auslassen, Trimmung und Karten-States stabil testen |
+
+- Bereits vorhandene Phase-5-nahe Commits wurden geprüft: `bc7981f` (Werkzeuggruppen), `95896cf` (Status/Konflikt) und `1f89abc` (Achsenbeschriftungen). Keine davon wird zurückgebaut.
+- Bewusst Phase 6: zeitliche Skalierung, Lane-Zuweisung, zentrale Kollisionsberechnung, automatische Seitenverteilung und Persistenz manueller Offsets bleiben unverändert.
