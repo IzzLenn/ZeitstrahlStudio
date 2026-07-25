@@ -330,3 +330,9 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 ### Exakter Fortsetzungsprompt nach diesem Teilmeilenstein
 
 > Öffne `C:\Projekte\ZeitstrahlStudio` auf `ui/redesign-0.3.0`. Prüfe Branch, Remote, beide HEADs und den Arbeitsbaum. Bewahre `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` unverändert und außerhalb jedes Stagings. Lies `SPEC.md`, `STATUS.md`, `DECISIONS.md`, `UI_REDESIGN_PLAN.md`, `ICON_REQUIREMENTS.md` und `UI_REDESIGN_HANDOFF.md`. Prüfe ausschließlich die verbleibenden Phase-4-Dialogmarkups (PDF-Vorschau, Export und Sicherungsverwaltung) gegen den vorhandenen Header-/Inhalts-/Aktionsleistenvertrag. Ändere nur belegte Abweichungen, baue und teste den atomaren Teilmeilenstein, aktualisiere Status/Handoff, committe und pushe ausschließlich normal nach `origin/ui/redesign-0.3.0`. Verwende weder apply_patch noch Computer Use noch den lokalen PNG-Bildhelper und beginne danach keinen weiteren größeren Schritt ohne neue Freigabe.
+
+### Pushstatus Phase 4 – Teilmeilenstein Bildvorschau und Änderungsprotokoll
+
+- Commit `7c1d3f09e7a2523b3dec4c0d4ecf918470c16715` (`ui: Bildvorschau und Änderungsprotokoll vereinheitlichen`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht; lokaler und entfernter HEAD waren danach identisch.
+- Der Commit umfasst die dialogbezogenen XAML-/Darstellungsänderungen, `DialogAccessibilityTests.cs`, `STATUS.md` und das vorherige Handoff.
+- Nächster atomarer Schritt nach neuer Freigabe: verbleibende Phase-4-Dialogmarkups für PDF-Vorschau, Export und Sicherungsverwaltung gegen den gemeinsamen Dialogvertrag prüfen.
