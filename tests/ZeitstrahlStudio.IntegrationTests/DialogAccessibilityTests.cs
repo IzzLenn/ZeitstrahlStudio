@@ -82,6 +82,64 @@ public sealed class DialogAccessibilityTests
         });
     }
 
+    [Fact]
+    public async Task HtmlExportOptionsDialog_ExposesOptionsAndPrimaryAction()
+    {
+        await RunOnStaThread(() =>
+        {
+            var dialog = new HtmlExportOptionsDialog(TimelineOrientation.Vertical);
+            Layout(dialog, 520, 420);
+
+            Assert.Equal("Standalone-HTML-Export", dialog.Title);
+            var optionsPanel = Assert.IsType<ScrollViewer>(dialog.FindName("HtmlExportOptionsPanel"));
+            Assert.Equal("HTML-Exportoptionen", AutomationProperties.GetName(optionsPanel));
+            var orientation = Assert.IsType<ComboBox>(dialog.FindName("OrientationBox"));
+            Assert.Equal(1, orientation.SelectedIndex);
+            var export = FindButton(dialog, "HTML exportieren und Zielpfad auswählen");
+            var cancel = FindButton(dialog, "HTML-Export abbrechen");
+            Assert.True(export.IsDefault);
+            Assert.True(cancel.IsCancel);
+            Assert.Equal("HTML exportieren …", export.Content);
+            AssertInside(dialog, optionsPanel);
+        });
+    }
+
+    [Theory]
+    [InlineData("AttachmentPdfPreviewDialog.xaml", "PDF-Vorschau Werkzeuge")]
+    [InlineData("PdfExportDialog.xaml", "PDF-Exportvorschau Werkzeuge")]
+    public void PdfDialogXaml_UsesTextToolsAndSemanticDialogResources(string fileName, string toolName)
+    {
+        var path = Path.Combine(FindAppRoot(), fileName);
+        var xaml = File.ReadAllText(path);
+
+        Assert.Contains("{DynamicResource DialogBackgroundBrush}", xaml, StringComparison.Ordinal);
+        Assert.Contains("{DynamicResource HeaderBackgroundBrush}", xaml, StringComparison.Ordinal);
+        Assert.Contains($"AutomationProperties.Name=\"{toolName}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Content=\"Vorherige Seite\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Content=\"Nächste Seite\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Content=\"Verkleinern\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Content=\"Vergrößern\"", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("Themes/Theme.Light.xaml", xaml, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Content=\"◀\"", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("Content=\"▶\"", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("Content=\"−\"", xaml, StringComparison.Ordinal);
+    }
+
+    private static string FindAppRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !File.Exists(Path.Combine(directory.FullName, "ZeitstrahlStudio.sln")))
+        {
+            directory = directory.Parent;
+        }
+
+        if (directory is null)
+        {
+            throw new DirectoryNotFoundException("Der Repository-Stamm konnte nicht ermittelt werden.");
+        }
+
+        return Path.Combine(directory.FullName, "src", "ZeitstrahlStudio.App");
+    }
     private static void WriteTestImage(string path)
     {
         var pixels = new byte[4 * 4 * 4];

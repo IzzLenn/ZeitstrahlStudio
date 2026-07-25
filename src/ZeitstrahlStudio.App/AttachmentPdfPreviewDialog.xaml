@@ -7,7 +7,8 @@
         MinWidth="720"
         MinHeight="520"
         ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource DialogBackgroundBrush}">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -26,16 +27,18 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="18,13" Background="{DynamicResource SurfaceAltBrush}">
+        <Border Grid.Row="0" Padding="20,14" Background="{DynamicResource HeaderBackgroundBrush}"
+                AutomationProperties.Name="PDF-Vorschau: Dateiinformationen">
             <DockPanel LastChildFill="True">
                 <TextBlock DockPanel.Dock="Left"
-                           Style="{StaticResource HeadingStyle}"
+                           Foreground="{DynamicResource HeaderForegroundBrush}"
+                           FontSize="{StaticResource FontSize2Xl}"
+                           FontWeight="SemiBold"
                            Text="{Binding FileName}"
                            TextTrimming="CharacterEllipsis" />
                 <TextBlock Margin="18,3,0,0"
                            HorizontalAlignment="Right"
-                           Style="{StaticResource BodyStyle}"
-                           Foreground="{DynamicResource MutedTextBrush}"
+                           Foreground="{DynamicResource HeaderMutedBrush}"
                            Text="{Binding StatusMessage}"
                            TextTrimming="CharacterEllipsis" />
             </DockPanel>
@@ -48,12 +51,12 @@
                 BorderThickness="0,1,0,1">
             <ScrollViewer HorizontalScrollBarVisibility="Auto"
                           VerticalScrollBarVisibility="Disabled">
-                <StackPanel Orientation="Horizontal">
-                    <Button MinWidth="38"
+                <WrapPanel x:Name="PdfPreviewTools" Orientation="Horizontal" AutomationProperties.Name="PDF-Vorschau Werkzeuge">
+                    <Button MinWidth="112"
                             Margin="0,0,8,0"
                             Command="{Binding PreviousPageCommand}"
-                            ToolTip="Vorherige Seite"
-                            Content="◀" />
+                            AutomationProperties.Name="Vorherige PDF-Seite"
+                            Content="Vorherige Seite" />
                     <TextBlock Width="130"
                                Margin="4,0,10,0"
                                VerticalAlignment="Center"
@@ -61,28 +64,28 @@
                                Style="{StaticResource BodyStyle}"
                                FontWeight="SemiBold"
                                Text="{Binding PageDisplay}" />
-                    <Button MinWidth="38"
+                    <Button MinWidth="108"
                             Margin="0,0,8,0"
                             Command="{Binding NextPageCommand}"
-                            ToolTip="Nächste Seite"
-                            Content="▶" />
+                            AutomationProperties.Name="Nächste PDF-Seite"
+                            Content="Nächste Seite" />
                     <Border Width="1" Margin="4,2,12,2" Background="{DynamicResource DividerBrush}" />
-                    <Button MinWidth="38"
+                    <Button MinWidth="104"
                             Margin="0,0,8,0"
                             Command="{Binding ZoomOutCommand}"
-                            ToolTip="Herauszoomen"
-                            Content="−" />
+                            AutomationProperties.Name="PDF-Vorschau verkleinern"
+                            Content="Verkleinern" />
                     <TextBlock Width="90"
                                Margin="2,0,8,0"
                                VerticalAlignment="Center"
                                TextAlignment="Center"
                                Style="{StaticResource BodyStyle}"
                                Text="{Binding ZoomDisplay}" />
-                    <Button MinWidth="38"
+                    <Button MinWidth="100"
                             Margin="0,0,8,0"
                             Command="{Binding ZoomInCommand}"
-                            ToolTip="Hineinzoomen"
-                            Content="+" />
+                            AutomationProperties.Name="PDF-Vorschau vergrößern"
+                            Content="Vergrößern" />
                     <Button MinWidth="90"
                             Margin="0,0,8,0"
                             Command="{Binding FitWidthCommand}"
@@ -96,15 +99,16 @@
                             Margin="0,0,8,0"
                             Command="{Binding OpenExternallyCommand}"
                             Content="In Windows öffnen" />
-                </StackPanel>
+                </WrapPanel>
             </ScrollViewer>
         </Border>
 
-        <Grid Grid.Row="2" Margin="12">
+        <Grid Grid.Row="2" Margin="20,16">
             <Border Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="1">
                 <ScrollViewer x:Name="PreviewViewport"
+                              AutomationProperties.Name="PDF-Seitenvorschau"
                               Padding="16"
                               HorizontalScrollBarVisibility="Auto"
                               VerticalScrollBarVisibility="Auto"
@@ -161,7 +165,7 @@
             </Border>
         </Grid>
 
-        <Border Grid.Row="3" Padding="14,10" Background="{DynamicResource SurfaceAltBrush}">
+        <Border Grid.Row="3" Padding="20,12" Background="{DynamicResource SurfaceAltBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
             <DockPanel>
                 <TextBlock VerticalAlignment="Center"
                            Style="{StaticResource BodyStyle}"
@@ -171,6 +175,7 @@
                         HorizontalAlignment="Right"
                         IsDefault="True"
                         IsCancel="True"
+                        AutomationProperties.Name="PDF-Vorschau schließen"
                         Content="Schließen" />
             </DockPanel>
         </Border>

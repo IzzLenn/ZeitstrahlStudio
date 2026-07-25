@@ -7,7 +7,8 @@
         MinWidth="980"
         MinHeight="640"
         ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource DialogBackgroundBrush}">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -25,7 +26,8 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="18,13" Background="{DynamicResource HeaderBackgroundBrush}">
+        <Border Grid.Row="0" Padding="20,14" Background="{DynamicResource HeaderBackgroundBrush}"
+                AutomationProperties.Name="PDF-Export: Beschreibung">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left">
                     <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
@@ -54,7 +56,8 @@
                     Background="{DynamicResource SurfaceBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer VerticalScrollBarVisibility="Auto"
+                              AutomationProperties.Name="PDF-Exportoptionen">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource PrimaryTextBrush}"
                                    FontSize="{StaticResource FontSizeLg}"
@@ -148,39 +151,43 @@
                 </Grid.RowDefinitions>
 
                 <Border Grid.Row="0"
-                        Padding="12,9"
+                        Padding="14,10"
                         Background="{DynamicResource SurfaceAltBrush}"
                         BorderBrush="{DynamicResource BorderBrush}"
                         BorderThickness="0,0,0,1">
                     <ScrollViewer HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Disabled">
-                        <StackPanel Orientation="Horizontal">
-                            <Button MinWidth="38"
+                        <WrapPanel x:Name="PdfExportPreviewTools" Orientation="Horizontal" AutomationProperties.Name="PDF-Exportvorschau Werkzeuge">
+                            <Button MinWidth="112"
                                     Margin="0,0,8,0"
                                     Command="{Binding Preview.PreviousPageCommand}"
-                                    Content="◀" />
+                                    AutomationProperties.Name="Vorherige PDF-Exportseite"
+                                    Content="Vorherige Seite" />
                             <TextBlock Width="130"
                                        VerticalAlignment="Center"
                                        Style="{StaticResource BodyStyle}"
                                        TextAlignment="Center"
                                        Text="{Binding Preview.PageDisplay}" />
-                            <Button MinWidth="38"
+                            <Button MinWidth="108"
                                     Margin="0,0,8,0"
                                     Command="{Binding Preview.NextPageCommand}"
-                                    Content="▶" />
-                            <Button MinWidth="38"
+                                    AutomationProperties.Name="Nächste PDF-Exportseite"
+                                    Content="Nächste Seite" />
+                            <Button MinWidth="104"
                                     Margin="0,0,8,0"
                                     Command="{Binding Preview.ZoomOutCommand}"
-                                    Content="−" />
+                                    AutomationProperties.Name="PDF-Exportvorschau verkleinern"
+                                    Content="Verkleinern" />
                             <TextBlock Width="90"
                                        VerticalAlignment="Center"
                                        Style="{StaticResource BodyStyle}"
                                        TextAlignment="Center"
                                        Text="{Binding Preview.ZoomDisplay}" />
-                            <Button MinWidth="38"
+                            <Button MinWidth="100"
                                     Margin="0,0,8,0"
                                     Command="{Binding Preview.ZoomInCommand}"
-                                    Content="+" />
+                                    AutomationProperties.Name="PDF-Exportvorschau vergrößern"
+                                    Content="Vergrößern" />
                             <Button MinWidth="90"
                                     Margin="0,0,8,0"
                                     Command="{Binding Preview.FitWidthCommand}"
@@ -193,12 +200,13 @@
                                     Margin="0,0,8,0"
                                     Command="{Binding Preview.OpenExternallyCommand}"
                                     Content="Extern prüfen" />
-                        </StackPanel>
+                        </WrapPanel>
                     </ScrollViewer>
                 </Border>
 
-                <Grid Grid.Row="1" Margin="12">
+                <Grid Grid.Row="1" Margin="16">
                     <ScrollViewer x:Name="PreviewViewport"
+                                  AutomationProperties.Name="PDF-Exportseitenvorschau"
                                   Padding="16"
                                   HorizontalScrollBarVisibility="Auto"
                                   VerticalScrollBarVisibility="Auto"
@@ -233,7 +241,7 @@
             </Grid>
         </Grid>
 
-        <Border Grid.Row="2" Padding="14,10" Background="{DynamicResource SurfaceAltBrush}">
+        <Border Grid.Row="2" Padding="20,12" Background="{DynamicResource SurfaceAltBrush}" BorderBrush="{DynamicResource BorderBrush}" BorderThickness="0,1,0,0">
             <DockPanel>
                 <TextBlock VerticalAlignment="Center"
                            Foreground="{DynamicResource SubtleTextBrush}"
@@ -241,10 +249,12 @@
                 <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
                     <Button Margin="0,0,8,0"
                             IsCancel="True"
+                            AutomationProperties.Name="PDF-Export abbrechen"
                             Content="Abbrechen" />
                     <Button Style="{StaticResource PrimaryButtonStyle}"
                             Command="{Binding ExportCommand}"
-                            Content="PDF speichern" />
+                            AutomationProperties.Name="PDF exportieren"
+                            Content="PDF exportieren" />
                 </StackPanel>
             </DockPanel>
         </Border>

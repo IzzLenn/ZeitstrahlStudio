@@ -533,3 +533,10 @@ Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifi
 - Neue STA-basierte Dialogtests prüfen beide Fenster mit temporären Daten auf Titel, erreichbare primäre Controls, AutomationProperties, Leerzustand, Mindestlayout und Standard-/Abbrechenaktion. Eine separate externe UI-Automation-Bibliothek ist nicht vorhanden.
 - Verifikation: `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore` erfolgreich (0 Warnungen, 0 Fehler); gezielte Dialog-, Audit- und Themevertragstests 9/9 bestanden.
 - Keine neuen Iconanforderungen. Nächster Schritt nach erneuter Freigabe: verbleibende Phase-4-Dialogmarkups für PDF-Vorschau, Export und Sicherungsverwaltung gegen denselben Vertrag prüfen.
+
+## UI-Redesign 0.3.0 – Phase 4, Teilmeilenstein PDF-Vorschau und Exportdialoge (25.07.2026)
+
+- PDF-Vorschau, PDF-Export und Standalone-HTML-Export folgen nun dem gemeinsamen themefähigen Kopf-, Inhalts- und Aktionsleistenvertrag. Seitennavigation und Zoom sind durch Klartext statt Unicode-Pseudo-Icons zugänglich; alle vorhandenen Commands und Exportabläufe bleiben erhalten.
+- Die PDF-Optionen und HTML-Optionen bleiben bei geringer Fensterhöhe scrollbar. Die HTML-Optionen erklären eingebettete Ressourcen und den anschließenden nativen Zielpfaddialog; dieser vorhandene Pfad bleibt unverändert.
+- Verifikation: `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore` erfolgreich (0 Warnungen, 0 Fehler). Gezielte PDF-Vorschau-, PDF-/HTML-Export-, Dialogautomations- und Themevertragstests: 20/20 bestanden.
+- Keine neuen Iconanforderungen. Noch offen in Phase 4: nur die Sicherungsverwaltung; danach sind die ausstehenden Phase-7-DPI-/Accessibility- und Review-Gates separat zu behandeln.

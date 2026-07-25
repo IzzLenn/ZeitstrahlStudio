@@ -2,11 +2,13 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Standalone-HTML-Export"
-        Width="520"
-        Height="420"
-        ResizeMode="NoResize"
+        Width="560"
+        Height="500"
+        MinWidth="520"
+        MinHeight="420"
         ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource DialogBackgroundBrush}">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -23,64 +25,89 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="20,15" Background="{DynamicResource HeaderBackgroundBrush}">
+        <Border Grid.Row="0"
+                Padding="20,14"
+                Background="{DynamicResource HeaderBackgroundBrush}"
+                AutomationProperties.Name="HTML-Export: Beschreibung">
             <StackPanel>
                 <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
                            FontSize="{StaticResource FontSize2Xl}"
                            FontWeight="SemiBold"
                            Text="Standalone-HTML exportieren" />
-                <TextBlock Margin="0,5,0,0"
+                <TextBlock Margin="0,4,0,0"
                            Foreground="{DynamicResource HeaderMutedBrush}"
-                           Text="Eine einzelne responsive Datei ohne Server oder externe Ressourcen." />
+                           Text="Eine responsive Einzeldatei ohne Server oder externe Ressourcen." />
             </StackPanel>
         </Border>
 
-        <StackPanel Grid.Row="1" Margin="24,18">
-            <TextBlock Style="{StaticResource LabelStyle}" Text="Anfangsdarstellung" />
-            <ComboBox x:Name="OrientationBox"
-                      Margin="0,6,0,0"
-                      SelectedIndex="0">
-                <ComboBoxItem Content="Horizontaler Zeitstrahl" />
-                <ComboBoxItem Content="Vertikaler Zeitstrahl" />
-            </ComboBox>
+        <ScrollViewer x:Name="HtmlExportOptionsPanel"
+                      Grid.Row="1"
+                      Margin="20,16"
+                      VerticalScrollBarVisibility="Auto"
+                      AutomationProperties.Name="HTML-Exportoptionen">
+            <StackPanel>
+                <TextBlock Foreground="{DynamicResource PrimaryTextBrush}"
+                           FontSize="{StaticResource FontSizeLg}"
+                           FontWeight="SemiBold"
+                           Text="Darstellung und Inhalt" />
 
-            <CheckBox x:Name="IncludeThumbnailsBox"
-                      Margin="0,18,0,0"
-                      IsChecked="True"
-                      Content="Kleine Dokumentvorschauen einbetten" />
-            <TextBlock Margin="22,4,0,0"
-                       Foreground="{DynamicResource MutedTextBrush}"
-                       FontSize="{StaticResource FontSizeXs}"
-                       Text="Primäre PDF-Seiten und Bilder werden verkleinert direkt in die HTML-Datei aufgenommen."
-                       TextWrapping="Wrap" />
+                <TextBlock Margin="0,14,0,0"
+                           Style="{StaticResource LabelStyle}"
+                           Text="Anfangsdarstellung" />
+                <ComboBox x:Name="OrientationBox"
+                          Margin="0,6,0,0"
+                          SelectedIndex="0"
+                          AutomationProperties.Name="Anfangsdarstellung des HTML-Zeitstrahls">
+                    <ComboBoxItem Content="Horizontaler Zeitstrahl" />
+                    <ComboBoxItem Content="Vertikaler Zeitstrahl" />
+                </ComboBox>
 
-            <CheckBox x:Name="IncludeNotesBox"
-                      Margin="0,14,0,0"
-                      Content="Interne Notizen in die Momentaufnahme aufnehmen" />
-
-            <Border Margin="0,18,0,0"
-                    Padding="11"
-                    Background="{DynamicResource WarningLightBrush}"
-                    BorderBrush="{DynamicResource WarningBrush}"
-                    BorderThickness="1"
-                    CornerRadius="{DynamicResource ControlCornerRadius}">
-                <TextBlock Foreground="{DynamicResource WarningTextBrush}"
-                           Text="Die HTML-Datei enthält eine unveränderliche Momentaufnahme. Webseitenlinks sind als externe Ziele gekennzeichnet und fragen vor dem Öffnen nach."
+                <CheckBox x:Name="IncludeThumbnailsBox"
+                          Margin="0,18,0,0"
+                          IsChecked="True"
+                          AutomationProperties.Name="Dokumentvorschauen in HTML einbetten"
+                          Content="Kleine Dokumentvorschauen einbetten" />
+                <TextBlock Margin="22,4,0,0"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           FontSize="{StaticResource FontSizeXs}"
+                           Text="Primäre PDF-Seiten und Bilder werden verkleinert direkt in die einzelne HTML-Datei eingebettet. Es werden keine separaten Ressourcen geschrieben."
                            TextWrapping="Wrap" />
-            </Border>
-        </StackPanel>
 
-        <Border Grid.Row="2" Padding="16,12" Background="{DynamicResource SurfaceAltBrush}">
+                <CheckBox x:Name="IncludeNotesBox"
+                          Margin="0,14,0,0"
+                          AutomationProperties.Name="Interne Notizen in HTML einbetten"
+                          Content="Interne Notizen in die Momentaufnahme aufnehmen" />
+
+                <Border Margin="0,18,0,0"
+                        Padding="11"
+                        Background="{DynamicResource WarningLightBrush}"
+                        BorderBrush="{DynamicResource WarningBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{DynamicResource ControlCornerRadius}">
+                    <TextBlock Foreground="{DynamicResource WarningTextBrush}"
+                               Text="Die HTML-Datei enthält eine unveränderliche Momentaufnahme. Webseitenlinks sind als externe Ziele gekennzeichnet und fragen vor dem Öffnen nach. Im nächsten Schritt wählen Sie den Zielpfad."
+                               TextWrapping="Wrap" />
+                </Border>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2"
+                Padding="20,12"
+                Background="{DynamicResource SurfaceAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0">
             <StackPanel HorizontalAlignment="Right" Orientation="Horizontal">
                 <Button Width="96"
                         Margin="0,0,8,0"
                         IsCancel="True"
+                        AutomationProperties.Name="HTML-Export abbrechen"
                         Content="Abbrechen" />
-                <Button Width="110"
+                <Button Width="150"
                         IsDefault="True"
                         Click="Confirm_Click"
                         Style="{StaticResource PrimaryButtonStyle}"
-                        Content="Weiter …" />
+                        AutomationProperties.Name="HTML exportieren und Zielpfad auswählen"
+                        Content="HTML exportieren …" />
             </StackPanel>
         </Border>
     </Grid>

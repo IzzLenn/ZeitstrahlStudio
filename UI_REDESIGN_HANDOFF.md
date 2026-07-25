@@ -336,3 +336,28 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Commit `7c1d3f09e7a2523b3dec4c0d4ecf918470c16715` (`ui: Bildvorschau und Änderungsprotokoll vereinheitlichen`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht; lokaler und entfernter HEAD waren danach identisch.
 - Der Commit umfasst die dialogbezogenen XAML-/Darstellungsänderungen, `DialogAccessibilityTests.cs`, `STATUS.md` und das vorherige Handoff.
 - Nächster atomarer Schritt nach neuer Freigabe: verbleibende Phase-4-Dialogmarkups für PDF-Vorschau, Export und Sicherungsverwaltung gegen den gemeinsamen Dialogvertrag prüfen.
+
+### Phase 4 – Teilmeilenstein PDF-Vorschau und Exportdialoge: Start
+
+- Ausgangs-HEAD und Remote-HEAD: `3b2f2e38a8e33ed1d08496434b92ba855f6411cc` auf `ui/redesign-0.3.0`.
+- Arbeitsbaum zu Beginn: ausschließlich die geschützten, fremden Änderungen `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt`; nichts gestaged.
+- Teilaufgabe: ausschließlich `AttachmentPdfPreviewDialog`, `PdfExportDialog` und `HtmlExportOptionsDialog` gegen den vorhandenen semantischen Dialogvertrag prüfen und angleichen. Sicherungsverwaltung und weitere UI-Teilmeilensteine sind ausdrücklich ausgenommen.
+- Prüfmethoden: Debug-Build, gezielte nicht-pixelbasierte WPF-/Theme-/Exporttests, STA-basierte Dialogprüfungen und vorhandene lokale Exporttests; keine visuelle Abnahme ohne echten Chat-Bildanhang.
+
+### Phase 4 – Teilmeilenstein PDF-Vorschau und Exportdialoge: Abschluss vor Commit
+
+- Geänderte Dateien: `AttachmentPdfPreviewDialog.xaml`, `PdfExportDialog.xaml`, `HtmlExportOptionsDialog.xaml` und `DialogAccessibilityTests.cs`; außerdem dieses Protokoll und `STATUS.md`.
+- Entscheidung: Die nativen Windows-Speicherdialoge bleiben unverändert die alleinige Zielpfad- und Dateiauswahl. Der HTML-Optionsdialog erklärt diesen anschließenden Schritt; es wurde keine parallele Export- oder Pfadlogik eingeführt.
+- PDF-Vorschau: Header, Arbeitsfläche und Footer folgen semantischen Dialogressourcen. Die Werkzeugleiste verwendet zugängliche Klartextbefehle für Seitenwechsel und Zoom; Seitenanzeige, Zoomzustand, Neuladen, lokales Öffnen, Lade- und Fehleroverlay bleiben unverändert erhalten.
+- PDF-Export: Optionen bleiben scrollbar, die Vorschauwerkzeuge sind textbasiert und benannt, und die primäre Aktion lautet eindeutig `PDF exportieren`. Der vorhandene ViewModel-Vertrag deaktiviert sie bis zu einer gültigen, aktuellen Vorschau; Validierungs-/Fehler- und Beschäftigtzustände bleiben ViewModel-gesteuert.
+- HTML-Export: Optionsbereich ist bei geringer Höhe scrollbar, erklärt eingebettete Vorschauen sowie die unveränderliche Offline-Momentaufnahme und führt mit `HTML exportieren …` eindeutig zur vorhandenen Zielpfadauswahl. Fachliche Optionen und Code-behind bleiben unverändert.
+- Tests: Der erste Build scheiterte einmal ausschließlich an einem fehlenden Test-namespace und der zweite an einer falsch benannten Testeigenschaft; beide ohne Produktivcodefehler korrigiert. Der erste gezielte Testlauf hatte 19/20, weil ein nicht modal angezeigtes Testfenster kein `DialogResult` setzen darf. Der Test wurde stabil auf die prüfbare Standard-/Abbrechenaktion umgestellt. Abschließend: Debug-Build 0 Warnungen/0 Fehler; gezielte PDF-/HTML-/Dialog-/Themevertragstests 20/20 bestanden.
+- WPF-Automation: Tests prüfen Titel, benannte Hauptbereiche, AutomationProperties, Standard-/Abbrechenaktionen, Scrollcontainer, Mindestlayout und die textbasierten Werkzeugbefehle. Für PDF-Export wird zusätzlich die echte ViewModel-Vorschau auf einem STA-Thread instanziiert. Eine externe UI-Automation-Bibliothek ist nicht vorhanden.
+- Abweichungen zum SOLL: Keine visuelle Abnahme, weil keine Screenshots als Chat-Anhang analysiert wurden. Die nativen Speicherdialoge sind absichtlich nicht nachgebaut und liegen außerhalb der XAML-Dialogfamilie.
+- Iconanforderungen: keine neuen Icons; die vorhandenen Funktionen nutzen Textbeschriftungen.
+- Verbleibend in Phase 4: ausschließlich Sicherungsverwaltung prüfen und – nur bei belegter Abweichung – angleichen. Phase 5/6 bleiben unverändert abgeschlossen; Phase 7 (vollständige DPI-/Accessibility-Abnahme) bleibt offen.
+- Nächster atomarer Schritt nach neuer Freigabe: Sicherungsverwaltung gegen den gemeinsamen Dialogvertrag prüfen. Kein weiterer Teilmeilenstein in diesem Lauf.
+
+### Exakter Fortsetzungsprompt nach Exportdialogen
+
+> Öffne `C:\Projekte\ZeitstrahlStudio` auf `ui/redesign-0.3.0`. Prüfe zuerst Branch, Remote, beide HEADs und den Arbeitsbaum. Bewahre `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` unverändert und außerhalb jedes Stagings. Lies `SPEC.md`, `STATUS.md`, `DECISIONS.md`, `UI_REDESIGN_HANDOFF.md` sowie die Sicherungsdialog-, Theme- und Testdateien. Bearbeite ausschließlich den nächsten atomaren Schritt Sicherungsverwaltung gegen den vorhandenen Header-/Inhalts-/Aktionsleistenvertrag; nutze weder apply_patch noch Computer Use noch den lokalen PNG-Bildhelper. Baue, teste, aktualisiere Status/Handoff, committe und pushe nur nach `origin/ui/redesign-0.3.0`, dann halte an.
