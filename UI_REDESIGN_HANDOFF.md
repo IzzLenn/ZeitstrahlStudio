@@ -419,3 +419,10 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 
 - Bereits vorhandene Phase-5-nahe Commits wurden geprüft: `bc7981f` (Werkzeuggruppen), `95896cf` (Status/Konflikt) und `1f89abc` (Achsenbeschriftungen). Keine davon wird zurückgebaut.
 - Bewusst Phase 6: zeitliche Skalierung, Lane-Zuweisung, zentrale Kollisionsberechnung, automatische Seitenverteilung und Persistenz manueller Offsets bleiben unverändert.
+
+## Phase 5 – Funktionsstand (25.07.2026)
+
+- Commit adf7f3 schließt die inventarisierten Restlücken: segmentierter lokaler Orientierungsumschalter mit aktiver Darstellung, verständliche Automation-Namen der zentralen lokalen Werkzeuge sowie Karten-Hover und ein von Auswahl getrennter gestrichelter Tastaturfokus.
+- Verifikation: dotnet build ZeitstrahlStudio.sln -c Debug --no-restore erfolgreich (0 Warnungen, 0 Fehler); gezielte STA-Integrationstests MainWindowAccessibilityTests und TimelineViewTests 18/18 erfolgreich.
+- Keine Phase-6-Logik wurde verändert. Programmatische Screenshots und abschließende visuelle Prüfung stehen noch aus; Phase 5 wird daher nicht als vollständig abgeschlossen behauptet.
+- Pushstatus: adf7f3a00050f13a2b839d2fd87b37faec34bf3 ist auf origin/ui/redesign-0.3.0 veröffentlicht.
