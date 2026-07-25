@@ -619,66 +619,86 @@
                                         Background="{DynamicResource RaisedSurfaceBrush}"
                                         BorderBrush="{DynamicResource BorderBrush}"
                                         BorderThickness="0,0,0,1">
-                                    <DockPanel LastChildFill="False">
-                                        <Button DockPanel.Dock="Left"
-                                                Style="{StaticResource CompactButtonStyle}"
-                                                Command="{Binding SetHorizontalTimelineCommand}"
-                                                Content="Horizontal" />
-                                        <Button DockPanel.Dock="Left"
-                                                Style="{StaticResource CompactButtonStyle}"
-                                                Command="{Binding SetVerticalTimelineCommand}"
-                                                Content="Vertikal" />
-                                        <Button DockPanel.Dock="Left"
-                                                Style="{StaticResource CompactButtonStyle}"
-                                                Command="{Binding ToggleGapCompressionCommand}"
-                                                ToolTip="Große leere Zeiträume komprimieren oder vollständig darstellen"
-                                                Content="{Binding GapCompressionText}" />
-                                        <Border DockPanel.Dock="Left" Style="{StaticResource ToolbarSeparatorStyle}" />
-                                        <Button DockPanel.Dock="Left"
-                                                Style="{StaticResource CompactButtonStyle}"
-                                                Click="TimelineZoomOut_Click"
-                                                ToolTip="Herauszoomen (Tastatur: Minus)"
-                                                Content="−" />
-                                        <Button DockPanel.Dock="Left"
-                                                Style="{StaticResource CompactButtonStyle}"
-                                                Click="TimelineZoomIn_Click"
-                                                ToolTip="Hineinzoomen (Tastatur: Plus)"
-                                                Content="+" />
-                                        <TextBlock DockPanel.Dock="Left"
-                                                   Width="58"
-                                                   Margin="2,0,8,0"
-                                                   VerticalAlignment="Center"
-                                                   TextAlignment="Center"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource PrimaryTextBrush}"
-                                                   Text="{Binding TimelineZoomText}" />
-                                        <Button DockPanel.Dock="Left"
-                                                Style="{StaticResource CompactButtonStyle}"
-                                                Click="TimelineShowAll_Click"
-                                                ToolTip="Gesamtes Projekt auf die Zeitachse einpassen"
-                                                Content="Alles" />
-                                        <Button DockPanel.Dock="Left"
-                                                Style="{StaticResource CompactButtonStyle}"
-                                                Click="TimelineCenterSelection_Click"
-                                                ToolTip="Ausgewähltes Ereignis zentrieren"
-                                                Content="Auswahl" />
-                                        <Button DockPanel.Dock="Left"
-                                                Style="{StaticResource CompactButtonStyle}"
-                                                Click="TimelineResetView_Click"
-                                                ToolTip="Zoom und sichtbaren Bereich zurücksetzen"
-                                                Content="Zurücksetzen" />
-                                        <Button DockPanel.Dock="Left"
-                                                Style="{StaticResource CompactButtonStyle}"
-                                                Command="{Binding ResetTimelineLayoutCommand}"
-                                                ToolTip="Alle manuellen Kartenpositionen entfernen und die automatische Anordnung wiederherstellen"
-                                                Content="Auto-Layout" />
-                                        <TextBlock DockPanel.Dock="Right"
-                                                   Margin="14,0,0,0"
+                                    <WrapPanel x:Name="TimelineToolsPanel" VerticalAlignment="Center">
+                                        <StackPanel Margin="0,0,12,0" Orientation="Horizontal">
+                                            <TextBlock Margin="0,0,7,0"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="{StaticResource FontSizeXs}"
+                                                       FontWeight="SemiBold"
+                                                       Text="ANSICHT" />
+                                            <Button Style="{StaticResource CompactButtonStyle}"
+                                                    Command="{Binding SetHorizontalTimelineCommand}"
+                                                    Content="Horizontal" />
+                                            <Button Style="{StaticResource CompactButtonStyle}"
+                                                    Command="{Binding SetVerticalTimelineCommand}"
+                                                    Content="Vertikal" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,12,0" Orientation="Horizontal">
+                                            <TextBlock Margin="0,0,7,0"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="{StaticResource FontSizeXs}"
+                                                       FontWeight="SemiBold"
+                                                       Text="ZOOM" />
+                                            <Button Style="{StaticResource CompactButtonStyle}"
+                                                    Click="TimelineZoomOut_Click"
+                                                    ToolTip="Herauszoomen (Tastatur: Minus)"
+                                                    Content="Verkleinern" />
+                                            <Button Style="{StaticResource CompactButtonStyle}"
+                                                    Click="TimelineZoomIn_Click"
+                                                    ToolTip="Hineinzoomen (Tastatur: Plus)"
+                                                    Content="Vergrößern" />
+                                            <TextBlock MinWidth="58"
+                                                       Margin="2,0,0,0"
+                                                       VerticalAlignment="Center"
+                                                       TextAlignment="Center"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource PrimaryTextBrush}"
+                                                       Text="{Binding TimelineZoomText}" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,12,0" Orientation="Horizontal">
+                                            <TextBlock Margin="0,0,7,0"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="{StaticResource FontSizeXs}"
+                                                       FontWeight="SemiBold"
+                                                       Text="ORIENTIERUNG" />
+                                            <Button Style="{StaticResource CompactButtonStyle}"
+                                                    Click="TimelineShowAll_Click"
+                                                    ToolTip="Gesamtes Projekt auf die Zeitachse einpassen"
+                                                    Content="Alles anzeigen" />
+                                            <Button Style="{StaticResource CompactButtonStyle}"
+                                                    Click="TimelineCenterSelection_Click"
+                                                    ToolTip="Ausgewähltes Ereignis zentrieren"
+                                                    Content="Auswahl zentrieren" />
+                                        </StackPanel>
+                                        <StackPanel Margin="0,0,12,0" Orientation="Horizontal">
+                                            <TextBlock Margin="0,0,7,0"
+                                                       VerticalAlignment="Center"
+                                                       Foreground="{DynamicResource MutedTextBrush}"
+                                                       FontSize="{StaticResource FontSizeXs}"
+                                                       FontWeight="SemiBold"
+                                                       Text="LAYOUT" />
+                                            <Button Style="{StaticResource CompactButtonStyle}"
+                                                    Command="{Binding ToggleGapCompressionCommand}"
+                                                    ToolTip="Große leere Zeiträume komprimieren oder vollständig darstellen"
+                                                    Content="{Binding GapCompressionText}" />
+                                            <Button Style="{StaticResource CompactButtonStyle}"
+                                                    Command="{Binding ResetTimelineLayoutCommand}"
+                                                    ToolTip="Alle manuellen Kartenpositionen entfernen und die automatische Anordnung wiederherstellen"
+                                                    Content="Auto-Layout" />
+                                            <Button Style="{StaticResource CompactButtonStyle}"
+                                                    Click="TimelineResetView_Click"
+                                                    ToolTip="Zoom und sichtbaren Bereich zurücksetzen"
+                                                    Content="Ansicht zurücksetzen" />
+                                        </StackPanel>
+                                        <TextBlock Margin="2,4,0,4"
                                                    VerticalAlignment="Center"
                                                    Foreground="{DynamicResource MutedTextBrush}"
                                                    FontSize="{StaticResource FontSizeXs}"
                                                    Text="Mausrad: Zoom · Hintergrund ziehen: Verschieben" />
-                                    </DockPanel>
+                                    </WrapPanel>
                                 </Border>
                                 <Border Grid.Row="1"
                                         Padding="9,6"

@@ -243,3 +243,13 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Umsetzung: `EventEditorDialog.xaml` besitzt nun einen gemeinsamen semantischen Kopfbereich, einen scrollbar verbleibenden Inhaltsbereich und eine eindeutig getrennte Aktionsleiste. Fachlogik, Bindings, Validierung und Enter/Escape wurden nicht verändert.
 - Prüfung: Debug-Build erfolgreich (0 Warnungen/0 Fehler); gezielte Hauptfenster-/Dialogtests 19/19 bestanden.
 - Nächster atomarer Schritt: Vorschau-, Analyse- und Protokolldialoge auf fehlende Kopf-/Aktionsleisten und Unicode-Pseudo-Icons prüfen; danach Phase 4 abschließen.
+
+### Pushstatus Phase 4 – Teilmeilenstein Ereignisdialog
+
+- Commit `badd7a5fd82599d3df68f261f7b6b9bb9c2bb404` (`ui: Ereignisdialog strukturieren`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht; lokaler und entfernter HEAD stimmten anschließend überein.
+
+### Phase 5 – Teilmeilenstein Timeline-Werkzeuge
+
+- Umsetzung: Die Werkzeugleiste ist als umbruchfähiges, beschriftetes Panel für Ansicht, Zoom, Orientierung und Layout strukturiert. Zoomschalter verwenden klare Texte anstelle von Unicode-Pseudo-Icons; alle vorhandenen Commands und Tooltips bleiben verbunden.
+- Test: `MainWindow_GroupsTimelineToolsWithoutHorizontalOverflow` ergänzt und bei 1280×720 bestanden; Debug-Build 0/0; gezielte MainWindow-/Timeline-Tests 18/18 bestanden.
+- Nächster atomarer Schritt: Karten-Renderer und Layoutengine auf vollständige Status-/Prioritäts-/Fristinformation und sichtbare manuelle Konflikte prüfen.

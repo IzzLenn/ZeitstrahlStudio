@@ -503,3 +503,9 @@ Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifi
 
 - Der Ereignisdialog verwendet jetzt einen klaren, themefähigen Kopfbereich mit dauerhaftem Bearbeitungskontext; der Tab-Inhalt bleibt scrollbar, die Aktionsleiste ist getrennt und behält Enter/Escape.
 - Verifikation: Debug-Build erfolgreich (0 Warnungen, 0 Fehler); 19 gezielte Hauptfenster- und Dialogintegrationstests bestanden.
+
+## UI-Redesign 0.3.0 – Phase 5, Teilmeilenstein Timeline-Werkzeuge (25.07.2026)
+
+- Die Timeline-Werkzeuge sind in umbruchfähige Gruppen für Ansicht, Zoom, Orientierung und Layout gegliedert. Alle bestehenden Befehle bleiben erhalten; die Zoom-Pseudo-Icons wurden durch verständliche Textbefehle ersetzt.
+- Neuer automatisierter Vertrag: bei 1280×720 bleiben alle Werkzeugbuttons innerhalb der Werkzeugfläche; Unicode-Zoominhalte sind ausgeschlossen.
+- Verifikation: Debug-Build erfolgreich (0 Warnungen, 0 Fehler); 18 gezielte Hauptfenster- und Timeline-Integrationstests bestanden.

@@ -222,6 +222,37 @@ public sealed class MainWindowAccessibilityTests
     }
 
     [Fact]
+    public async Task MainWindow_GroupsTimelineToolsWithoutHorizontalOverflow()
+    {
+        await RunOnStaThread(() =>
+        {
+            var viewModel = CreateViewModelWithProject();
+            try
+            {
+                var window = new MainWindow(viewModel);
+                Layout(window, 1_280, 720);
+                var tools = Assert.IsType<WrapPanel>(window.FindName("TimelineToolsPanel"));
+                var buttons = FindLogicalDescendants<Button>(tools).ToArray();
+
+                Assert.NotEmpty(buttons);
+                Assert.DoesNotContain(
+                    buttons.Select(button => button.Content as string),
+                    content => content is "−" or "+");
+                Assert.All(buttons, button =>
+                {
+                    Assert.True(button.ActualWidth > 0);
+                    var rightEdge = button.TranslatePoint(new Point(button.ActualWidth, 0), tools).X;
+                    Assert.InRange(rightEdge, 0, tools.ActualWidth + 0.1);
+                });
+            }
+            finally
+            {
+                DisposeViewModel(viewModel);
+            }
+        });
+    }
+
+    [Fact]
     public async Task MainWindow_AllowsBothSidePanelsToBeCollapsedAndRestored()
     {
         await RunOnStaThread(() =>
