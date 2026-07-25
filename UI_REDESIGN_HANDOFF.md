@@ -361,3 +361,9 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 ### Exakter Fortsetzungsprompt nach Exportdialogen
 
 > Öffne `C:\Projekte\ZeitstrahlStudio` auf `ui/redesign-0.3.0`. Prüfe zuerst Branch, Remote, beide HEADs und den Arbeitsbaum. Bewahre `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` unverändert und außerhalb jedes Stagings. Lies `SPEC.md`, `STATUS.md`, `DECISIONS.md`, `UI_REDESIGN_HANDOFF.md` sowie die Sicherungsdialog-, Theme- und Testdateien. Bearbeite ausschließlich den nächsten atomaren Schritt Sicherungsverwaltung gegen den vorhandenen Header-/Inhalts-/Aktionsleistenvertrag; nutze weder apply_patch noch Computer Use noch den lokalen PNG-Bildhelper. Baue, teste, aktualisiere Status/Handoff, committe und pushe nur nach `origin/ui/redesign-0.3.0`, dann halte an.
+
+### Pushstatus Phase 4 – Teilmeilenstein PDF-Vorschau und Exportdialoge
+
+- Commit `3e2f4b06c67f205e6737dbd41f35da4462176236` (`ui: PDF- und HTML-Exportdialoge vereinheitlichen`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht; lokaler und entfernter HEAD waren danach identisch.
+- Geschützte Benutzeränderungen blieben ungestaged: `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt`.
+- Nächster atomarer Schritt nach neuer Freigabe: ausschließlich Sicherungsverwaltung gegen den gemeinsamen Dialogvertrag prüfen.
