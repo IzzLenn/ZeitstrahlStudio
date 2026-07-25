@@ -307,3 +307,8 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Umsetzung: `AttachmentAnalysisDialog.xaml` verwendet einen themefähigen Kopfbereich mit Datei-, Status-, Medien- und Extraktionsinformation, einen klar abgegrenzten Tab-Inhalt und eine feste Aktionsleiste.
 - Prüfung: Debug-Build 0/0; gezielte Analyse-/Export-/Sicherungstests 7/7 bestanden.
 - Nächster atomarer Schritt: die Bildvorschau und das Änderungsprotokoll auf denselben Dialogvertrag prüfen und fehlende Struktur gezielt ergänzen.
+
+### Pushstatus Phase 4 – Teilmeilenstein Dokumentanalyse-Dialog
+
+- Commit `d320cd1d5b92ebd06aea392b335c14acb46ccd07` (`ui: Dokumentanalyse-Dialog vereinheitlichen`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht; lokaler und entfernter HEAD sind identisch.
+- Nächster atomarer Schritt: Bildvorschau und Änderungsprotokoll strukturell gegen den gemeinsamen Dialogvertrag prüfen.
