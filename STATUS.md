@@ -520,3 +520,8 @@ Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifi
 
 - Tickbeschriftungen respektieren jetzt einen Mindestabstand und werden nahe einer Lückenbeschriftung unterdrückt; alle Achsenmarken bleiben sichtbar.
 - Verifikation: Debug-Build erfolgreich (0 Warnungen, 0 Fehler); Timeline-Renderer-Tests 5/5 bestanden.
+
+## UI-Redesign 0.3.0 – Phase 4, Teilmeilenstein Dokumentanalyse-Dialog (25.07.2026)
+
+- Der Dokumentanalyse-Dialog folgt nun dem semantischen Kopf-, Inhalts- und Aktionsleistenvertrag; alle bestehenden Bindings und Tastaturaktionen bleiben erhalten.
+- Verifikation: Debug-Build erfolgreich (0 Warnungen, 0 Fehler); 7 gezielte Analyse-, Export- und Sicherungsintegrationstests bestanden.

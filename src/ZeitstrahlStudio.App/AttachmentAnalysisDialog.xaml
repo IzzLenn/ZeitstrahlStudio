@@ -17,29 +17,38 @@
         </ResourceDictionary>
     </Window.Resources>
 
-    <Grid Margin="20">
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <StackPanel>
-            <TextBlock Style="{StaticResource HeadingStyle}" Text="{Binding FileName}" />
-            <TextBlock Margin="0,5,0,2"
-                       Style="{StaticResource BodyStyle}"
-                       Foreground="{DynamicResource SubtleTextBrush}"
-                       Text="{Binding StatusText}" />
-            <TextBlock Style="{StaticResource CaptionStyle}" Text="{Binding MediaType}" />
-            <TextBlock Margin="0,4,0,0"
-                       Foreground="{DynamicResource WarningTextBrush}"
-                       FontWeight="SemiBold"
-                       Text="{Binding ExtractionMethodText}" />
-            <TextBlock Margin="0,6,0,14"
-                       Style="{StaticResource SubtitleStyle}"
-                       Text="{Binding DocumentTitle}" />
-        </StackPanel>
+        <Border Grid.Row="0"
+                Padding="20,14"
+                Background="{DynamicResource HeaderBackgroundBrush}">
+            <StackPanel>
+                <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
+                           FontSize="{StaticResource FontSize2Xl}"
+                           FontWeight="SemiBold"
+                           Text="{Binding FileName}" />
+                <TextBlock Margin="0,3,0,0"
+                           Foreground="{DynamicResource HeaderMutedBrush}"
+                           Text="{Binding StatusText}" />
+                <TextBlock Margin="0,5,0,0"
+                           Foreground="{DynamicResource HeaderMutedBrush}"
+                           FontSize="{StaticResource FontSizeSm}"
+                           Text="{Binding MediaType}" />
+                <TextBlock Margin="0,4,0,0"
+                           Foreground="{DynamicResource WarningTextBrush}"
+                           FontWeight="SemiBold"
+                           Text="{Binding ExtractionMethodText}" />
+                <TextBlock Margin="0,6,0,0"
+                           Foreground="{DynamicResource HeaderForegroundBrush}"
+                           Text="{Binding DocumentTitle}" />
+            </StackPanel>
+        </Border>
 
-        <TabControl Grid.Row="1">
+        <TabControl Grid.Row="1" Margin="20,16">
             <TabItem Header="Extrahierter Text">
                 <TextBox Margin="10"
                          Padding="10"
@@ -65,12 +74,17 @@
             </TabItem>
         </TabControl>
 
-        <Button Grid.Row="2"
-                Width="100"
-                Margin="0,16,0,0"
-                HorizontalAlignment="Right"
-                IsDefault="True"
-                IsCancel="True"
-                Content="Schließen" />
+        <Border Grid.Row="2"
+                Padding="20,12"
+                Background="{DynamicResource SurfaceAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0">
+            <Button Style="{StaticResource BaseButtonStyle}"
+                    Width="100"
+                    HorizontalAlignment="Right"
+                    IsDefault="True"
+                    IsCancel="True"
+                    Content="Schließen" />
+        </Border>
     </Grid>
 </Window>

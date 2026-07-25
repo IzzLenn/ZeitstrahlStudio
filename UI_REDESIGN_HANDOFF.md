@@ -301,3 +301,9 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 ### Exakter Fortsetzungsprompt
 
 > Öffne `C:\Projekte\ZeitstrahlStudio` auf `ui/redesign-0.3.0`. Prüfe zuerst HEAD, Remote und Arbeitsbaum. Bewahre `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` unverändert und außerhalb jedes Stagings. Lies `SPEC.md`, `STATUS.md`, `DECISIONS.md`, `UI_REDESIGN_HANDOFF.md` und die relevanten UI-Dateien. Setze zuerst die verbleibende Phase-4-Dialogangleichung fort, danach Phase 6/7. Verwende weder apply_patch noch Computer Use noch den lokalen PNG-Bildhelper. Baue und teste jeden Teilmeilenstein, aktualisiere Status/Handoff, committe und pushe ausschließlich nach `origin/ui/redesign-0.3.0`. Erzeuge am visuellen Review-Gate die vorgegebenen Screenshots unter `artifacts/ui-validation/final-review/`, prüfe nur Metadaten und halte dann auf die Chat-Bildanhänge.
+
+### Phase 4 – Teilmeilenstein Dokumentanalyse-Dialog
+
+- Umsetzung: `AttachmentAnalysisDialog.xaml` verwendet einen themefähigen Kopfbereich mit Datei-, Status-, Medien- und Extraktionsinformation, einen klar abgegrenzten Tab-Inhalt und eine feste Aktionsleiste.
+- Prüfung: Debug-Build 0/0; gezielte Analyse-/Export-/Sicherungstests 7/7 bestanden.
+- Nächster atomarer Schritt: die Bildvorschau und das Änderungsprotokoll auf denselben Dialogvertrag prüfen und fehlende Struktur gezielt ergänzen.
