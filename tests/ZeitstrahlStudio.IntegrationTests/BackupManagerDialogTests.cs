@@ -1,3 +1,5 @@
+using System.Windows.Automation;
+using System.Windows.Controls;
 using System.Windows;
 using System.Windows.Threading;
 using ZeitstrahlStudio.App;
@@ -64,7 +66,20 @@ public sealed class BackupManagerDialogTests
                 dialog.Measure(new Size(1_100, 680));
                 dialog.Arrange(new Rect(0, 0, 1_100, 680));
                 dialog.UpdateLayout();
-                Assert.NotNull(dialog.FindName("BackupGrid"));
+                var header = Assert.IsType<Border>(dialog.FindName("BackupManagerHeader"));
+                Assert.Equal("Sicherungsverwaltung: Beschreibung", AutomationProperties.GetName(header));
+                var retention = Assert.IsType<ScrollViewer>(dialog.FindName("BackupRetentionPanel"));
+                Assert.Equal("Aufbewahrungseinstellungen für Sicherungen", AutomationProperties.GetName(retention));
+                var backupGrid = Assert.IsType<DataGrid>(dialog.FindName("BackupGrid"));
+                Assert.Equal("Verfügbare Projektsicherungen", AutomationProperties.GetName(backupGrid));
+                var emptyState = Assert.IsType<Border>(dialog.FindName("BackupEmptyState"));
+                Assert.Equal(Visibility.Collapsed, emptyState.Visibility);
+                var close = LogicalTreeHelper.GetChildren(dialog)
+                    .OfType<DependencyObject>()
+                    .SelectMany(FindDescendants)
+                    .OfType<Button>()
+                    .Single(button => AutomationProperties.GetName(button) == "Sicherungsverwaltung schließen");
+                Assert.True(close.IsCancel);
                 dialog.Close();
                 completion.SetResult();
             }
@@ -116,6 +131,17 @@ public sealed class BackupManagerDialogTests
         Assert.Equal(1, backups.RestoreCalls);
     }
 
+    private static IEnumerable<DependencyObject> FindDescendants(DependencyObject root)
+    {
+        foreach (var child in LogicalTreeHelper.GetChildren(root).OfType<DependencyObject>())
+        {
+            yield return child;
+            foreach (var descendant in FindDescendants(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
     private static ProjectWorkspace CreateWorkspace() => new(
         TimelineProject.Create(Guid.NewGuid(), "Sicherungstest", Timestamp),
         Path.GetTempPath(),

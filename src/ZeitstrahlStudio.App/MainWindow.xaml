@@ -490,23 +490,26 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <StackPanel Visibility="{Binding HasRecoveryCandidates, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <StackPanel Visibility="{Binding HasRecoveryCandidates, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.Name="Wiederherstellbare Arbeitskopien">
                                 <TextBlock Margin="0,18,0,10" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Bold" Text="WIEDERHERSTELLUNG" />
                                 <ItemsControl ItemsSource="{Binding RecoveryCandidates}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
                                             <Border Margin="0,0,0,8" Padding="11" Background="{DynamicResource WarningLightBrush}"
-                                                    BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1" CornerRadius="{DynamicResource CardCornerRadius}">
+                                                    BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1" CornerRadius="{DynamicResource CardCornerRadius}" AutomationProperties.Name="{Binding ProjectName, StringFormat=Wiederherstellbare Arbeitskopie: {0}}">
                                                 <StackPanel>
                                                     <TextBlock FontWeight="SemiBold" Text="{Binding ProjectName}" TextWrapping="Wrap" />
-                                                    <TextBlock Margin="0,3,0,8" Foreground="{DynamicResource WarningTextBrush}" Text="Nicht ordnungsgemäß geschlossen" />
+                                                    <TextBlock Margin="0,3,0,0" Foreground="{DynamicResource WarningTextBrush}" Text="Nicht ordnungsgemäß geschlossen" />
+                                                    <TextBlock Margin="0,3,0,8" Foreground="{DynamicResource MutedTextBrush}" Text="{Binding LastUpdatedAtUtc, StringFormat=Letzte Arbeitskopie: {0:g}}" />
                                                     <StackPanel Orientation="Horizontal">
                                                         <Button Margin="0,0,12,0" Style="{StaticResource LinkButtonStyle}"
                                                                 Command="{Binding DataContext.RecoverCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}" Content="Wiederherstellen" />
+                                                                CommandParameter="{Binding}" AutomationProperties.Name="Arbeitskopie wiederherstellen"
+                                                                ToolTip="Diese Arbeitskopie öffnen und anschließend speichern" Content="Wiederherstellen" />
                                                         <Button Style="{StaticResource LinkButtonStyle}" Foreground="{DynamicResource DangerTextBrush}"
                                                                 Command="{Binding DataContext.DiscardRecoveryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                                CommandParameter="{Binding}" Content="Verwerfen" />
+                                                                CommandParameter="{Binding}" AutomationProperties.Name="Arbeitskopie verwerfen"
+                                                                ToolTip="Wiederherstellbare Arbeitskopie endgültig verwerfen" Content="Verwerfen" />
                                                     </StackPanel>
                                                 </StackPanel>
                                             </Border>

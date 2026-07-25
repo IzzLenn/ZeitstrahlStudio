@@ -367,3 +367,23 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Commit `3e2f4b06c67f205e6737dbd41f35da4462176236` (`ui: PDF- und HTML-Exportdialoge vereinheitlichen`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht; lokaler und entfernter HEAD waren danach identisch.
 - Geschützte Benutzeränderungen blieben ungestaged: `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt`.
 - Nächster atomarer Schritt nach neuer Freigabe: ausschließlich Sicherungsverwaltung gegen den gemeinsamen Dialogvertrag prüfen.
+
+## Phase 4 – Sicherungsverwaltung: Beginn des finalen atomaren Teilmeilensteins (25.07.2026)
+
+- Ausgangs-HEAD und bestätigter Remote-HEAD: `70d5880e3c71a203ff89366afbf3535297036ea8` auf `ui/redesign-0.3.0`.
+- Pushstatus: Der dokumentierte Exportdialog-Meilenstein ist erfolgreich auf `origin/ui/redesign-0.3.0` veröffentlicht.
+- Arbeitsbaum vor Beginn: ausschließlich die geschützten, unveränderten Benutzeränderungen an `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html`; nichts gestaged.
+- Umfang dieses letzten Phase-4-Schritts: Sicherungsverwaltung und Wiederherstellungsdarstellung gegen den bestehenden Dialogvertrag prüfen und ausschließlich reale UI-/Zugänglichkeitslücken schließen. Keine Änderungen an Sicherungslogik, Persistenz oder den geschützten Beispieldateien.
+## Phase 4 – Sicherungsverwaltung abgeschlossen (25.07.2026)
+
+- Der finale Dialogabgleich vereinheitlicht `BackupManagerDialog`: semantische Dialogfläche, beschriebener Kopfbereich, zugänglicher Aufbewahrungsbereich, explizite Namen/Tooltips für Einstellungen, Aktualisieren, manuelle Sicherung, Wiederherstellung und Schließen sowie eine eindeutige Busy-/Fehlermeldung. Sicherungs-, Wiederherstellungs- und Aufbewahrungslogik wurden nicht verändert.
+- Wiederherstellungskarten der Startansicht zeigen jetzt zusätzlich den Zeitpunkt der letzten Arbeitskopie und exponieren ihre Aktionen mit eindeutigen Automation-Namen und Tooltips.
+- Die vorhandene STA-Prüfung deckt Header, Aufbewahrungsbereich, Sicherungsgrid, ausgeblendeten Reserve-Leerzustand und Escape-Schließen ab.
+- Verifikation: `dotnet build ZeitstrahlStudio.sln -c Debug` erfolgreich (0 Warnungen, 0 Fehler); gezielter Integrationstestlauf für Sicherung, Wiederherstellung, MainWindow-/Dialog-Accessibility und Theme: 31/31 erfolgreich.
+- Phase 4 ist damit abgeschlossen. Phase 5 ist durch gruppierte Timeline-Werkzeuge und die vereinheitlichte Startansicht fortgeschritten; Phase 6 umfasst Kartenstatus, manuelle Layoutkonflikte und entzerrte Achsenbeschriftungen. Kein weiterer Phase-5-bis-8-Schritt wurde in diesem Lauf begonnen.
+- Bekannte Abweichung: keine visuelle Abnahme ohne echten Bildanhang; Computer Use, apply_patch und lokaler PNG-Helfer bleiben nicht verwendbar.
+- Nächster atomarer Schritt erst nach neuer Freigabe: Phase 5/6 anhand des dokumentierten Layout- und Viewport-Rests neu abgrenzen; Phase 7 erst danach separat beginnen.
+
+### Exakter Fortsetzungsprompt
+
+> Öffne `C:\Projekte\ZeitstrahlStudio` auf `ui/redesign-0.3.0`. Prüfe Branch, Remote, beide HEADs und Arbeitsbaum. Bewahre die beiden geschützten Beispieldateien unverändert und ungestaged. Lies die verbindlichen Dokumente sowie `UI_REDESIGN_HANDOFF.md`. Beginne keinen neuen Dialogschritt; grenze zuerst den kleinsten noch offenen Layout-/Viewport-Schritt aus Phase 5/6 ab, baue und teste ihn gezielt, aktualisiere die Dokumentation, committe und pushe nur nach `origin/ui/redesign-0.3.0`. Nutze weder apply_patch noch Computer Use noch den lokalen PNG-Helfer.

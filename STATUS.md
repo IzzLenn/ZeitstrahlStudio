@@ -540,3 +540,9 @@ Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifi
 - Die PDF-Optionen und HTML-Optionen bleiben bei geringer Fensterhöhe scrollbar. Die HTML-Optionen erklären eingebettete Ressourcen und den anschließenden nativen Zielpfaddialog; dieser vorhandene Pfad bleibt unverändert.
 - Verifikation: `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore` erfolgreich (0 Warnungen, 0 Fehler). Gezielte PDF-Vorschau-, PDF-/HTML-Export-, Dialogautomations- und Themevertragstests: 20/20 bestanden.
 - Keine neuen Iconanforderungen. Noch offen in Phase 4: nur die Sicherungsverwaltung; danach sind die ausstehenden Phase-7-DPI-/Accessibility- und Review-Gates separat zu behandeln.
+
+## UI-Redesign – Phase 4 abgeschlossen (25.07.2026)
+
+- Sicherungsverwaltung und Wiederherstellungskarten gegen den gemeinsamen Dialogvertrag vereinheitlicht; keine Sicherungs- oder Persistenzlogik geändert.
+- Debug-Build: erfolgreich, 0 Warnungen/0 Fehler. Gezielte Sicherungs-, Wiederherstellungs-, Theme- und Accessibility-Integrationstests: 31/31 erfolgreich.
+- Nächster Schritt erst nach Freigabe: kleinsten noch offenen Layout-/Viewport-Schritt aus Phase 5/6 neu bestimmen.

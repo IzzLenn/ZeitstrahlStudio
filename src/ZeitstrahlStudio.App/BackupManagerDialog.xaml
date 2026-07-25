@@ -8,7 +8,8 @@
         MinHeight="560"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource SurfaceBrush}"
+        Background="{DynamicResource DialogBackgroundBrush}"
+        AutomationProperties.Name="Lokale Projektsicherungen"
         Closing="Window_Closing">
     <Window.Resources>
         <ResourceDictionary>
@@ -33,7 +34,7 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Border Grid.Row="0" Padding="20,14" Background="{DynamicResource HeaderBackgroundBrush}">
+        <Border x:Name="BackupManagerHeader" Grid.Row="0" Padding="20,14" Background="{DynamicResource HeaderBackgroundBrush}" AutomationProperties.Name="Sicherungsverwaltung: Beschreibung">
             <DockPanel>
                 <StackPanel DockPanel.Dock="Left">
                     <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
@@ -62,7 +63,7 @@
                     Background="{DynamicResource SurfaceAltBrush}"
                     BorderBrush="{DynamicResource BorderBrush}"
                     BorderThickness="0,0,1,0">
-                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                <ScrollViewer x:Name="BackupRetentionPanel" VerticalScrollBarVisibility="Auto" AutomationProperties.Name="Aufbewahrungseinstellungen für Sicherungen">
                     <StackPanel>
                         <TextBlock Foreground="{DynamicResource PrimaryTextBrush}"
                                    FontSize="{StaticResource FontSizeLg}"
@@ -77,23 +78,28 @@
                                    Text="Sicherungen des aktuellen Tages" />
                         <TextBox Height="30"
                                  ToolTip="Zulässig: 1 bis 48"
+                                 AutomationProperties.Name="Anzahl der Sicherungen des aktuellen Tages"
                                  Text="{Binding CurrentDayBackupCount, UpdateSourceTrigger=LostFocus}" />
 
                         <TextBlock Style="{StaticResource LabelStyle}"
                                    Text="Tägliche Sicherungen" />
                         <TextBox Height="30"
                                  ToolTip="Zulässig: 1 bis 90"
+                                 AutomationProperties.Name="Anzahl der täglichen Sicherungen"
                                  Text="{Binding DailyBackupCount, UpdateSourceTrigger=LostFocus}" />
 
                         <TextBlock Style="{StaticResource LabelStyle}"
                                    Text="Wöchentliche Sicherungen" />
                         <TextBox Height="30"
                                  ToolTip="Zulässig: 1 bis 104"
+                                 AutomationProperties.Name="Anzahl der wöchentlichen Sicherungen"
                                  Text="{Binding WeeklyBackupCount, UpdateSourceTrigger=LostFocus}" />
 
                         <Button Margin="0,18,0,0"
                                 Style="{StaticResource PrimaryButtonStyle}"
                                 Command="{Binding ApplySettingsCommand}"
+                                AutomationProperties.Name="Aufbewahrungseinstellungen anwenden"
+                                ToolTip="Aufbewahrungsregeln speichern und auf bestehende Sicherungen anwenden"
                                 Content="Einstellungen anwenden" />
 
                         <Border Margin="0,18,0,0"
@@ -113,7 +119,8 @@
                                 BorderBrush="{DynamicResource DangerBrush}"
                                 BorderThickness="1"
                                 CornerRadius="{DynamicResource ControlCornerRadius}"
-                                Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                Visibility="{Binding HasError, Converter={StaticResource BooleanToVisibilityConverter}}"
+                                AutomationProperties.Name="Fehler in der Sicherungsverwaltung">
                             <TextBlock Foreground="{DynamicResource DangerTextBrush}"
                                        Text="{Binding ErrorMessage}"
                                        TextWrapping="Wrap" />
@@ -140,16 +147,20 @@
                             MinWidth="105"
                             Margin="0,0,8,0"
                             Command="{Binding RefreshCommand}"
+                            AutomationProperties.Name="Sicherungsliste aktualisieren"
+                            ToolTip="Lokale Sicherungen erneut laden"
                             Content="Aktualisieren" />
                     <Button DockPanel.Dock="Right"
                             Style="{StaticResource PrimaryButtonStyle}"
                             MinWidth="105"
                             Command="{Binding CreateManualBackupCommand}"
+                            AutomationProperties.Name="Manuelle Sicherung erstellen"
+                            ToolTip="Jetzt eine zusätzliche manuelle Projektsicherung erstellen"
                             Content="Jetzt sichern" />
                 </DockPanel>
 
-                <DataGrid x:Name="BackupGrid"
-                          Grid.Row="1"
+                <Grid Grid.Row="1">
+                    <DataGrid x:Name="BackupGrid"
                           ItemsSource="{Binding Backups}"
                           SelectedItem="{Binding SelectedBackup}"
                           AutoGenerateColumns="False"
@@ -160,7 +171,8 @@
                           CanUserDeleteRows="False"
                           HeadersVisibility="Column"
                           GridLinesVisibility="Horizontal"
-                          AlternatingRowBackground="{DynamicResource SurfaceAltBrush}">
+                          AlternatingRowBackground="{DynamicResource SurfaceAltBrush}"
+                          AutomationProperties.Name="Verfügbare Projektsicherungen">
                     <DataGrid.Columns>
                         <DataGridTextColumn Width="190"
                                             Header="Zeitpunkt"
@@ -176,15 +188,32 @@
                                             Binding="{Binding Record.Sha256}" />
                     </DataGrid.Columns>
                 </DataGrid>
+                    <Border x:Name="BackupEmptyState" Visibility="Collapsed"
+                            Padding="24"
+                            Background="{DynamicResource SurfaceAltBrush}"
+                            BorderBrush="{DynamicResource BorderBrush}"
+                            BorderThickness="1"
+                            CornerRadius="{DynamicResource CardCornerRadius}"
+                            AutomationProperties.Name="Keine lokalen Sicherungen verfügbar">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" MaxWidth="420">
+                            <TextBlock HorizontalAlignment="Center" FontSize="{StaticResource FontSizeLg}" FontWeight="SemiBold" Text="Noch keine lokale Sicherung" />
+                            <TextBlock Margin="0,8,0,0" HorizontalAlignment="Center" Foreground="{DynamicResource MutedTextBrush}"
+                                       Text="Erstellen Sie mit „Jetzt sichern“ eine manuelle Sicherung. Automatische Sicherungen erscheinen nach dem nächsten Speichervorgang."
+                                       TextAlignment="Center" TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
 
                 <DockPanel Grid.Row="2" Margin="0,12,0,0">
                     <TextBlock VerticalAlignment="Center"
                                Foreground="{DynamicResource MutedTextBrush}"
-                               Text="Die Wiederherstellung ersetzt nicht sofort die gespeicherte Projektdatei." />
+                               Text="Vor der Wiederherstellung wird eine manuelle Sicherheitssicherung erstellt; anschließend bitte speichern." />
                     <Button DockPanel.Dock="Right"
                             Style="{StaticResource PrimaryButtonStyle}"
-                            MinWidth="105"
+                            MinWidth="180"
                             Command="{Binding RestoreCommand}"
+                            AutomationProperties.Name="Ausgewählte Sicherung wiederherstellen"
+                            ToolTip="Ausgewählte Sicherung nach Bestätigung wiederherstellen"
                             Content="Auswahl wiederherstellen" />
                 </DockPanel>
             </Grid>
@@ -199,12 +228,15 @@
                     Width="105"
                     HorizontalAlignment="Right"
                     IsCancel="True"
+                    AutomationProperties.Name="Sicherungsverwaltung schließen"
+                    ToolTip="Sicherungsverwaltung schließen"
                     Content="Schließen" />
         </Border>
 
         <Border Grid.RowSpan="3"
                 Background="{DynamicResource DialogOverlayBrush}"
-                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}">
+                Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}"
+                AutomationProperties.Name="Sicherungsvorgang wird ausgeführt">
             <StackPanel Width="360"
                         HorizontalAlignment="Center"
                         VerticalAlignment="Center">
