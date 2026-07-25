@@ -211,3 +211,22 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Push: erfolgreich; lokaler und entfernter Feature-Branch stehen auf demselben Commit.
 - Stagingprüfung vor Commit: ausschließlich `STATUS.md`, `UI_REDESIGN_HANDOFF.md`, `NewProjectDialog.xaml` und `ProjectSettingsDialog.xaml`; das Beispielarchiv war nicht enthalten.
 - Verbleibende Phasen dieses Auftrags: Phase 4 vollständig abschließen, danach Phase 5 und 6; Phase 7 und 8 bleiben ausdrücklich ausgenommen.
+
+## Fortsetzungslauf Phase 4–7 bis zum visuellen Review-Gate – 25.07.2026
+
+- Modell/Reasoning: GPT-5 Codex; Laufzeit-Reasoning nicht separat ausgewiesen.
+- Ausgangs-HEAD / Remote-HEAD: `5a164e79df3411acb8dbb051bd082632fa0224b9` (identisch).
+- Branch: `ui/redesign-0.3.0`; nichts gestaged.
+- Arbeitsbaum zu Beginn: zwei fremde, geschützte Änderungen: `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html`. Beide bleiben unangetastet, außerhalb aller Tests, Stages und Commits.
+- Verfügbare Prüfung: Build, Unit-/Integrationstests sowie UI Automation und Windows/.NET-Screenshots; Computer Use und der lokale PNG-Helfer sind gemäß Auftrag blockiert und werden nicht verwendet.
+- Ausgewertete Referenzen: Chat-Anhänge 01–03 (IST), 04–06 (SOLL) sowie 07+ (bisheriger Branchstand); die Hauptansicht weicht vor allem bei Karten-/Timeline-Layout, Werkzeuggruppierung und Dialogvereinheitlichung vom SOLL ab.
+- Aktuell bearbeitete Phase: 4 – Startansicht und Dialoge.
+- Nächster atomarer Schritt: vorhandene Startansicht und alle Dialoge samt zugeordneten ViewModels/Tests vollständig prüfen und die kleinste sichere Phase-4-Änderung ableiten.
+
+### Phase 4 – Teilmeilenstein Startansicht
+
+- Umsetzung: Startansicht ohne Projekt verwendet eine textbasierte Produktmarke anstelle eines Unicode-Pseudo-Icons. Der Wiederherstellungsbereich wird ausschließlich bei Kandidaten angezeigt; `HasRecoveryCandidates` wird nach jedem Abruf benachrichtigt.
+- Geänderte Dateien: `MainWindow.xaml`, `MainWindowViewModel.cs`, `STATUS.md`, `UI_REDESIGN_HANDOFF.md`.
+- Prüfung: Debug-Build erfolgreich (0 Warnungen/0 Fehler); gezielte Hauptfenster- und Dialogtests 19/19 bestanden.
+- UI-Automation: die bestehenden STA-Integrationstests decken Fensterstruktur, Automation-Namen, Fokus und Referenzgrößen ab; eine echte visuelle Abnahme ist weiterhin bis zum Screenshot-Rückgabeprozess aufgeschoben.
+- Nächster atomarer Schritt: Dialog-Header und Aktionsleisten der verbleibenden Export-, Sicherungs-, Vorschau- und Protokolldialoge auf den gemeinsamen SOLL-Vertrag abgleichen.

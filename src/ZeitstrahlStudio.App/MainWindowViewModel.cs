@@ -203,6 +203,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
 
     public ObservableCollection<RecentProject> RecentProjects { get; } = [];
     public ObservableCollection<RecoveryCandidate> RecoveryCandidates { get; } = [];
+    public bool HasRecoveryCandidates => RecoveryCandidates.Count > 0;
     public ObservableCollection<TimelineEvent> Events { get; } = [];
 
     public AsyncRelayCommand NewProjectCommand { get; }
@@ -1669,6 +1670,8 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         {
             RecoveryCandidates.Add(recovery);
         }
+
+        OnPropertyChanged(nameof(HasRecoveryCandidates));
     }
 
     private async Task RefreshRecentProjectsAsync()

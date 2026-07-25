@@ -490,28 +490,30 @@
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
-                            <TextBlock Margin="0,18,0,10" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Bold" Text="WIEDERHERSTELLUNG" />
-                            <ItemsControl ItemsSource="{Binding RecoveryCandidates}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Border Margin="0,0,0,8" Padding="11" Background="{DynamicResource WarningLightBrush}"
-                                                BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1" CornerRadius="{DynamicResource CardCornerRadius}">
-                                            <StackPanel>
-                                                <TextBlock FontWeight="SemiBold" Text="{Binding ProjectName}" TextWrapping="Wrap" />
-                                                <TextBlock Margin="0,3,0,8" Foreground="{DynamicResource WarningTextBrush}" Text="Nicht ordnungsgemäß geschlossen" />
-                                                <StackPanel Orientation="Horizontal">
-                                                    <Button Margin="0,0,12,0" Style="{StaticResource LinkButtonStyle}"
-                                                            Command="{Binding DataContext.RecoverCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            CommandParameter="{Binding}" Content="Wiederherstellen" />
-                                                    <Button Style="{StaticResource LinkButtonStyle}" Foreground="{DynamicResource DangerTextBrush}"
-                                                            Command="{Binding DataContext.DiscardRecoveryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
-                                                            CommandParameter="{Binding}" Content="Verwerfen" />
+                            <StackPanel Visibility="{Binding HasRecoveryCandidates, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                <TextBlock Margin="0,18,0,10" Foreground="{DynamicResource WarningTextBrush}" FontWeight="Bold" Text="WIEDERHERSTELLUNG" />
+                                <ItemsControl ItemsSource="{Binding RecoveryCandidates}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate>
+                                            <Border Margin="0,0,0,8" Padding="11" Background="{DynamicResource WarningLightBrush}"
+                                                    BorderBrush="{DynamicResource WarningBrush}" BorderThickness="1" CornerRadius="{DynamicResource CardCornerRadius}">
+                                                <StackPanel>
+                                                    <TextBlock FontWeight="SemiBold" Text="{Binding ProjectName}" TextWrapping="Wrap" />
+                                                    <TextBlock Margin="0,3,0,8" Foreground="{DynamicResource WarningTextBrush}" Text="Nicht ordnungsgemäß geschlossen" />
+                                                    <StackPanel Orientation="Horizontal">
+                                                        <Button Margin="0,0,12,0" Style="{StaticResource LinkButtonStyle}"
+                                                                Command="{Binding DataContext.RecoverCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}" Content="Wiederherstellen" />
+                                                        <Button Style="{StaticResource LinkButtonStyle}" Foreground="{DynamicResource DangerTextBrush}"
+                                                                Command="{Binding DataContext.DiscardRecoveryCommand, RelativeSource={RelativeSource AncestorType=Window}}"
+                                                                CommandParameter="{Binding}" Content="Verwerfen" />
+                                                    </StackPanel>
                                                 </StackPanel>
-                                            </StackPanel>
-                                        </Border>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
+                                            </Border>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
@@ -523,17 +525,13 @@
                 <StackPanel HorizontalAlignment="Center"
                             VerticalAlignment="Center"
                             Visibility="{Binding HasNoProject, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <Border Width="72"
-                            Height="72"
-                            HorizontalAlignment="Center"
+                    <Border HorizontalAlignment="Center"
+                            Padding="14,7"
                             Background="{DynamicResource AccentLightBrush}"
-                            CornerRadius="36">
-                        <TextBlock HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"
-                                   Foreground="{DynamicResource AccentTextBrush}"
-                                   FontSize="30"
-                                   FontWeight="Light"
-                                   Text="＋" />
+                            CornerRadius="{DynamicResource ControlCornerRadius}">
+                        <TextBlock Foreground="{DynamicResource AccentTextBrush}"
+                                   FontWeight="SemiBold"
+                                   Text="Zeitstrahl Studio" />
                     </Border>
                     <TextBlock Margin="0,22,0,0"
                                HorizontalAlignment="Center"

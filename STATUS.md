@@ -491,3 +491,10 @@ Ergebnis: Debug-Build mit 0 Warnungen und 0 Fehlern; 17/17 gezielte MainWindow-/
 ### Umfangsgrenze und nächster Schritt
 
 Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifikation, vollständiger Release-Prüfzyklus, Publish, Vorschauinstaller, Versionsänderungen und Releasevorbereitung wurden nicht begonnen. Ein späterer Auftrag beginnt frühestens mit Phase 4 und liest zuvor `UI_REDESIGN_HANDOFF.md`.
+
+## UI-Redesign 0.3.0 – Phase 4, Teilmeilenstein Startansicht (25.07.2026)
+
+- Die Startansicht verwendet nun eine klare Textmarke anstelle eines nicht lizenzierten Unicode-Pseudo-Icons.
+- Der Bereich „Wiederherstellung“ erscheint nur noch, wenn tatsächlich Wiederherstellungskandidaten verfügbar sind.
+- Verifikation: `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore` erfolgreich (0 Warnungen, 0 Fehler); 19 gezielte Hauptfenster- und Dialogintegrationstests bestanden.
+- Noch offen: übrige Phase-4-Dialogabnahme sowie Phasen 5 bis 7 und das verbindliche Screenshot-Review-Gate.
