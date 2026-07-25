@@ -387,3 +387,7 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 ### Exakter Fortsetzungsprompt
 
 > Öffne `C:\Projekte\ZeitstrahlStudio` auf `ui/redesign-0.3.0`. Prüfe Branch, Remote, beide HEADs und Arbeitsbaum. Bewahre die beiden geschützten Beispieldateien unverändert und ungestaged. Lies die verbindlichen Dokumente sowie `UI_REDESIGN_HANDOFF.md`. Beginne keinen neuen Dialogschritt; grenze zuerst den kleinsten noch offenen Layout-/Viewport-Schritt aus Phase 5/6 ab, baue und teste ihn gezielt, aktualisiere die Dokumentation, committe und pushe nur nach `origin/ui/redesign-0.3.0`. Nutze weder apply_patch noch Computer Use noch den lokalen PNG-Helfer.
+### Pushstatus Phase 4 – Sicherungsverwaltung
+
+- Commit `5d99667` (`ui: Sicherungsverwaltung vereinheitlichen`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht.
+- Der Commit enthält ausschließlich die geprüften Sicherungs-/Wiederherstellungsoberflächen, den STA-Integrationstest und die zugehörige Statusdokumentation; die beiden geschützten Beispieldateien blieben ungestaged.
