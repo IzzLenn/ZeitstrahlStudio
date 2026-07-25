@@ -66,6 +66,7 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     private Point cardDragStart;
     private Vector cardDragDelta;
     private bool isCardDragActive;
+    private Guid? hoveredEventId;
     private Guid? fileDropTargetEventId;
     private int lastAppliedRangeRevision = int.MinValue;
 
@@ -613,6 +614,7 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
 
         if (!isPanning || e.LeftButton != MouseButtonState.Pressed && e.MiddleButton != MouseButtonState.Pressed)
         {
+            SetHoveredCard(HitTestCard(e.GetPosition(this))?.EventId);
             return;
         }
 
@@ -620,6 +622,12 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         SetHorizontalOffset(panStartHorizontalOffset - (current.X - panStart.X));
         SetVerticalOffset(panStartVerticalOffset - (current.Y - panStart.Y));
         e.Handled = true;
+    }
+
+    protected override void OnMouseLeave(MouseEventArgs e)
+    {
+        base.OnMouseLeave(e);
+        SetHoveredCard(null);
     }
 
     protected override void OnMouseUp(MouseButtonEventArgs e)
@@ -1064,18 +1072,26 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     {
         var color = GetEventBrush(timelineEvent.ColorHex);
         var selected = SelectedEvent?.Id == timelineEvent.Id;
+        var hovered = hoveredEventId == timelineEvent.Id;
+        var focused = selected && IsKeyboardFocusWithin;
         var isFileDropTarget = fileDropTargetEventId == timelineEvent.Id;
         var borderPen = CreatePen(
             isFileDropTarget || selected
                 ? SelectedBrush
                 : card.HasManualConflict ? DeadlineBrush : color,
-            isFileDropTarget ? 4 : selected ? 3 : card.HasManualConflict ? 3 : 2);
+            isFileDropTarget ? 4 : selected ? 3 : hovered ? 3 : card.HasManualConflict ? 3 : 2);
         drawingContext.DrawRoundedRectangle(
             CardBrush,
             borderPen,
             rect,
             CardCornerRadius,
             CardCornerRadius);
+        if (focused)
+        {
+            var focusRect = rect;
+            focusRect.Inflate(3, 3);
+            drawingContext.DrawRoundedRectangle(null, CreateDashedPen(SelectedBrush, 1.5), focusRect, CardCornerRadius + 2, CardCornerRadius + 2);
+        }
         var colorBar = Orientation == TimelineOrientation.Horizontal
             ? new Rect(rect.Left, rect.Top, 7, rect.Height)
             : new Rect(rect.Left, rect.Top, rect.Width, 7);
@@ -1607,6 +1623,18 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     }
 
     private void ClearFileDropTarget() => SetFileDropTarget(null);
+
+    private void SetHoveredCard(Guid? eventId)
+    {
+        if (hoveredEventId == eventId)
+        {
+            return;
+        }
+
+        hoveredEventId = eventId;
+        Cursor = eventId.HasValue ? Cursors.Hand : Cursors.Arrow;
+        InvalidateVisual();
+    }
 
     private void DrawEmptyState(DrawingContext drawingContext)
     {
