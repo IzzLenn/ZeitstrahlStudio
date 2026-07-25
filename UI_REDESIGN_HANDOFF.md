@@ -276,3 +276,28 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 - Umsetzung: Die Achse zeichnet weiterhin jede Markierung, zeigt Text aber nur bei ausreichendem Abstand und außerhalb des reservierten Bereichs einer Lückenbeschriftung. Das reduziert Überlagerungen ohne Zeitdaten oder Navigationsverhalten zu verändern.
 - Prüfung: Debug-Build 0/0; TimelineView-Tests 5/5 bestanden.
 - Nächster atomarer Schritt: Phase-4-Dialogrest und Phase-6-Viewport-/DPI-Abdeckung zusammenführen, dann Phase 7 beginnen.
+
+### Pushstatus Phase 6 – Teilmeilenstein Achsenbeschriftungen
+
+- Commit `1f89abc376f01421f2c43c9f868840a1cf8df0fb` (`ui: Achsenbeschriftungen entzerren`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht.
+- Lokaler und entfernter HEAD sind identisch; weiterhin uncommittet bleiben ausschließlich die zwei geschützten fremden Beispiel-Dateien.
+- Nächster atomarer Schritt: restliche Phase-4-Dialogabnahme und die Phase-7-Accessibility-/DPI-Prüfung fortsetzen.
+
+## Konsolidierter Übergabestand nach Commit 1f89abc – 25.07.2026
+
+- Aktueller Commit und Pushstatus: `1f89abc376f01421f2c43c9f868840a1cf8df0fb` (`ui: Achsenbeschriftungen entzerren`) ist erfolgreich auf `origin/ui/redesign-0.3.0`; lokaler und entfernter HEAD sind identisch.
+- In diesem Lauf erzeugte Commits: `4f2feba` Startansicht, `badd7a5` Ereignisdialog, `bc7981f` Timeline-Werkzeuge, `95896cf` Kartenstatus/Layoutkonflikte, `1f89abc` Achsenbeschriftungen.
+- Phase 4: Startansicht und Ereignisdialog sind modernisiert. Noch offen sind die systematische Abnahme und ggf. Präsentationsangleichung der verbleibenden Sicherungs-, Export-, Vorschau-, Analyse- und Protokolldialoge.
+- Phase 5: Werkzeugleiste ist gruppiert und umbruchfähig; `MainWindow_GroupsTimelineToolsWithoutHorizontalOverflow` besteht bei 1280×720. Karten zeigen Priorität, Status, Frist, Anhang und manuellen Zustand textlich.
+- Phase 6: manuelle Kartenüberschneidungen werden sichtbar als Konflikt markiert; Achsenbeschriftungen sind entzerrt. Noch offen sind breitere Layout-/Viewport-/Größenabnahmen inklusive vertikaler Ansichten.
+- Phase 7: offen – vollständige Accessibility-, Fokus-, AutomationProperties-, High-Contrast- und DPI-Prüfung bei 100/125/150/200 Prozent.
+- Phase 8: offen – erst am visuellen Review-Gate programmatische Screenshots erzeugen, Metadaten prüfen, dann auf echte Chat-Anhänge zur visuellen Analyse warten.
+- Ausgeführte Prüfungen in diesem Lauf: Debug-Builds jeweils erfolgreich mit 0 Warnungen/0 Fehlern; Dialog-/MainWindow-Tests 19/19, Timeline-Werkzeug-/Viewtests 18/18, Layoutengine-Tests 17/17, TimelineView-Tests 5/5.
+- Bekannte Abweichungen zum SOLL: abschließende visuelle Prüfung steht aus; die Dialogfamilie ist noch nicht vollständig vereinheitlicht, und die vollständige Kartengeometrie/vertikale Lane-Abnahme erfordert die vorgesehenen Screenshots.
+- Werkzeugblocker: `apply_patch` nicht verwenden; Computer Use nicht verwendbar; lokaler PNG-Bildhelper nicht verwendbar. Alternativen: PowerShell/.NET-Dateibearbeitung, UI Automation, programmatische Screenshot-Erzeugung sowie visuelle Analyse nach erneutem Hochladen als echter Chat-Anhang.
+- Arbeitsbaum: geschützt und niemals zu stagen sind `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und die fremde Änderung `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html`.
+- Nächster atomarer Schritt: die verbleibenden Phase-4-Dialogmarkups strukturell prüfen, nur fehlende Kopf-/Inhalts-/Aktionsleisten gezielt angleichen und durch vorhandene Dialogtests absichern.
+
+### Exakter Fortsetzungsprompt
+
+> Öffne `C:\Projekte\ZeitstrahlStudio` auf `ui/redesign-0.3.0`. Prüfe zuerst HEAD, Remote und Arbeitsbaum. Bewahre `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` unverändert und außerhalb jedes Stagings. Lies `SPEC.md`, `STATUS.md`, `DECISIONS.md`, `UI_REDESIGN_HANDOFF.md` und die relevanten UI-Dateien. Setze zuerst die verbleibende Phase-4-Dialogangleichung fort, danach Phase 6/7. Verwende weder apply_patch noch Computer Use noch den lokalen PNG-Bildhelper. Baue und teste jeden Teilmeilenstein, aktualisiere Status/Handoff, committe und pushe ausschließlich nach `origin/ui/redesign-0.3.0`. Erzeuge am visuellen Review-Gate die vorgegebenen Screenshots unter `artifacts/ui-validation/final-review/`, prüfe nur Metadaten und halte dann auf die Chat-Bildanhänge.
