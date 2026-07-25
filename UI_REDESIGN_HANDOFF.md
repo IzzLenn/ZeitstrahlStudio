@@ -312,3 +312,21 @@ Kein weiterer Arbeitsschritt in diesem Lauf. Ein neuer, ausdrücklich freigegebe
 
 - Commit `d320cd1d5b92ebd06aea392b335c14acb46ccd07` (`ui: Dokumentanalyse-Dialog vereinheitlichen`) wurde regulär nach `origin/ui/redesign-0.3.0` gepusht; lokaler und entfernter HEAD sind identisch.
 - Nächster atomarer Schritt: Bildvorschau und Änderungsprotokoll strukturell gegen den gemeinsamen Dialogvertrag prüfen.
+
+### Phase 4 – Teilmeilenstein Bildvorschau und Änderungsprotokoll
+
+- Ausgangs-HEAD: `f4b29784a5045f1fb4d8c9b1d6be734a6eac79c6` (`docs: jüngsten UI-Teilstand protokollieren`), regulär auf `origin/ui/redesign-0.3.0` gepusht.
+- Geänderte Dateien: `AttachmentImagePreviewDialog.xaml`, `AuditLogDialog.xaml`, `AuditLogDialog.xaml.cs` sowie `DialogAccessibilityTests.cs`.
+- Bildvorschau: nutzt den gemeinsamen themefähigen Kopfbereich mit Dateiname und Bildmaßen, eine klar umrandete und in beide Richtungen scrollbar bleibende Bildfläche sowie eine getrennte Aktionsleiste. Die bestehende Dekodierung, Bildanzeige und Escape-/Enter-Schließen bleiben erhalten.
+- Änderungsprotokoll: nutzt denselben Header-/Inhalts-/Footer-Vertrag, einen textlichen Leerzustand, eindeutige Automation-Namen und horizontale/vertikale Scrollleisten. Lange Beschreibungen werden gekürzt angezeigt und vollständig per Tooltip erreichbar; Erfolg bleibt als Textspalte sichtbar und nicht nur farbcodiert.
+- Automation und Layout: neue STA-basierte WPF-Tests öffnen beide Dialoge mit temporären Testdaten, prüfen Fenstertitel, primäre Controls, AutomationProperties, Leerzustand, Mindestgröße und Einhaltung des Content-Rechtecks. Die Controls sind erreichbar; beide Schließenaktionen bleiben Standard- und Abbrechenaktion. Eine separate externe UI-Automation-Bibliothek ist im Repository nicht vorhanden; keine neue parallele Testarchitektur eingeführt.
+- Prüfung: `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore` erfolgreich (0 Warnungen, 0 Fehler). Gezielte Dialog-/Audit-/Themevertragstests: 9/9 bestanden.
+- Iconanforderungen: keine neuen Icons nötig; die bestehenden Textaktionen bleiben unverändert.
+- Stand Phase 4: Start-, Ereignis-, Dokumentanalyse-, Bildvorschau- und Änderungsprotokolldialog sind vereinheitlicht. Noch zu prüfen sind die verbleibenden Phase-4-Dialoge, insbesondere PDF-Vorschau, PDF-/HTML-Export und Sicherungsverwaltung, soweit deren Struktur noch abweicht.
+- Stand Phase 5/6: gruppierte Timeline-Werkzeuge, textliche Kartenstatus, sichtbare manuelle Layoutkonflikte und entzerrte Achsenbeschriftungen sind abgeschlossen; breitere Viewport-/vertikale/DPI-Abnahmen sind noch offen.
+- Werkzeugblocker: `apply_patch`, Computer Use und der lokale PNG-Bildhelper bleiben nicht verwendbar. Verfügbar bleiben PowerShell/.NET-Dateibearbeitung, WPF-Automationstests, programmatische Screenshot-Erzeugung und spätere visuelle Analyse nach erneutem Chat-Bildanhang.
+- Nächster atomarer Schritt: die verbleibenden Phase-4-Dialogmarkups (PDF-Vorschau, Export und Sicherungsverwaltung) strukturell gegen den gemeinsamen Dialogvertrag prüfen und nur belegte Abweichungen angleichen.
+
+### Exakter Fortsetzungsprompt nach diesem Teilmeilenstein
+
+> Öffne `C:\Projekte\ZeitstrahlStudio` auf `ui/redesign-0.3.0`. Prüfe Branch, Remote, beide HEADs und den Arbeitsbaum. Bewahre `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` unverändert und außerhalb jedes Stagings. Lies `SPEC.md`, `STATUS.md`, `DECISIONS.md`, `UI_REDESIGN_PLAN.md`, `ICON_REQUIREMENTS.md` und `UI_REDESIGN_HANDOFF.md`. Prüfe ausschließlich die verbleibenden Phase-4-Dialogmarkups (PDF-Vorschau, Export und Sicherungsverwaltung) gegen den vorhandenen Header-/Inhalts-/Aktionsleistenvertrag. Ändere nur belegte Abweichungen, baue und teste den atomaren Teilmeilenstein, aktualisiere Status/Handoff, committe und pushe ausschließlich normal nach `origin/ui/redesign-0.3.0`. Verwende weder apply_patch noch Computer Use noch den lokalen PNG-Bildhelper und beginne danach keinen weiteren größeren Schritt ohne neue Freigabe.

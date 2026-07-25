@@ -8,7 +8,7 @@
         MinHeight="420"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
-        Background="{DynamicResource SurfaceBrush}">
+        Background="{DynamicResource DialogBackgroundBrush}">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -24,37 +24,80 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <StackPanel Margin="20,16,20,12">
-            <TextBlock Foreground="{DynamicResource PrimaryTextBrush}"
-                       FontSize="{StaticResource FontSize2Xl}"
-                       FontWeight="SemiBold"
-                       Text="Änderungsprotokoll" />
-            <TextBlock Margin="0,4,0,0"
-                       Foreground="{DynamicResource MutedTextBrush}"
-                       Text="Lokal in der Projektdatenbank gespeicherte Ereignisoperationen." />
-        </StackPanel>
-        <DataGrid Grid.Row="1"
-                  Margin="20,0"
-                  ItemsSource="{Binding}"
-                  AutoGenerateColumns="False"
-                  IsReadOnly="True"
-                  CanUserAddRows="False"
-                  CanUserDeleteRows="False"
-                  HeadersVisibility="Column"
-                  GridLinesVisibility="Horizontal"
-                  AlternatingRowBackground="{DynamicResource SurfaceAltBrush}">
-            <DataGrid.Columns>
-                <DataGridTextColumn Width="155"
-                                    Header="Zeitpunkt (UTC)"
-                                    Binding="{Binding TimestampUtc, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" />
-                <DataGridTextColumn Width="100" Header="Vorgang" Binding="{Binding Operation}" />
-                <DataGridTextColumn Width="135" Header="Datensatz" Binding="{Binding EntityType}" />
-                <DataGridTextColumn Width="*" Header="Beschreibung" Binding="{Binding Description}" />
-                <DataGridCheckBoxColumn Width="75" Header="Erfolg" Binding="{Binding Succeeded}" />
-            </DataGrid.Columns>
-        </DataGrid>
+
+        <Border Grid.Row="0"
+                Padding="20,14"
+                Background="{DynamicResource HeaderBackgroundBrush}"
+                AutomationProperties.Name="Änderungsprotokoll: Beschreibung">
+            <StackPanel>
+                <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
+                           FontSize="{StaticResource FontSize2Xl}"
+                           FontWeight="SemiBold"
+                           Text="Änderungsprotokoll" />
+                <TextBlock Margin="0,4,0,0"
+                           Foreground="{DynamicResource HeaderMutedBrush}"
+                           Text="Lokal in der Projektdatenbank gespeicherte Ereignisoperationen." />
+            </StackPanel>
+        </Border>
+
+        <Grid Grid.Row="1" Margin="20,16">
+            <DataGrid x:Name="AuditEntriesGrid"
+                      ItemsSource="{Binding Entries}"
+                      AutoGenerateColumns="False"
+                      IsReadOnly="True"
+                      CanUserAddRows="False"
+                      CanUserDeleteRows="False"
+                      HeadersVisibility="Column"
+                      GridLinesVisibility="Horizontal"
+                      ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                      ScrollViewer.VerticalScrollBarVisibility="Auto"
+                      AlternatingRowBackground="{DynamicResource SurfaceAltBrush}"
+                      AutomationProperties.Name="Protokolleinträge">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Width="155"
+                                        Header="Zeitpunkt (UTC)"
+                                        Binding="{Binding TimestampUtc, StringFormat={}{0:dd.MM.yyyy HH:mm:ss}}" />
+                    <DataGridTextColumn Width="100" Header="Vorgang" Binding="{Binding Operation}" />
+                    <DataGridTextColumn Width="135" Header="Datensatz" Binding="{Binding EntityType}" />
+                    <DataGridTextColumn Width="*" Header="Beschreibung" Binding="{Binding Description}">
+                        <DataGridTextColumn.ElementStyle>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+                                <Setter Property="TextWrapping" Value="NoWrap" />
+                                <Setter Property="ToolTip" Value="{Binding Description}" />
+                            </Style>
+                        </DataGridTextColumn.ElementStyle>
+                    </DataGridTextColumn>
+                    <DataGridCheckBoxColumn Width="75" Header="Erfolg" Binding="{Binding Succeeded}" />
+                </DataGrid.Columns>
+            </DataGrid>
+
+            <Border x:Name="AuditEmptyState"
+                    Padding="24"
+                    HorizontalAlignment="Center"
+                    VerticalAlignment="Center"
+                    Background="{DynamicResource SurfaceAltBrush}"
+                    BorderBrush="{DynamicResource BorderBrush}"
+                    BorderThickness="1"
+                    CornerRadius="{DynamicResource CardCornerRadius}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Visibility" Value="Collapsed" />
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding HasEntries}" Value="False">
+                                <Setter Property="Visibility" Value="Visible" />
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <TextBlock Foreground="{DynamicResource SecondaryTextBrush}"
+                           Text="Für dieses Projekt sind noch keine Änderungen protokolliert."
+                           TextAlignment="Center"
+                           TextWrapping="Wrap" />
+            </Border>
+        </Grid>
+
         <Border Grid.Row="2"
-                Margin="0,14,0,0"
                 Padding="20,12"
                 Background="{DynamicResource SurfaceAltBrush}"
                 BorderBrush="{DynamicResource BorderBrush}"
@@ -62,7 +105,9 @@
             <Button Style="{StaticResource BaseButtonStyle}"
                     Width="100"
                     HorizontalAlignment="Right"
+                    IsDefault="True"
                     IsCancel="True"
+                    AutomationProperties.Name="Änderungsprotokoll schließen"
                     Content="Schließen" />
         </Border>
     </Grid>

@@ -7,7 +7,8 @@
         MinWidth="560"
         MinHeight="420"
         ShowInTaskbar="False"
-        WindowStartupLocation="CenterOwner">
+        WindowStartupLocation="CenterOwner"
+        Background="{DynamicResource DialogBackgroundBrush}">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>
@@ -23,29 +24,56 @@
             <RowDefinition Height="*" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <Border Padding="16,12" Background="{DynamicResource SurfaceAltBrush}">
-            <DockPanel>
-                <TextBlock Style="{StaticResource HeadingStyle}" Text="{Binding FileName}" />
-                <TextBlock Margin="14,3,0,0"
-                           Style="{StaticResource BodyStyle}"
-                           Foreground="{DynamicResource MutedTextBrush}"
-                           Text="{Binding Dimensions}" />
-            </DockPanel>
+
+        <Border x:Name="ImagePreviewHeader"
+                Grid.Row="0"
+                Padding="20,14"
+                Background="{DynamicResource HeaderBackgroundBrush}"
+                AutomationProperties.Name="Bildvorschau: Dateiinformationen">
+            <StackPanel>
+                <TextBlock Foreground="{DynamicResource HeaderForegroundBrush}"
+                           FontSize="{StaticResource FontSize2Xl}"
+                           FontWeight="SemiBold"
+                           Text="{Binding FileName}"
+                           TextTrimming="CharacterEllipsis" />
+                <TextBlock Margin="0,4,0,0"
+                           Foreground="{DynamicResource HeaderMutedBrush}"
+                           Text="{Binding Dimensions}"
+                           TextTrimming="CharacterEllipsis" />
+            </StackPanel>
         </Border>
-        <ScrollViewer Grid.Row="1"
-                      Margin="12"
-                      HorizontalScrollBarVisibility="Auto"
-                      VerticalScrollBarVisibility="Auto">
-            <Image Source="{Binding PreviewImage}"
-                   Stretch="Uniform"
-                   SnapsToDevicePixels="True" />
-        </ScrollViewer>
-        <Button Grid.Row="2"
-                Width="100"
-                Margin="0,0,16,14"
-                HorizontalAlignment="Right"
-                IsDefault="True"
-                IsCancel="True"
-                Content="Schließen" />
+
+        <Border Grid.Row="1"
+                Margin="20,16"
+                Padding="12"
+                Background="{DynamicResource SurfaceBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="1"
+                CornerRadius="{DynamicResource CardCornerRadius}">
+            <ScrollViewer x:Name="ImagePreviewViewport"
+                          HorizontalScrollBarVisibility="Auto"
+                          VerticalScrollBarVisibility="Auto"
+                          AutomationProperties.Name="Bildvorschau">
+                <Image HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Source="{Binding PreviewImage}"
+                       Stretch="Uniform"
+                       SnapsToDevicePixels="True" />
+            </ScrollViewer>
+        </Border>
+
+        <Border Grid.Row="2"
+                Padding="20,12"
+                Background="{DynamicResource SurfaceAltBrush}"
+                BorderBrush="{DynamicResource BorderBrush}"
+                BorderThickness="0,1,0,0">
+            <Button Style="{StaticResource BaseButtonStyle}"
+                    Width="100"
+                    HorizontalAlignment="Right"
+                    IsDefault="True"
+                    IsCancel="True"
+                    AutomationProperties.Name="Bildvorschau schließen"
+                    Content="Schließen" />
+        </Border>
     </Grid>
 </Window>

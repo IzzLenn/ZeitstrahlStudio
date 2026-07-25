@@ -8,7 +8,13 @@ public partial class AuditLogDialog : Window
 {
     public AuditLogDialog(IReadOnlyList<AuditEntry> entries)
     {
+        ArgumentNullException.ThrowIfNull(entries);
         InitializeComponent();
-        DataContext = entries ?? throw new ArgumentNullException(nameof(entries));
+        DataContext = new AuditLogDialogModel(entries);
+    }
+
+    private sealed record AuditLogDialogModel(IReadOnlyList<AuditEntry> Entries)
+    {
+        public bool HasEntries => Entries.Count > 0;
     }
 }

@@ -525,3 +525,11 @@ Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifi
 
 - Der Dokumentanalyse-Dialog folgt nun dem semantischen Kopf-, Inhalts- und Aktionsleistenvertrag; alle bestehenden Bindings und Tastaturaktionen bleiben erhalten.
 - Verifikation: Debug-Build erfolgreich (0 Warnungen, 0 Fehler); 7 gezielte Analyse-, Export- und Sicherungsintegrationstests bestanden.
+
+## UI-Redesign 0.3.0 – Phase 4, Teilmeilenstein Bildvorschau und Änderungsprotokoll (25.07.2026)
+
+- Bildvorschau und Änderungsprotokoll folgen jetzt dem vorhandenen themefähigen Dialogvertrag aus Kopfbereich, abgegrenztem scrollbaren Inhalt und fester Aktionsleiste.
+- Die Bildvorschau behält Dekodierung, Zoomdarstellung und Scrollen; das Änderungsprotokoll behält Datenquelle, Spalten, Sortierung und Schließen, ergänzt einen beschreibenden Leerzustand und lesbare Langtextbehandlung.
+- Neue STA-basierte Dialogtests prüfen beide Fenster mit temporären Daten auf Titel, erreichbare primäre Controls, AutomationProperties, Leerzustand, Mindestlayout und Standard-/Abbrechenaktion. Eine separate externe UI-Automation-Bibliothek ist nicht vorhanden.
+- Verifikation: `dotnet build ZeitstrahlStudio.sln -c Debug --no-restore` erfolgreich (0 Warnungen, 0 Fehler); gezielte Dialog-, Audit- und Themevertragstests 9/9 bestanden.
+- Keine neuen Iconanforderungen. Nächster Schritt nach erneuter Freigabe: verbleibende Phase-4-Dialogmarkups für PDF-Vorschau, Export und Sicherungsverwaltung gegen denselben Vertrag prüfen.
