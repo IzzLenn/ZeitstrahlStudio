@@ -33,7 +33,7 @@ Beim ersten Start zeigt Zeitstrahl Studio einen Startbildschirm mit folgenden Op
 
 - **Neues Projekt**: Ein leeres Projekt erstellen
 - **Projekt öffnen**: Ein vorhandenes `.zeitprojekt`-Archiv öffnen
-- **Einstellungen**: Hell, Dunkel oder die lokale Windows-Einstellung bereits vor dem Öffnen eines Projekts wählen
+- **Einstellungen in der oberen Befehlsleiste**: Hell, Dunkel oder die lokale Windows-Einstellung bereits vor dem Öffnen eines Projekts wählen
 - **Zuletzt verwendet**: Schnellzugriff auf kürzlich geöffnete Projekte
 - **Wiederherstellen**: Wiederherstellung nach einem Absturz
 

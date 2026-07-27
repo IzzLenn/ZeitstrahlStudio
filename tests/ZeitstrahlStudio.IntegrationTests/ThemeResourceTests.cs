@@ -109,19 +109,36 @@ public sealed class ThemeResourceTests
     }
 
     [Fact]
-    public void SharedControlStyles_ThemeDropdownAndPopupSurfaces()
+    public void SharedControlStyles_PreserveStandardDropdownBehavior()
     {
         var path = Path.Combine(FindAppRoot(), "Themes", "ControlStyles.xaml");
         var xaml = File.ReadAllText(path);
 
-        Assert.Contains("<ControlTemplate TargetType=\"ComboBox\">", xaml, StringComparison.Ordinal);
-        Assert.Contains("TargetType=\"ComboBoxItem\"", xaml, StringComparison.Ordinal);
-        Assert.Contains("{DynamicResource ElevatedSurfaceBrush}", xaml, StringComparison.Ordinal);
+        Assert.Contains("<Style TargetType=\"ComboBox\">", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("<ControlTemplate TargetType=\"ComboBox\">", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("TargetType=\"ComboBoxItem\"", xaml, StringComparison.Ordinal);
         Assert.Contains("TargetType=\"CalendarItem\"", xaml, StringComparison.Ordinal);
         Assert.Contains("TargetType=\"ContextMenu\"", xaml, StringComparison.Ordinal);
-        Assert.DoesNotContain("SystemColors.", xaml, StringComparison.Ordinal);
         Assert.DoesNotContain("Background=\"White\"", xaml, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("Background=\"#FFFFFF\"", xaml, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void DarkTheme_OverridesNativeSelectionSurfacesWithoutReplacingControlTemplates()
+    {
+        var brushes = ReadBrushes(Path.Combine(FindAppRoot(), "Themes", "Theme.Dark.xaml"));
+
+        foreach (var key in new[]
+                 {
+                     "{x:Static SystemColors.WindowBrushKey}",
+                     "{x:Static SystemColors.ControlBrushKey}",
+                     "{x:Static SystemColors.HighlightBrushKey}",
+                     "{x:Static SystemColors.MenuBrushKey}",
+                 })
+        {
+            Assert.True(brushes.TryGetValue(key, out var brush), $"Im dunklen Theme fehlt {key}.");
+            Assert.NotEqual(new RgbColor(255, 255, 255), brush);
+        }
     }
 
     private static Dictionary<string, RgbColor> ReadBrushes(string path)

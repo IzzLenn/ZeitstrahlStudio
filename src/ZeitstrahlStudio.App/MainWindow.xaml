@@ -556,11 +556,6 @@
                         <Button Style="{StaticResource ToolbarButtonStyle}"
                                 Command="{Binding OpenProjectCommand}"
                                 Content="Projekt öffnen" />
-                        <Button Style="{StaticResource ToolbarButtonStyle}"
-                                Command="{Binding SettingsCommand}"
-                                AutomationProperties.Name="Einstellungen im Startbildschirm"
-                                ToolTip="Erscheinungsbild vor dem Öffnen eines Projekts einstellen"
-                                Content="Einstellungen" />
                     </StackPanel>
                 </StackPanel>
 

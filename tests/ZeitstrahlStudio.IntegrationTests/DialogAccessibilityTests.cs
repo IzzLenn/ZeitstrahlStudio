@@ -127,7 +127,7 @@ public sealed class DialogAccessibilityTests
     }
 
     [Fact]
-    public async Task ComboBoxPopup_UsesDarkThemeSurfaceAtRuntime()
+    public async Task ComboBoxPopup_PreservesLabelsAndUsesDarkNativeSurfaceAtRuntime()
     {
         await RunOnStaThread(() =>
         {
@@ -141,15 +141,23 @@ public sealed class DialogAccessibilityTests
             Layout(dialog, 520, 330);
             var comboBox = Assert.IsType<ComboBox>(dialog.FindName("ApplicationThemeBox"));
             _ = comboBox.ApplyTemplate();
+
+            Assert.Contains(
+                FindVisualDescendants<TextBlock>(comboBox),
+                text => text.Text == "Dunkel");
+
             comboBox.IsDropDownOpen = true;
             comboBox.UpdateLayout();
-
             var popup = Assert.IsType<Popup>(comboBox.Template.FindName("PART_Popup", comboBox));
-            var popupSurface = Assert.IsType<Border>(popup.Child);
-            var background = Assert.IsType<SolidColorBrush>(popupSurface.Background);
+            Assert.NotNull(popup.Child);
+            var backgrounds = FindVisualDescendants<Border>(popup.Child)
+                .Select(border => border.Background)
+                .OfType<SolidColorBrush>()
+                .Select(brush => brush.Color)
+                .ToArray();
 
-            Assert.NotEqual(Colors.White, background.Color);
-            Assert.Equal(Color.FromRgb(0x1E, 0x29, 0x3B), background.Color);
+            Assert.DoesNotContain(Colors.White, backgrounds);
+            Assert.Contains(Color.FromRgb(0x0F, 0x17, 0x2A), backgrounds);
         });
     }
 
@@ -222,6 +230,24 @@ public sealed class DialogAccessibilityTests
             }
 
             foreach (var descendant in FindDescendants<T>(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    private static IEnumerable<T> FindVisualDescendants<T>(DependencyObject root)
+        where T : DependencyObject
+    {
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
+        {
+            var child = VisualTreeHelper.GetChild(root, index);
+            if (child is T match)
+            {
+                yield return match;
+            }
+
+            foreach (var descendant in FindVisualDescendants<T>(child))
             {
                 yield return descendant;
             }

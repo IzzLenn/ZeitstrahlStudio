@@ -1076,21 +1076,35 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         var focused = selected && IsKeyboardFocusWithin;
         var isFileDropTarget = fileDropTargetEventId == timelineEvent.Id;
         var borderPen = CreatePen(
-            isFileDropTarget || selected
-                ? SelectedBrush
-                : card.HasManualConflict ? DeadlineBrush : color,
-            isFileDropTarget ? 4 : selected ? 3 : hovered ? 3 : card.HasManualConflict ? 3 : 2);
+            color,
+            isFileDropTarget ? 4 : selected || hovered || card.HasManualConflict ? 3 : 2);
         drawingContext.DrawRoundedRectangle(
             CardBrush,
             borderPen,
             rect,
             CardCornerRadius,
             CardCornerRadius);
-        if (focused)
+        if (selected || isFileDropTarget)
         {
             var focusRect = rect;
             focusRect.Inflate(3, 3);
-            drawingContext.DrawRoundedRectangle(null, CreateDashedPen(SelectedBrush, 1.5), focusRect, CardCornerRadius + 2, CardCornerRadius + 2);
+            drawingContext.DrawRoundedRectangle(
+                null,
+                CreateDashedPen(SelectedBrush, focused || isFileDropTarget ? 1.5 : 1),
+                focusRect,
+                CardCornerRadius + 2,
+                CardCornerRadius + 2);
+        }
+        else if (card.HasManualConflict)
+        {
+            var conflictRect = rect;
+            conflictRect.Inflate(3, 3);
+            drawingContext.DrawRoundedRectangle(
+                null,
+                CreateDashedPen(DeadlineBrush, 1.5),
+                conflictRect,
+                CardCornerRadius + 2,
+                CardCornerRadius + 2);
         }
         var colorBar = Orientation == TimelineOrientation.Horizontal
             ? new Rect(rect.Left, rect.Top, 7, rect.Height)

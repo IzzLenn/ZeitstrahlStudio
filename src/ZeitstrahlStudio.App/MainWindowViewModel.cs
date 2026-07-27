@@ -1058,7 +1058,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             Theme = themeService.CurrentTheme,
         };
         var settings = dialogs.RequestProjectSettings(settingsForDialog);
-        if (settings is null || settings == CurrentWorkspace.Project.Settings)
+        if (settings is null || settings == settingsForDialog)
         {
             return;
         }

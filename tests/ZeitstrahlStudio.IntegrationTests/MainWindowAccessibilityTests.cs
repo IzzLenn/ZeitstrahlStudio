@@ -141,7 +141,7 @@ public sealed class MainWindowAccessibilityTests
     }
 
     [Fact]
-    public async Task MainWindow_StartScreenExposesSettingsBeforeAProjectIsOpened()
+    public async Task MainWindow_TopCommandBarExposesSettingsBeforeAProjectIsOpened()
     {
         await RunOnStaThread(() =>
         {
@@ -153,11 +153,12 @@ public sealed class MainWindowAccessibilityTests
 
                 Assert.True(viewModel.HasNoProject);
                 Assert.True(viewModel.SettingsCommand.CanExecute(null));
-                var settings = Assert.IsType<Button>(FindAutomationNamedDescendant(
-                    window,
-                    "Einstellungen im Startbildschirm"));
+                var commandBar = Assert.IsType<Border>(window.FindName("GlobalCommandBar"));
+                var settings = Assert.Single(FindLogicalDescendants<Button>(commandBar)
+                    .Where(button => AutomationProperties.GetName(button) == "Einstellungen"));
                 Assert.Equal(Visibility.Visible, settings.Visibility);
                 Assert.True(settings.IsEnabled);
+                Assert.Null(FindAutomationNamedDescendant(window, "Einstellungen im Startbildschirm"));
             }
             finally
             {
@@ -166,6 +167,56 @@ public sealed class MainWindowAccessibilityTests
         });
     }
 
+    [Fact]
+    public async Task ProjectSettings_CanSwitchFromGlobalDarkToStoredProjectLightTheme()
+    {
+        ApplicationTheme? appliedTheme = null;
+        var applicationTheme = CreateProxy<IApplicationThemeService>(
+            new Dictionary<string, Func<object?[], object?>>
+            {
+                ["get_CurrentTheme"] = _ => ApplicationTheme.Dark,
+                ["get_IsDark"] = _ => true,
+                [nameof(IApplicationThemeService.ApplyAndSaveAsync)] = arguments =>
+                {
+                    appliedTheme = (ApplicationTheme)arguments[0]!;
+                    return Task.CompletedTask;
+                },
+            });
+        var dialogs = CreateProxy<IUserDialogService>(
+            new Dictionary<string, Func<object?[], object?>>
+            {
+                [nameof(IUserDialogService.RequestProjectSettings)] = arguments =>
+                {
+                    var presented = Assert.IsType<ProjectSettings>(arguments[0]);
+                    Assert.Equal(ApplicationTheme.Dark, presented.Theme);
+                    return presented with { Theme = ApplicationTheme.Light };
+                },
+            });
+        var viewModel = CreateViewModel(
+            openProject: true,
+            applicationThemeOverride: applicationTheme,
+            dialogsOverride: dialogs,
+            configureProject: project => project.ChangeSettings(
+                project.Settings with { Theme = ApplicationTheme.Light },
+                Timestamp.AddMinutes(1)));
+        try
+        {
+            var method = typeof(MainWindowViewModel).GetMethod(
+                "EditProjectSettingsAsync",
+                BindingFlags.Instance | BindingFlags.NonPublic);
+            var task = Assert.IsAssignableFrom<Task>(method!.Invoke(viewModel, null));
+
+            await task;
+
+            Assert.Equal(ApplicationTheme.Light, appliedTheme);
+            Assert.Equal(ApplicationTheme.Light, viewModel.CurrentProject!.Settings.Theme);
+            Assert.Equal("Die Projekteinstellungen wurden übernommen.", viewModel.StatusMessage);
+        }
+        finally
+        {
+            await viewModel.DisposeAsync();
+        }
+    }
     [Theory]
     [InlineData(1.00)]
     [InlineData(1.25)]
@@ -322,7 +373,11 @@ public sealed class MainWindowAccessibilityTests
     }
     private static MainWindowViewModel CreateViewModelWithProject() => CreateViewModel(openProject: true);
 
-    private static MainWindowViewModel CreateViewModel(bool openProject)
+    private static MainWindowViewModel CreateViewModel(
+        bool openProject,
+        IApplicationThemeService? applicationThemeOverride = null,
+        IUserDialogService? dialogsOverride = null,
+        Action<TimelineProject>? configureProject = null)
     {
         var project = TimelineProject.Create(Guid.NewGuid(), "Zugänglichkeitstest", Timestamp);
         for (var index = 0; index < 4; index++)
@@ -336,6 +391,8 @@ public sealed class MainWindowAccessibilityTests
                 Timestamp);
         }
 
+        configureProject?.Invoke(project);
+
         var workspace = new ProjectWorkspace(
             project,
             Path.GetTempPath(),
@@ -344,6 +401,8 @@ public sealed class MainWindowAccessibilityTests
         var workspaces = CreateProxy<IProjectWorkspaceService>(new Dictionary<string, Func<object?[], object?>>
         {
             [nameof(IProjectWorkspaceService.OpenAsync)] = _ => Task.FromResult(workspace),
+            [nameof(IProjectWorkspaceService.CheckpointAsync)] = arguments =>
+                Task.FromResult(Assert.IsType<ProjectWorkspace>(arguments[0])),
         });
         var recent = CreateProxy<IRecentProjectsService>(new Dictionary<string, Func<object?[], object?>>
         {
@@ -355,7 +414,7 @@ public sealed class MainWindowAccessibilityTests
             [nameof(IProjectRecoveryService.FindAsync)] = _ =>
                 Task.FromResult<IReadOnlyList<RecoveryCandidate>>([]),
         });
-        var applicationTheme = CreateProxy<IApplicationThemeService>(
+        var applicationTheme = applicationThemeOverride ?? CreateProxy<IApplicationThemeService>(
             new Dictionary<string, Func<object?[], object?>>
             {
                 ["get_CurrentTheme"] = _ => ApplicationTheme.Dark,
@@ -380,7 +439,7 @@ public sealed class MainWindowAccessibilityTests
             CreateProxy<IAttachmentAnalysisQueue>(),
             CreateProxy<IAttachmentAnalysisStore>(),
             new ProjectEventEditingService(),
-            CreateProxy<IUserDialogService>());
+            dialogsOverride ?? CreateProxy<IUserDialogService>());
         if (openProject)
         {
             viewModel.OpenPathAsync(workspace.ArchivePath!).GetAwaiter().GetResult();

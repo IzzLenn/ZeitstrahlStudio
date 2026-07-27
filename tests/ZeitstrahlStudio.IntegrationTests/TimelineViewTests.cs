@@ -1,3 +1,4 @@
+using System.Reflection;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
@@ -98,6 +99,75 @@ public sealed class TimelineViewTests
         thread.Join(TimeSpan.FromSeconds(5));
     }
 
+    [Fact]
+    public async Task Render_UsesEventColorForTheCompleteSelectedCardFrame()
+    {
+        var completion = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var thread = new Thread(() =>
+        {
+            try
+            {
+                const int width = 700;
+                const int height = 460;
+                var project = TimelineProject.Create(Guid.NewGuid(), "Farbtest", Timestamp);
+                var timelineEvent = TimelineEvent.Create(
+                    Guid.NewGuid(),
+                    "Vollständig farbiger Rahmen",
+                    EventDate.Exact(new DateOnly(2026, 7, 27)),
+                    Timestamp);
+                timelineEvent.SetClassification(
+                    EventPriority.Normal,
+                    EventStatus.Active,
+                    "#12AB34",
+                    Timestamp);
+                project.AddEvent(timelineEvent, Timestamp);
+                var view = new TimelineView
+                {
+                    Project = project,
+                    SelectedEvent = timelineEvent,
+                    Orientation = TimelineOrientation.Horizontal,
+                    CompressLargeGaps = true,
+                };
+
+                _ = Render(view, width, height);
+                view.ShowWholeProject();
+                var pixels = Render(view, width, height);
+                var layoutField = typeof(TimelineView).GetField(
+                    "layout",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                var layout = Assert.IsType<TimelineLayoutResult>(layoutField!.GetValue(view));
+                var card = Assert.Single(layout.Cards);
+                var getCardRect = typeof(TimelineView).GetMethod(
+                    "GetCardRect",
+                    BindingFlags.Instance | BindingFlags.NonPublic);
+                var cardRect = Assert.IsType<Rect>(getCardRect!.Invoke(view, [card]));
+                var framePoint = new Point(
+                    cardRect.Left + (cardRect.Width / 2) - view.HorizontalOffset,
+                    cardRect.Top + 1 - view.VerticalOffset);
+
+                AssertColorNear(
+                    pixels,
+                    width,
+                    height,
+                    framePoint,
+                    Color.FromRgb(0x12, 0xAB, 0x34));
+                completion.SetResult();
+            }
+            catch (Exception exception)
+            {
+                completion.SetException(exception);
+            }
+            finally
+            {
+                Dispatcher.CurrentDispatcher.InvokeShutdown();
+            }
+        });
+        thread.SetApartmentState(ApartmentState.STA);
+        thread.Start();
+
+        await completion.Task.WaitAsync(TimeSpan.FromSeconds(15));
+        thread.Join(TimeSpan.FromSeconds(5));
+    }
     [Theory]
     [InlineData(1.00)]
     [InlineData(1.25)]
@@ -140,6 +210,33 @@ public sealed class TimelineViewTests
 
         await completion.Task.WaitAsync(TimeSpan.FromSeconds(15));
         thread.Join(TimeSpan.FromSeconds(5));
+    }
+
+    private static void AssertColorNear(
+        byte[] pixels,
+        int width,
+        int height,
+        Point point,
+        Color expected)
+    {
+        var centerX = (int)Math.Round(point.X);
+        var centerY = (int)Math.Round(point.Y);
+        for (var y = Math.Max(0, centerY - 2); y <= Math.Min(height - 1, centerY + 2); y++)
+        {
+            for (var x = Math.Max(0, centerX - 2); x <= Math.Min(width - 1, centerX + 2); x++)
+            {
+                var offset = ((y * width) + x) * 4;
+                if (pixels[offset] == expected.B &&
+                    pixels[offset + 1] == expected.G &&
+                    pixels[offset + 2] == expected.R &&
+                    pixels[offset + 3] == byte.MaxValue)
+                {
+                    return;
+                }
+            }
+        }
+
+        Assert.Fail($"Am Kartenrahmen wurde nicht die Ereignisfarbe {expected} gefunden.");
     }
 
     private static byte[] Render(TimelineView view, int width, int height, double scale = 1)

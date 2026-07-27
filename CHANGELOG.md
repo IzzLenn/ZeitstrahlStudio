@@ -6,7 +6,7 @@ Alle wichtigen Änderungen an Zeitstrahl Studio werden in dieser Datei dokumenti
 
 ### Geändert
 
-- Dunkelmodus für ComboBox-Popups, Kalender, Kontextmenüs, Tabellenköpfe und weitere native Auswahlflächen vollständig themefähig gemacht
+- Dunkelmodus für ComboBox-Popups, Kalender, Kontextmenüs, Tabellenköpfe und weitere native Auswahlflächen themefähig gemacht, ohne das Standardverhalten der Dropdowns zu ersetzen
 - Einstellungen bereits im Startbildschirm zugänglich gemacht und das globale Farbschema lokal sowie atomar gespeichert
 - Projektwechsel und Projekterstellung überschreiben das gewählte globale Hell-/Dunkel-Schema nicht mehr
 - Ereigniseditor um eine visuelle, tastaturzugängliche Farbpalette mit Live-Vorschau ergänzt; freie `#RRGGBB`-Eingaben bleiben möglich

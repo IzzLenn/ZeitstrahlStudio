@@ -1,14 +1,14 @@
 # Projektstatus
 
-Status: In Entwicklung - UI-Korrektur für Darkmode, globale Einstellungen und Farbauswahl abgeschlossen
+Status: In Entwicklung - UI-Nachkorrektur für Einstellungen, Darkmode und Ereigniskarten
 
 Letzte Aktualisierung: 27.07.2026
 
 ## Aktuelle Phase
 
-Auf Branch `ui/redesign-0.3.0` ist der angeforderte UI-Korrekturmeilenstein abgeschlossen. Native Auswahl- und Popupflächen verwenden im Dunkelmodus keine weißen Systemflächen mehr. Die globale Themepräferenz ist bereits im Startbildschirm erreichbar, wird lokal atomar gespeichert und bleibt bei Projektwechseln sowie Neuerstellungen aktiv. Der Ereigniseditor bietet eine visuelle Farbpalette mit Live-Vorschau und weiterhin editierbarer `#RRGGBB`-Eingabe.
+Die visuelle Nutzerabnahme vom 27.07.2026 hat Regressionen im vorherigen UI-Korrekturmeilenstein aufgedeckt. Die Nachkorrektur ist implementiert: Der zusätzliche Einstellungsbutton innerhalb der Startseite wurde entfernt; ausschließlich der bereits vorhandene Button rechts in der oberen Befehlsleiste bleibt vor und nach dem Öffnen eines Projekts aktiv. Das eigene globale ComboBox-Template wurde vollständig zurückgenommen, weil es `DisplayMemberPath` umging und `SelectionOption`-/`SearchChoice`-Objekttexte anzeigte. Native WPF-Auswahlzustände erhalten ihre Hell-/Dunkelfarben nun über die Theme-Ressourcenschlüssel, ohne Dropdown-Funktion oder Bindings zu ersetzen.
 
-Debug und Release sind mit 0 Warnungen/0 Fehlern gebaut; jeweils 63 Unit-Tests und 113 Integrationstests bestehen. Formatprüfung und selbstenthaltender `win-x64`-Publish sind erfolgreich. Die vorhandenen Benutzeränderungen an `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` bleiben unangetastet und werden nicht committed.
+Der Wechsel von global Dunkel zu Hell innerhalb eines geöffneten Projekts vergleicht das Dialogergebnis jetzt mit dem tatsächlich an den Dialog übergebenen Ausgangszustand. Der Ereigniskartenrahmen verwendet auch bei Auswahl, Hover und Layoutkonflikt vollständig die Ereignisfarbe; Auswahl und Konflikt bleiben über getrennte äußere Markierungen erkennbar. Die vorhandenen Nutzeränderungen unter `samples/` bleiben unangetastet.
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -549,11 +549,11 @@ Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifi
 
 ## UI-Korrekturmeilenstein Theme, Start-Einstellungen und Ereignisfarbe (27.07.2026)
 
-- ComboBox besitzt jetzt ein vollständiges themefähiges Template; geschlossenes Feld, Popup-Rahmen und Einträge verwenden ausschließlich semantische dynamische Ressourcen.
+- Der zunächst eingeführte vollständige ComboBox-Template-Ersatz wurde nach der visuellen Abnahme in der unten dokumentierten Nachkorrektur vollständig zurückgenommen; Dropdowns verwenden wieder ihr Standardverhalten.
 - DatePicker-/Kalender-, Kontextmenü-, Tabellenkopf/-zellen- und Registerflächen erhielten ergänzende globale Darkmode-Stile; weiße WPF-Systemflächen werden dadurch nicht mehr in die dunkle Oberfläche übernommen.
 - Das globale Farbschema wird versioniert und atomar in `%LocalAppData%\Zeitstrahl Studio\appearance-settings.json` gespeichert und vor dem Hauptfenster geladen.
 - Projekt öffnen, Projekt erstellen und Projekt schließen wenden kein projektspezifisches Theme mehr auf die laufende Oberfläche an. Die globale Auswahl bleibt aktiv.
-- Der Einstellungsbefehl ist ohne geöffnetes Projekt verfügbar; Startansicht, Befehlsleiste und Ansichtsmenü bieten einen direkten Zugang.
+- Der Einstellungsbefehl ist ohne geöffnetes Projekt verfügbar; der bereits vorhandene Button in der oberen Befehlsleiste und das Ansichtsmenü bieten den direkten Zugang.
 - Der Ereigniseditor zeigt zwölf beschriftete, tastaturbedienbare Farbfelder und eine Live-Vorschau. Ein beliebiger validierter `#RRGGBB`-Wert kann weiterhin eingegeben werden.
 - Neue Regressionstests prüfen atomare Persistenz und Wiederherstellung, toleranten Start bei beschädigter Einstellungsdatei, Theme-Stabilität beim Projektwechsel, Startansicht-Zugang, tatsächliche dunkle Popupfarbe, Palettenzugänglichkeit und freie Hexwerte.
 - Ein bereits vorhandener Timeline-Konflikttest wurde deterministisch an die tatsächlich sortierte zweite Karte gebunden; die vorherige zufällige GUID-Zuordnung konnte den beabsichtigten Überlappungsfall verfehlen.
@@ -574,4 +574,39 @@ Ergebnis: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 63/63 Unit-Tes
 
 ## Nächster konkreter Arbeitsschritt (27.07.2026)
 
-Manuelle visuelle Abnahme der neuen Popup-, Kalender- und Farbauswahlflächen auf Windows 10 und Windows 11 bei 100/125/150/200 Prozent Skalierung; anschließend den nächsten noch offenen UI-Redesign-Schritt neu bestimmen.
+Manuelle visuelle Nachprüfung des korrigierten oberen Einstellungszugangs, der WPF-Standard-Dropdowns, aller Darkmode-Auswahlzustände, des Theme-Wechsels und der vollständig farbigen Ereigniskartenrahmen; anschließend den nächsten noch offenen UI-Redesign-Schritt neu bestimmen.
+
+## UI-Nachkorrektur nach visueller Abnahme (27.07.2026)
+
+### Umgesetzte Änderungen
+
+- Den ausschließlich im vorherigen Korrekturcommit ergänzten Einstellungsbutton innerhalb der Startseiten-Aktionsgruppe entfernt.
+- Den bereits vorhandenen Einstellungsbutton rechts in der oberen Befehlsleiste beibehalten; `SettingsCommand` bleibt ohne geöffnetes Projekt ausführbar und öffnet dort die globalen Anwendungseinstellungen.
+- Das im vorherigen Korrekturcommit eingeführte vollständige `ComboBox`- und `ComboBoxItem`-Template vollständig auf den vorherigen Standardstil zurückgeführt. Damit funktionieren `DisplayMemberPath`, `SelectedValuePath`, Tastatursteuerung und bestehende Dropdown-Bindings wieder unverändert.
+- Helle native WPF-Auswahlflächen im Dunkelmodus über Theme-Ressourcen für Window, Control, Highlight, inaktive Auswahl, Menu, Rahmen und Infobereiche korrigiert. Dieselben Ressourcenschlüssel sind mit passenden Farben auch im hellen Theme vorhanden.
+- Fehler im Projekt-Einstellungsablauf behoben: Das Ergebnis wird gegen `settingsForDialog` statt gegen den davon abweichenden gespeicherten Projektzustand verglichen. Dadurch wird die Auswahl „Hell“ nicht mehr verworfen, wenn das Projekt bereits Hell gespeichert hatte, global aber Dunkel aktiv ist.
+- Timeline-Renderer geändert: Der vollständige innere Kartenrahmen verwendet immer `TimelineEvent.ColorHex`. Auswahl beziehungsweise Datei-Drop erhalten weiterhin eine separate blaue äußere gestrichelte Markierung; ein Layoutkonflikt erhält eine separate rote äußere gestrichelte Markierung.
+- Benutzerhandbuch, Änderungsprotokoll und ADR-038 an den korrigierten Bedien- und Themevertrag angepasst.
+
+### Automatisierte Regressionstests
+
+- Hauptfenstertest prüft, dass vor dem Öffnen eines Projekts genau der obere Einstellungsbutton sichtbar und aktiv ist und kein zusätzlicher Startseiten-Button existiert.
+- ViewModel-Test reproduziert den zuvor fehlerhaften Wechsel von global Dunkel zu im Projekt bereits gespeichertem Hell und prüft Anwendung, Projektzustand und Statusmeldung.
+- Theme-Test verhindert ein erneutes globales eigenes ComboBox-Template und prüft die dunklen nativen Window-/Control-/Highlight-/Menu-Flächen.
+- Laufzeittest prüft am echten Standard-ComboBox-Visual-Tree die sichtbare Beschriftung „Dunkel“ sowie eine nicht weiße Popupfläche.
+- Renderpixel-Test prüft bei einer ausgewählten Ereigniskarte die benutzerdefinierte Ereignisfarbe am oberen Kartenrahmen und damit außerhalb des linken Farbbalkens.
+
+### Erfolgreiche Abschlussverifikation
+
+```powershell
+dotnet restore ZeitstrahlStudio.sln
+dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore --no-build
+dotnet build ZeitstrahlStudio.sln -c Release --no-restore
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
+dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
+dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
+.\build.ps1 -Task BuildInstaller -Version 0.3.0
+```
+
+Ergebnis: Debug und Release jeweils 0 Warnungen und 0 Fehler; jeweils 63/63 Unit-Tests und 116/116 Integrationstests bestanden. Formatprüfung und selbstenthaltender `win-x64`-Publish erfolgreich. Inno Setup 6.7.3 erzeugte den Installer `ZeitstrahlStudio-0.3.0-win-x64-setup.exe` mit 62.730.065 Bytes und SHA-256 `2A9D607B6A8FB50A5973A8BDD06D063888B37A6A1F18FCAD5E8A42806ECD1C95`.
