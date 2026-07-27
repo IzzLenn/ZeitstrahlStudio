@@ -706,3 +706,40 @@ Ergebnis: Debug und Release jeweils 0 Warnungen und 0 Fehler; jeweils 63/63 Unit
 ## Nächster konkreter Arbeitsschritt (27.07.2026, Register-/DatePicker-Korrektur)
 
 Aktualisierten Installer installieren und die ausgewählten Registerkarten in Hauptansicht, Ereigniseditor und Detailinspektor, das deaktivierte/aktive Fälligkeitsdatum einschließlich Kalender sowie die Standardfarbpalette visuell prüfen. Andere UI- oder Funktionsbereiche bleiben bis zu einer neuen ausdrücklichen Beauftragung unverändert.
+
+## UI-Nachkorrektur Hauptmenü-Markierung im Darkmode (27.07.2026)
+
+### Ursache und enger Änderungsumfang
+
+- Der neue Screenshot zeigte im geöffneten oberen Menü „Ansicht“ eine helle native WPF-Hervorhebungsfläche. Die helle Darkmode-Schrift des Eintrags war darauf nicht lesbar.
+- Ausschließlich die Darstellung der `MenuItem`-Instanzen im vorhandenen `MainMenu` wurde geändert. Menübefehle, Eingabegesten, Untermenüs, Kontextmenüs, ComboBoxen, Dialoge und fachliche Abläufe blieben unverändert.
+- Die vorhandenen Benutzeränderungen in `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` wurden nicht bearbeitet und bleiben außerhalb dieses Meilensteins.
+
+### Umsetzung und Tests
+
+- Das lokale `MainMenu.Resources`-Template zeichnet Grundfläche und Popup mit `MenuBackgroundBrush`.
+- Hervorgehobene und geöffnete Einträge verwenden `NavigationSelectedBackgroundBrush` und `NavigationSelectedForegroundBrush`; angehakte Einträge verwenden die korrespondierenden Auswahlressourcen. Im dunklen Theme entspricht dies einer Fläche `#1E3A8A` mit Schrift `#BFDBFE`.
+- Header, Zugriffstasten, Befehlskürzel, Untermenüpfeil, Häkchen, Rollen und Tastaturnavigation bleiben Bestandteil des WPF-`MenuItem`-Vertrags.
+- Ein Laufzeittest prüft am realen Hauptmenü die dunkle aktive Eintragsfläche, lesbare helle Schrift und die Popupfläche `#111827`. Ein zusätzlicher XAML-Vertragstest fordert den lokal begrenzten `IsHighlighted`-Zustand und verhindert eine versehentliche Rückkehr zur nativen hellen Markierung.
+- Alle 27 Hauptfenster-/Theme-Tests bestanden. Der vollständige Abschlusslauf bestand mit 63/63 Unit- und 123/123 Integrationstests in Debug und Release.
+- Der normale Patch-Helfer scheiterte bei allen Änderungsversuchen vor Dateizugriff am Windows-Sandbox-Startfehler. Daher wurden ausschließlich exakt gezählte Einmal-Ersetzungen verwendet und anschließend mit `git diff --check`, Diff-Review, Build und Tests kontrolliert.
+- Der erste Lauf des neuen Laufzeittests erwartete einen geöffnet bleibenden Popupzustand in einem nur angeordneten, nicht eingeblendeten WPF-Testfenster. WPF schloss diesen Zustand sofort. Die instabile Erwartung wurde entfernt; der aktive Eintrag wird zur Laufzeit geprüft, während der konkrete Hover-Trigger zusätzlich statisch abgesichert ist.
+
+### Erfolgreiche Abschlussverifikation
+
+```powershell
+dotnet restore ZeitstrahlStudio.sln
+dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore --no-build
+dotnet build ZeitstrahlStudio.sln -c Release --no-restore
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
+dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
+dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
+.\build.ps1 -Task BuildInstaller -Version 0.3.0
+```
+
+Ergebnis: Debug und Release jeweils 0 Warnungen und 0 Fehler; jeweils 63/63 Unit-Tests und 123/123 Integrationstests bestanden. Formatprüfung und selbstenthaltender `win-x64`-Publish erfolgreich. Inno Setup 6.7.3 erzeugte den aktualisierten Installer `ZeitstrahlStudio-0.3.0-win-x64-setup.exe` mit 62.739.836 Bytes und SHA-256 `ABECB136D2447BAF350E2F0FE359C704C37B4D3F0FD69628CDF48B63A3EF30F5`.
+
+## Nächster konkreter Arbeitsschritt (27.07.2026, Hauptmenü-Markierung)
+
+Aktualisierten Installer installieren, im Dunkelmodus das Menü „Ansicht“ öffnen und die Lesbarkeit beim Überfahren aller Einträge mit Maus sowie Tastatur visuell prüfen. Andere UI- oder Funktionsbereiche bleiben bis zu einer neuen ausdrücklichen Beauftragung unverändert.

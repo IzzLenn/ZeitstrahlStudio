@@ -151,6 +151,27 @@ public sealed class ThemeResourceTests
     }
 
     [Fact]
+    public void MainWindow_MainMenuScopesReadableHighlightedStateToItsOwnTemplate()
+    {
+        var path = Path.Combine(FindAppRoot(), "MainWindow.xaml");
+        var xaml = File.ReadAllText(path);
+
+        Assert.Contains("<Menu.Resources>", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"MainMenuItemBorder\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("<Trigger Property=\"IsHighlighted\" Value=\"True\">", xaml, StringComparison.Ordinal);
+        Assert.Contains(
+            "Value=\"{DynamicResource NavigationSelectedBackgroundBrush}\"",
+            xaml,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "Value=\"{DynamicResource NavigationSelectedForegroundBrush}\"",
+            xaml,
+            StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"PART_Popup\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("ContentSource=\"Header\"", xaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void DarkTheme_OverridesNativeSelectionSurfacesWithoutReplacingControlTemplates()
     {
         var brushes = ReadBrushes(Path.Combine(FindAppRoot(), "Themes", "Theme.Dark.xaml"));

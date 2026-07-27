@@ -141,6 +141,60 @@ public sealed class MainWindowAccessibilityTests
     }
 
     [Fact]
+    public async Task MainWindow_DarkMainMenuKeepsActiveEntriesReadable()
+    {
+        await RunOnStaThread(() =>
+        {
+            var viewModel = CreateViewModelWithProject();
+            try
+            {
+                var window = new MainWindow(viewModel);
+                window.Resources.MergedDictionaries.Insert(0, new ResourceDictionary
+                {
+                    Source = new Uri(
+                        "/ZeitstrahlStudio.App;component/Themes/Theme.Dark.xaml",
+                        UriKind.Relative),
+                });
+                Layout(window, 1_280, 760);
+
+                var menu = Assert.IsType<Menu>(window.FindName("MainMenu"));
+                var viewMenu = menu.Items.OfType<MenuItem>().Single(item =>
+                    string.Equals(item.Header as string, "_Ansicht", StringComparison.Ordinal));
+                _ = viewMenu.ApplyTemplate();
+                viewMenu.UpdateLayout();
+
+                var vertical = viewMenu.Items.OfType<MenuItem>().Single(item =>
+                    string.Equals(item.Header as string, "_Vertikal", StringComparison.Ordinal));
+                vertical.IsCheckable = true;
+                vertical.IsChecked = true;
+                _ = vertical.ApplyTemplate();
+                vertical.UpdateLayout();
+
+                var activeEntryBorder = Assert.IsType<Border>(
+                    vertical.Template.FindName("MainMenuItemBorder", vertical));
+                Assert.Equal(
+                    Color.FromRgb(0x1E, 0x3A, 0x8A),
+                    AssertSolidColor(activeEntryBorder.Background));
+                Assert.NotEqual(Colors.White, AssertSolidColor(activeEntryBorder.Background));
+                Assert.Equal(
+                    Color.FromRgb(0xBF, 0xDB, 0xFE),
+                    AssertSolidColor(vertical.Foreground));
+
+                var popup = Assert.IsType<System.Windows.Controls.Primitives.Popup>(
+                    viewMenu.Template.FindName("PART_Popup", viewMenu));
+                var popupBorder = Assert.IsType<Border>(popup.Child);
+                Assert.Equal(
+                    Color.FromRgb(0x11, 0x18, 0x27),
+                    AssertSolidColor(popupBorder.Background));
+            }
+            finally
+            {
+                DisposeViewModel(viewModel);
+            }
+        });
+    }
+
+    [Fact]
     public async Task MainWindow_TopCommandBarExposesSettingsBeforeAProjectIsOpened()
     {
         await RunOnStaThread(() =>
