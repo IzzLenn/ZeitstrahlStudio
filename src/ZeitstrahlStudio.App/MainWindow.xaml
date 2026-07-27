@@ -164,7 +164,7 @@
                         <Separator />
                         <MenuItem Header="_Navigation ein-/ausblenden" Click="SidebarToggle_Click" />
                         <MenuItem Header="_Details ein-/ausblenden" Click="InspectorToggle_Click" />
-                        <MenuItem Header="Projekt_einstellungen" Command="{Binding SettingsCommand}" />
+                        <MenuItem Header="_Einstellungen" Command="{Binding SettingsCommand}" />
                     </MenuItem>
                     <MenuItem Header="_Ereignis">
                         <MenuItem Header="_Hinzufügen" Command="{Binding AddEventCommand}" InputGestureText="Strg+N" />
@@ -209,8 +209,8 @@
                 <Button DockPanel.Dock="Right"
                         Style="{StaticResource ToolbarButtonStyle}"
                         Command="{Binding SettingsCommand}"
-                        AutomationProperties.Name="Projekteinstellungen"
-                        ToolTip="Projekteinstellungen öffnen"
+                        AutomationProperties.Name="Einstellungen"
+                        ToolTip="Anwendungs- und Projekteinstellungen öffnen"
                         Content="Einstellungen" />
                 <Button x:Name="InspectorToggleButton"
                         DockPanel.Dock="Right"
@@ -556,6 +556,11 @@
                         <Button Style="{StaticResource ToolbarButtonStyle}"
                                 Command="{Binding OpenProjectCommand}"
                                 Content="Projekt öffnen" />
+                        <Button Style="{StaticResource ToolbarButtonStyle}"
+                                Command="{Binding SettingsCommand}"
+                                AutomationProperties.Name="Einstellungen im Startbildschirm"
+                                ToolTip="Erscheinungsbild vor dem Öffnen eines Projekts einstellen"
+                                Content="Einstellungen" />
                     </StackPanel>
                 </StackPanel>
 

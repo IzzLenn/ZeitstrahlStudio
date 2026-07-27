@@ -33,8 +33,11 @@ Beim ersten Start zeigt Zeitstrahl Studio einen Startbildschirm mit folgenden Op
 
 - **Neues Projekt**: Ein leeres Projekt erstellen
 - **Projekt öffnen**: Ein vorhandenes `.zeitprojekt`-Archiv öffnen
+- **Einstellungen**: Hell, Dunkel oder die lokale Windows-Einstellung bereits vor dem Öffnen eines Projekts wählen
 - **Zuletzt verwendet**: Schnellzugriff auf kürzlich geöffnete Projekte
 - **Wiederherstellen**: Wiederherstellung nach einem Absturz
+
+Das gewählte Farbschema wird ausschließlich lokal auf dem Gerät gespeichert. Es bleibt beim Erstellen, Öffnen und Schließen von Projekten sowie nach einem Programmneustart erhalten.
 
 ## Projekte verwalten
 
@@ -73,6 +76,8 @@ Wählen Sie **Datei → Schließen**. Ungespeicherte Änderungen werden abgefrag
   - Frist
   - Priorität, Farbe, Schlagwörter, Quelle, Notizen
   - Webseitenlinks
+
+Für die Ereignisfarbe steht eine direkt anklickbare und per Tastatur bedienbare Farbpalette zur Verfügung. Ein eigener Wert kann weiterhin im Feld daneben als `#RRGGBB` eingegeben werden.
 
 ### Ereignis bearbeiten
 

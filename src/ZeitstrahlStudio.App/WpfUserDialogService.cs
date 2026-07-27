@@ -38,6 +38,15 @@ public sealed class WpfUserDialogService : IUserDialogService
         return dialog.ShowDialog() == true ? dialog.ProjectName : null;
     }
 
+    public ApplicationTheme? RequestApplicationTheme(ApplicationTheme currentTheme)
+    {
+        var dialog = new ApplicationSettingsDialog(currentTheme)
+        {
+            Owner = System.Windows.Application.Current.MainWindow,
+        };
+        return dialog.ShowDialog() == true ? dialog.Result : null;
+    }
+
     public EventEditRequest? RequestEvent(TimelineEvent? timelineEvent, string defaultEventColorHex)
     {
         var dialog = new EventEditorDialog(timelineEvent, defaultEventColorHex)

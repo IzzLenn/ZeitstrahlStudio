@@ -40,7 +40,7 @@
                            Text="Projekteinstellungen" />
                 <TextBlock Margin="0,3,0,0"
                            Foreground="{DynamicResource HeaderMutedBrush}"
-                           Text="Darstellung und Exportvorgaben werden im Projekt gespeichert." />
+                           Text="Das Farbschema gilt global; Zeitstrahl- und Exportvorgaben werden im Projekt gespeichert." />
             </StackPanel>
         </Border>
 

@@ -1,6 +1,7 @@
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
+using System.Windows.Controls.Primitives;
 using System.Windows.Media;
 using System.Windows.Media.Imaging;
 using ZeitstrahlStudio.App;
@@ -101,6 +102,54 @@ public sealed class DialogAccessibilityTests
             Assert.True(cancel.IsCancel);
             Assert.Equal("HTML exportieren …", export.Content);
             AssertInside(dialog, optionsPanel);
+        });
+    }
+
+    [Fact]
+    public async Task ApplicationSettingsDialog_AndEventColorPaletteAreKeyboardReachable()
+    {
+        await RunOnStaThread(() =>
+        {
+            var settings = new ApplicationSettingsDialog(ApplicationTheme.Dark);
+            Layout(settings, 520, 330);
+            var themeBox = Assert.IsType<ComboBox>(settings.FindName("ApplicationThemeBox"));
+            Assert.Equal("Globales Farbschema", AutomationProperties.GetName(themeBox));
+            Assert.True(themeBox.IsEnabled);
+            Assert.True(FindButton(settings, "Einstellungen übernehmen").IsDefault);
+
+            var editor = new EventEditorDialog(null);
+            Layout(editor, 900, 720);
+            var palette = Assert.IsType<ListBox>(editor.FindName("EventColorPalette"));
+            Assert.Equal("Visuelle Ereignisfarbauswahl", AutomationProperties.GetName(palette));
+            Assert.True(palette.Focusable);
+            Assert.True(palette.Items.Count >= 12);
+        });
+    }
+
+    [Fact]
+    public async Task ComboBoxPopup_UsesDarkThemeSurfaceAtRuntime()
+    {
+        await RunOnStaThread(() =>
+        {
+            var dialog = new ApplicationSettingsDialog(ApplicationTheme.Dark);
+            dialog.Resources.MergedDictionaries.Insert(0, new ResourceDictionary
+            {
+                Source = new Uri(
+                    "/ZeitstrahlStudio.App;component/Themes/Theme.Dark.xaml",
+                    UriKind.Relative),
+            });
+            Layout(dialog, 520, 330);
+            var comboBox = Assert.IsType<ComboBox>(dialog.FindName("ApplicationThemeBox"));
+            _ = comboBox.ApplyTemplate();
+            comboBox.IsDropDownOpen = true;
+            comboBox.UpdateLayout();
+
+            var popup = Assert.IsType<Popup>(comboBox.Template.FindName("PART_Popup", comboBox));
+            var popupSurface = Assert.IsType<Border>(popup.Child);
+            var background = Assert.IsType<SolidColorBrush>(popupSurface.Background);
+
+            Assert.NotEqual(Colors.White, background.Color);
+            Assert.Equal(Color.FromRgb(0x1E, 0x29, 0x3B), background.Color);
         });
     }
 

@@ -140,6 +140,32 @@ public sealed class MainWindowAccessibilityTests
         });
     }
 
+    [Fact]
+    public async Task MainWindow_StartScreenExposesSettingsBeforeAProjectIsOpened()
+    {
+        await RunOnStaThread(() =>
+        {
+            var viewModel = CreateViewModel(openProject: false);
+            try
+            {
+                var window = new MainWindow(viewModel);
+                Layout(window, 1_280, 760);
+
+                Assert.True(viewModel.HasNoProject);
+                Assert.True(viewModel.SettingsCommand.CanExecute(null));
+                var settings = Assert.IsType<Button>(FindAutomationNamedDescendant(
+                    window,
+                    "Einstellungen im Startbildschirm"));
+                Assert.Equal(Visibility.Visible, settings.Visibility);
+                Assert.True(settings.IsEnabled);
+            }
+            finally
+            {
+                DisposeViewModel(viewModel);
+            }
+        });
+    }
+
     [Theory]
     [InlineData(1.00)]
     [InlineData(1.25)]
@@ -294,7 +320,9 @@ public sealed class MainWindowAccessibilityTests
         Assert.InRange(topLeft.X + element.ActualWidth, 0, container.ActualWidth + 0.1);
         Assert.InRange(topLeft.Y + element.ActualHeight, 0, container.ActualHeight + 0.1);
     }
-    private static MainWindowViewModel CreateViewModelWithProject()
+    private static MainWindowViewModel CreateViewModelWithProject() => CreateViewModel(openProject: true);
+
+    private static MainWindowViewModel CreateViewModel(bool openProject)
     {
         var project = TimelineProject.Create(Guid.NewGuid(), "Zugänglichkeitstest", Timestamp);
         for (var index = 0; index < 4; index++)
@@ -327,6 +355,14 @@ public sealed class MainWindowAccessibilityTests
             [nameof(IProjectRecoveryService.FindAsync)] = _ =>
                 Task.FromResult<IReadOnlyList<RecoveryCandidate>>([]),
         });
+        var applicationTheme = CreateProxy<IApplicationThemeService>(
+            new Dictionary<string, Func<object?[], object?>>
+            {
+                ["get_CurrentTheme"] = _ => ApplicationTheme.Dark,
+                ["get_IsDark"] = _ => true,
+                [nameof(IApplicationThemeService.Apply)] = _ => throw new InvalidOperationException(
+                    "Ein Projektwechsel darf das globale Farbschema nicht anwenden oder überschreiben."),
+            });
         var viewModel = new MainWindowViewModel(
             workspaces,
             recent,
@@ -334,7 +370,7 @@ public sealed class MainWindowAccessibilityTests
             CreateProxy<IProjectAutosaveService>(),
             CreateProxy<IBackupService>(),
             CreateProxy<ITimelineThumbnailService>(),
-            CreateProxy<IApplicationThemeService>(),
+            applicationTheme,
             CreateProxy<ILocalLogService>(),
             CreateProxy<IAuditLogService>(),
             CreateProxy<IProjectSearchService>(),
@@ -345,8 +381,13 @@ public sealed class MainWindowAccessibilityTests
             CreateProxy<IAttachmentAnalysisStore>(),
             new ProjectEventEditingService(),
             CreateProxy<IUserDialogService>());
-        viewModel.OpenPathAsync(workspace.ArchivePath!).GetAwaiter().GetResult();
-        Assert.True(viewModel.HasProject);
+        if (openProject)
+        {
+            viewModel.OpenPathAsync(workspace.ArchivePath!).GetAwaiter().GetResult();
+            Assert.True(viewModel.HasProject);
+            Assert.True(viewModel.IsDarkTheme);
+        }
+
         return viewModel;
     }
 

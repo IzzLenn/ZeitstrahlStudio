@@ -25,6 +25,8 @@ public partial class App : System.Windows.Application
                 ValidateOnBuild = true,
                 ValidateScopes = true,
             });
+            await serviceProvider.GetRequiredService<IApplicationThemeService>()
+                .InitializeAsync(CancellationToken.None).ConfigureAwait(true);
             mainViewModel = serviceProvider.GetRequiredService<MainWindowViewModel>();
             var window = serviceProvider.GetRequiredService<MainWindow>();
             MainWindow = window;
@@ -108,7 +110,7 @@ public partial class App : System.Windows.Application
             provider.GetRequiredService<IProjectWorkspaceService>(),
             provider.GetRequiredService<IBackupService>()));
         services.AddSingleton<ProjectEventEditingService>();
-        services.AddSingleton<IApplicationThemeService, ApplicationThemeService>();
+        services.AddSingleton<IApplicationThemeService>(_ => new ApplicationThemeService());
         services.AddSingleton<IUserDialogService, WpfUserDialogService>();
         services.AddSingleton<MainWindowViewModel>();
         services.AddSingleton<MainWindow>();

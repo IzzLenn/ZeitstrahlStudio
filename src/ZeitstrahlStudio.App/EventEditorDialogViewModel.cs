@@ -82,6 +82,7 @@ public sealed partial class EventEditorDialogViewModel : ObservableObject
     public IReadOnlyList<SelectionOption<EventPriority>> PriorityOptions { get; }
     public IReadOnlyList<SelectionOption<EventStatus>> StatusOptions { get; }
     public IReadOnlyList<SelectionOption<DeadlineStatus>> DeadlineStatusOptions { get; }
+    public IReadOnlyList<ColorPaletteOption> ColorOptions => EventColorPalette.Options;
 
     public string Title
     {
@@ -192,7 +193,26 @@ public sealed partial class EventEditorDialogViewModel : ObservableObject
     public string ColorHex
     {
         get => colorHex;
-        set => SetProperty(ref colorHex, value);
+        set
+        {
+            if (SetProperty(ref colorHex, value))
+            {
+                OnPropertyChanged(nameof(SelectedPaletteColorHex));
+            }
+        }
+    }
+
+    public string? SelectedPaletteColorHex
+    {
+        get => ColorOptions.FirstOrDefault(option =>
+            string.Equals(option.Hex, ColorHex, StringComparison.OrdinalIgnoreCase))?.Hex;
+        set
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                ColorHex = value;
+            }
+        }
     }
 
     public string TagsText

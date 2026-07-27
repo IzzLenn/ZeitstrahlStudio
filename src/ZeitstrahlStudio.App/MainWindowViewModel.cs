@@ -160,7 +160,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             () => !IsBusy && HasProject);
         SettingsCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(EditProjectSettingsAsync),
-            () => !IsBusy && HasProject);
+            () => !IsBusy);
         AddAttachmentsCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(ChooseAndImportAttachmentsAsync),
             () => !IsBusy && SelectedEvent is not null);
@@ -198,7 +198,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             () => IsAttachmentImporting);
         InitializeSearchPresentation();
         themeService.ThemeChanged += OnApplicationThemeChanged;
-        themeService.Apply(ApplicationTheme.FollowWindows);
     }
 
     public ObservableCollection<RecentProject> RecentProjects { get; } = [];
@@ -454,7 +453,6 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             RefreshEventList(selectedEventId: null);
             InitializeTimelineRange();
             ResetSearchForWorkspace();
-            themeService.Apply(value?.Project.Settings.Theme ?? ApplicationTheme.FollowWindows);
 
             OnPropertyChanged(nameof(HasProject));
             OnPropertyChanged(nameof(HasNoProject));
@@ -1042,10 +1040,24 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     {
         if (CurrentWorkspace is null)
         {
+            var applicationTheme = dialogs.RequestApplicationTheme(themeService.CurrentTheme);
+            if (applicationTheme is null || applicationTheme.Value == themeService.CurrentTheme)
+            {
+                return;
+            }
+
+            await themeService.ApplyAndSaveAsync(
+                applicationTheme.Value,
+                lifetimeCancellation.Token).ConfigureAwait(true);
+            StatusMessage = "Die Anwendungseinstellungen wurden übernommen.";
             return;
         }
 
-        var settings = dialogs.RequestProjectSettings(CurrentWorkspace.Project.Settings);
+        var settingsForDialog = CurrentWorkspace.Project.Settings with
+        {
+            Theme = themeService.CurrentTheme,
+        };
+        var settings = dialogs.RequestProjectSettings(settingsForDialog);
         if (settings is null || settings == CurrentWorkspace.Project.Settings)
         {
             return;
@@ -1053,8 +1065,14 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
 
         var timestampUtc = DateTimeOffset.UtcNow;
         var selectedEventId = SelectedEvent?.Id;
+        if (settings.Theme != themeService.CurrentTheme)
+        {
+            await themeService.ApplyAndSaveAsync(
+                settings.Theme,
+                lifetimeCancellation.Token).ConfigureAwait(true);
+        }
+
         CurrentWorkspace.Project.ChangeSettings(settings, timestampUtc);
-        themeService.Apply(settings.Theme);
         MarkCurrentProjectChanged(selectedEventId);
         await WriteProjectSettingsAuditAsync(timestampUtc).ConfigureAwait(true);
         await CheckpointCurrentWorkspaceAsync(

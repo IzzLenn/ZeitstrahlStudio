@@ -143,7 +143,7 @@ public sealed class TimelineLayoutEngineTests
             new TimelineLayoutOptions(TimelineOrientation.Horizontal));
         var first = automatic.Cards[0];
         var second = automatic.Cards[1];
-        var secondEvent = project.Events[1];
+        var secondEvent = project.Events.Single(timelineEvent => timelineEvent.Id == second.EventId);
         project.SetLayoutPosition(
             new LayoutPosition(
                 secondEvent.Id,

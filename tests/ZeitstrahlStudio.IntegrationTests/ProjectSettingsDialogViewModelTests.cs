@@ -65,4 +65,20 @@ public sealed class ProjectSettingsDialogViewModelTests
         Assert.Equal("#AABBCC", newEvent.ColorHex);
         Assert.Equal("#112233", existingEvent.ColorHex);
     }
+
+    [Fact]
+    public void EventEditor_OffersVisualPaletteAndStillAcceptsCustomHexColor()
+    {
+        var viewModel = new EventEditorDialogViewModel(null);
+
+        Assert.True(viewModel.ColorOptions.Count >= 12);
+        Assert.Contains(viewModel.ColorOptions, option => option.Hex == "#DC2626" && option.Label == "Rot");
+
+        viewModel.Title = "Eigene Farbe";
+        viewModel.ColorHex = "#1A2B3C";
+        Assert.Null(viewModel.SelectedPaletteColorHex);
+        Assert.Equal("#1A2B3C", viewModel.ColorHex);
+        Assert.True(viewModel.TryBuildRequest(out var request, out var errorMessage), errorMessage);
+        Assert.Equal("#1A2B3C", request!.ColorHex);
+    }
 }

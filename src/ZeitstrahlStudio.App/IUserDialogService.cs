@@ -24,6 +24,7 @@ public sealed record BackupManagerResult(
 public interface IUserDialogService
 {
     string? RequestProjectName();
+    ApplicationTheme? RequestApplicationTheme(ApplicationTheme currentTheme);
     EventEditRequest? RequestEvent(TimelineEvent? timelineEvent, string defaultEventColorHex);
     ProjectSettings? RequestProjectSettings(ProjectSettings settings);
     IReadOnlyList<string> RequestAttachmentPaths();

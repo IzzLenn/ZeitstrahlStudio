@@ -1,14 +1,14 @@
 # Projektstatus
 
-Status: In Entwicklung - UI-Redesign 0.3.0, Phase 4 begonnen; Dialog-Teilschritt abgeschlossen
+Status: In Entwicklung - UI-Korrektur für Darkmode, globale Einstellungen und Farbauswahl abgeschlossen
 
-Letzte Aktualisierung: 22.07.2026
+Letzte Aktualisierung: 27.07.2026
 
 ## Aktuelle Phase
 
-Auf Branch `ui/redesign-0.3.0` läuft der klar abgegrenzte UI-Auftrag für Phase 0 bis 3. Phase 0 und Phase 1 sind dokumentiert, committed und gepusht. Phase 2 ersetzt den alten einzeiligen Header durch ein normales Hauptmenü und eine kompakte, gruppierte, textbasierte Befehlsleiste. Alle bestehenden Funktionsgruppen bleiben erreichbar; die aktive Orientierung besitzt einen ausgewählten statt deaktivierten Zustand. Der Debug-Build ist mit 0 Warnungen/0 Fehlern erfolgreich; 11 gezielte MainWindow-/Theme-Tests bestehen. Eine lokale UI-Automation-Laufzeitprüfung bestätigt Hauptmenü und 13 vollständig sichtbare Befehlsleistenaktionen bei 1280×760. Phase 4 ist begonnen. Der Dialog „Neues Projekt“ und die Themeoberfläche der Projekteinstellungen wurden modernisiert; die übrigen Dialoge, Phase 5 und Phase 6 bleiben offen.
+Auf Branch `ui/redesign-0.3.0` ist der angeforderte UI-Korrekturmeilenstein abgeschlossen. Native Auswahl- und Popupflächen verwenden im Dunkelmodus keine weißen Systemflächen mehr. Die globale Themepräferenz ist bereits im Startbildschirm erreichbar, wird lokal atomar gespeichert und bleibt bei Projektwechseln sowie Neuerstellungen aktiv. Der Ereigniseditor bietet eine visuelle Farbpalette mit Live-Vorschau und weiterhin editierbarer `#RRGGBB`-Eingabe.
 
-Die Phasen 4 bis 8, vollständige Endverifikation, Publish, Installer, Versionsänderung und Releasevorbereitung sind ausdrücklich nicht Bestandteil dieses Laufs. Die vorhandene Benutzeränderung an samples/ZeitstrahlStudio-Beispiel.zeitprojekt bleibt unangetastet und wird nicht committed.
+Debug und Release sind mit 0 Warnungen/0 Fehlern gebaut; jeweils 63 Unit-Tests und 113 Integrationstests bestehen. Formatprüfung und selbstenthaltender `win-x64`-Publish sind erfolgreich. Die vorhandenen Benutzeränderungen an `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` und `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` bleiben unangetastet und werden nicht committed.
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -546,3 +546,32 @@ Dieser Auftrag ist nach Phase 3 beendet. Phasen 4 bis 8, vollständige Endverifi
 - Sicherungsverwaltung und Wiederherstellungskarten gegen den gemeinsamen Dialogvertrag vereinheitlicht; keine Sicherungs- oder Persistenzlogik geändert.
 - Debug-Build: erfolgreich, 0 Warnungen/0 Fehler. Gezielte Sicherungs-, Wiederherstellungs-, Theme- und Accessibility-Integrationstests: 31/31 erfolgreich.
 - Nächster Schritt erst nach Freigabe: kleinsten noch offenen Layout-/Viewport-Schritt aus Phase 5/6 neu bestimmen.
+
+## UI-Korrekturmeilenstein Theme, Start-Einstellungen und Ereignisfarbe (27.07.2026)
+
+- ComboBox besitzt jetzt ein vollständiges themefähiges Template; geschlossenes Feld, Popup-Rahmen und Einträge verwenden ausschließlich semantische dynamische Ressourcen.
+- DatePicker-/Kalender-, Kontextmenü-, Tabellenkopf/-zellen- und Registerflächen erhielten ergänzende globale Darkmode-Stile; weiße WPF-Systemflächen werden dadurch nicht mehr in die dunkle Oberfläche übernommen.
+- Das globale Farbschema wird versioniert und atomar in `%LocalAppData%\Zeitstrahl Studio\appearance-settings.json` gespeichert und vor dem Hauptfenster geladen.
+- Projekt öffnen, Projekt erstellen und Projekt schließen wenden kein projektspezifisches Theme mehr auf die laufende Oberfläche an. Die globale Auswahl bleibt aktiv.
+- Der Einstellungsbefehl ist ohne geöffnetes Projekt verfügbar; Startansicht, Befehlsleiste und Ansichtsmenü bieten einen direkten Zugang.
+- Der Ereigniseditor zeigt zwölf beschriftete, tastaturbedienbare Farbfelder und eine Live-Vorschau. Ein beliebiger validierter `#RRGGBB`-Wert kann weiterhin eingegeben werden.
+- Neue Regressionstests prüfen atomare Persistenz und Wiederherstellung, toleranten Start bei beschädigter Einstellungsdatei, Theme-Stabilität beim Projektwechsel, Startansicht-Zugang, tatsächliche dunkle Popupfarbe, Palettenzugänglichkeit und freie Hexwerte.
+- Ein bereits vorhandener Timeline-Konflikttest wurde deterministisch an die tatsächlich sortierte zweite Karte gebunden; die vorherige zufällige GUID-Zuordnung konnte den beabsichtigten Überlappungsfall verfehlen.
+
+### Erfolgreiche Abschlussverifikation
+
+```powershell
+dotnet restore ZeitstrahlStudio.sln
+dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore --no-build
+dotnet build ZeitstrahlStudio.sln -c Release --no-restore
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
+dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
+dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
+```
+
+Ergebnis: Debug und Release jeweils 0 Warnungen/0 Fehler; jeweils 63/63 Unit-Tests und 113/113 Integrationstests bestanden; Formatprüfung und selbstenthaltender Publish erfolgreich.
+
+## Nächster konkreter Arbeitsschritt (27.07.2026)
+
+Manuelle visuelle Abnahme der neuen Popup-, Kalender- und Farbauswahlflächen auf Windows 10 und Windows 11 bei 100/125/150/200 Prozent Skalierung; anschließend den nächsten noch offenen UI-Redesign-Schritt neu bestimmen.

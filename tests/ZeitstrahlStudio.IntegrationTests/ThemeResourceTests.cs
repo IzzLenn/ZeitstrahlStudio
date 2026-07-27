@@ -108,6 +108,22 @@ public sealed class ThemeResourceTests
         Assert.Equal(24, values["FontSize3Xl"]);
     }
 
+    [Fact]
+    public void SharedControlStyles_ThemeDropdownAndPopupSurfaces()
+    {
+        var path = Path.Combine(FindAppRoot(), "Themes", "ControlStyles.xaml");
+        var xaml = File.ReadAllText(path);
+
+        Assert.Contains("<ControlTemplate TargetType=\"ComboBox\">", xaml, StringComparison.Ordinal);
+        Assert.Contains("TargetType=\"ComboBoxItem\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("{DynamicResource ElevatedSurfaceBrush}", xaml, StringComparison.Ordinal);
+        Assert.Contains("TargetType=\"CalendarItem\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("TargetType=\"ContextMenu\"", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("SystemColors.", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("Background=\"White\"", xaml, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Background=\"#FFFFFF\"", xaml, StringComparison.OrdinalIgnoreCase);
+    }
+
     private static Dictionary<string, RgbColor> ReadBrushes(string path)
     {
         var document = XDocument.Load(path);
