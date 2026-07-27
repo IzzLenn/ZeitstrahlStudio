@@ -168,6 +168,64 @@ public sealed class MainWindowAccessibilityTests
     }
 
     [Fact]
+    public async Task MainWindow_DarkFilterComboBoxesShowSelectedLabelsOnDarkSurfaces()
+    {
+        await RunOnStaThread(() =>
+        {
+            var viewModel = CreateViewModelWithProject();
+            try
+            {
+                var window = new MainWindow(viewModel);
+                window.Resources.MergedDictionaries.Insert(0, new ResourceDictionary
+                {
+                    Source = new Uri(
+                        "/ZeitstrahlStudio.App;component/Themes/Theme.Dark.xaml",
+                        UriKind.Relative),
+                });
+                Layout(window, 1_280, 760);
+
+                foreach (var (automationName, expectedLabel) in new[]
+                         {
+                             ("Nach Priorität filtern", "Priorität: alle"),
+                             ("Nach Schlagwort filtern", "Schlagwort: alle"),
+                             ("Nach vorhandenen Anhängen filtern", "Anhänge: alle"),
+                         })
+                {
+                    var comboBox = FindLogicalDescendants<ComboBox>(window).Single(item =>
+                        string.Equals(AutomationProperties.GetName(item), automationName, StringComparison.Ordinal));
+                    _ = comboBox.ApplyTemplate();
+                    comboBox.UpdateLayout();
+                    Assert.Equal(Color.FromRgb(0x0F, 0x17, 0x2A), AssertSolidColor(comboBox.Background));
+                    var fieldBorder = Assert.IsType<Border>(comboBox.Template.FindName("FieldBorder", comboBox));
+                    Assert.Equal(Color.FromRgb(0x0F, 0x17, 0x2A), AssertSolidColor(fieldBorder.Background));
+                    Assert.Contains(
+                        FindVisualDescendants<TextBlock>(comboBox),
+                        text => string.Equals(text.Text, expectedLabel, StringComparison.Ordinal)
+                            && AssertSolidColor(text.Foreground) == Color.FromRgb(0xF8, 0xFA, 0xFC));
+                }
+
+                var priority = FindLogicalDescendants<ComboBox>(window).Single(item =>
+                    AutomationProperties.GetName(item) == "Nach Priorität filtern");
+                priority.SelectedIndex = 1;
+                priority.UpdateLayout();
+                Assert.Equal(EventPriority.Low, viewModel.SearchPriority);
+                Assert.Contains(FindVisualDescendants<TextBlock>(priority), text => text.Text == "Niedrig");
+
+                var attachments = FindLogicalDescendants<ComboBox>(window).Single(item =>
+                    AutomationProperties.GetName(item) == "Nach vorhandenen Anhängen filtern");
+                attachments.SelectedIndex = 1;
+                attachments.UpdateLayout();
+                Assert.True(viewModel.SearchHasAttachment);
+                Assert.Contains(FindVisualDescendants<TextBlock>(attachments), text => text.Text == "Mit Anhang");
+            }
+            finally
+            {
+                DisposeViewModel(viewModel);
+            }
+        });
+    }
+
+    [Fact]
     public async Task ProjectSettings_CanSwitchFromGlobalDarkToStoredProjectLightTheme()
     {
         ApplicationTheme? appliedTheme = null;
@@ -512,6 +570,26 @@ public sealed class MainWindowAccessibilityTests
             }
         }
     }
+
+    private static IEnumerable<T> FindVisualDescendants<T>(DependencyObject root)
+        where T : DependencyObject
+    {
+        for (var index = 0; index < VisualTreeHelper.GetChildrenCount(root); index++)
+        {
+            var child = VisualTreeHelper.GetChild(root, index);
+            if (child is T match)
+            {
+                yield return match;
+            }
+
+            foreach (var descendant in FindVisualDescendants<T>(child))
+            {
+                yield return descendant;
+            }
+        }
+    }
+
+    private static Color AssertSolidColor(Brush brush) => Assert.IsType<SolidColorBrush>(brush).Color;
 
     private static Task RunOnStaThread(Action action)
     {

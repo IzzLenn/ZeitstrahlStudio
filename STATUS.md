@@ -610,3 +610,48 @@ dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -
 ```
 
 Ergebnis: Debug und Release jeweils 0 Warnungen und 0 Fehler; jeweils 63/63 Unit-Tests und 116/116 Integrationstests bestanden. Formatprüfung und selbstenthaltender `win-x64`-Publish erfolgreich. Inno Setup 6.7.3 erzeugte den Installer `ZeitstrahlStudio-0.3.0-win-x64-setup.exe` mit 62.730.065 Bytes und SHA-256 `2A9D607B6A8FB50A5973A8BDD06D063888B37A6A1F18FCAD5E8A42806ECD1C95`.
+
+## UI-Nachkorrektur Auswahlfelder nach zweiter visueller Abnahme (27.07.2026)
+
+### Ursache und enger Änderungsumfang
+
+- Der neue Screenshot belegt, dass die vorherige Rückkehr zum nativen WPF-Standardtemplate nicht genügte: geschlossene `ComboBox`-Felder wurden im Dunkelmodus weiterhin mit einer weißen Windows-Systemfläche gezeichnet, während die ausgewählten Labels dadurch praktisch unsichtbar waren.
+- Die zuvor ergänzten System-Brush-Schlüssel bleiben erhalten, sind für die geschlossene native ComboBox-Fläche aber nicht zuverlässig wirksam.
+- Ausschließlich die gemeinsame visuelle `ComboBox`-/`ComboBoxItem`-Hülle wurde korrigiert. Datenquellen, Auswahlwerte, Befehle, Filterlogik, Dialogabläufe und andere UI-Bereiche wurden nicht verändert.
+- Die vorhandenen Benutzeränderungen in `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` wurden nicht berührt und bleiben außerhalb dieses Meilensteins.
+
+### Umsetzung
+
+- Geschlossene Auswahlfelder zeichnen `InputBackgroundBrush`, Theme-Rahmen, Fokuszustand und Pfeil nun selbst; geöffnete Dropdowns verwenden `ElevatedSurfaceBrush` und themefähige Hover-/Auswahlzustände. Im Dunkelmodus existiert damit weder im geschlossenen Feld noch in der Popupfläche eine weiße Systemfläche.
+- Die ausgewählte Beschriftung wird direkt über `SelectionBoxItem`, `SelectionBoxItemTemplate`, `ItemTemplateSelector` und `SelectionBoxItemStringFormat` dargestellt. Popup-Einträge verwenden `ContentSource="Content"`. Dadurch bleiben `DisplayMemberPath`-Labels wie „Dunkel“, „Horizontal“ oder „Priorität: alle“ sichtbar und es erscheinen keine internen `SelectionOption`-/`SearchChoice`-Typtexte.
+- `ItemsSource`, `SelectedItem`, `SelectedValue`, `SelectedValuePath`, `DisplayMemberPath`, Öffnen/Schließen und Tastaturbedienung bleiben beim WPF-`ComboBox`-Steuerelement; es wurde keine fachliche Auswahl- oder Filterlogik ersetzt.
+- Die beiden Projekteinstellungsfelder erhielten ausschließlich stabile Namen und Automation-Namen für gezielte Laufzeittests; Position und Bedienablauf des Dialogs blieben unverändert.
+- ADR-038 und `CHANGELOG.md` wurden an den tatsächlich abgenommenen ComboBox-Vertrag angepasst.
+- Der normale Patch-Helfer scheiterte vor Dateizugriff am bekannten Windows-Sandbox-Startfehler. Die Änderungen wurden deshalb als exakt gezählte 1:1-Blockersetzungen ausgeführt und anschließend mit `git diff --check`, Diff-Review und Build kontrolliert.
+
+### Neue und erweiterte Regressionstests
+
+- Pixelbasierter Darkmode-Test prüft globale Einstellungen sowie beide Projekteinstellungsfelder auf überwiegend dunkle Renderfläche, sichtbare helle Schriftpixel und die Labels „Dunkel“ beziehungsweise „Horizontal“.
+- Popup-Laufzeittest prüft dunkle Hintergrundfläche und die tatsächlich erzeugten sichtbaren Einträge „Windows-Einstellung übernehmen“, „Hell“ und „Dunkel“.
+- Hauptfenster-Laufzeittest prüft die drei im Screenshot sichtbaren Filter „Priorität: alle“, „Schlagwort: alle“ und „Anhänge: alle“ auf dunkle Fläche und helle Beschriftung.
+- Derselbe Hauptfenstertest wählt „Niedrig“ und „Mit Anhang“ aus und prüft sichtbaren Text sowie Rückfluss in `SearchPriority` und `SearchHasAttachment`.
+- Der statische Themevertrag fordert die Template-Bindungen, `ContentSource="Content"`, das echte `PART_Popup` und weiterhin das Fehlen fest codierter weißer Flächen.
+
+### Erfolgreiche Abschlussverifikation
+
+```powershell
+dotnet restore ZeitstrahlStudio.sln
+dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore --no-build
+dotnet build ZeitstrahlStudio.sln -c Release --no-restore
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
+dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
+dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
+.\build.ps1 -Task BuildInstaller -Version 0.3.0
+```
+
+Ergebnis: Debug und Release jeweils 0 Warnungen und 0 Fehler; jeweils 63/63 Unit-Tests und 117/117 Integrationstests bestanden. Formatprüfung und selbstenthaltender `win-x64`-Publish erfolgreich. Inno Setup 6.7.3 erzeugte den aktualisierten Installer `ZeitstrahlStudio-0.3.0-win-x64-setup.exe` mit 62.720.035 Bytes und SHA-256 `9F0369589596AB9B4CF9EF870B939BE054FA845948E40E75E3A787C0A7505677`.
+
+## Nächster konkreter Arbeitsschritt (27.07.2026, Auswahlfeldkorrektur)
+
+Aktualisierten Installer installieren und die geschlossenen sowie geöffneten Auswahlfelder in globalen Einstellungen, Projekteinstellungen, Hauptfiltern und Ereignisdialog visuell prüfen. Andere UI- oder Funktionsbereiche bleiben bis zu einer neuen ausdrücklichen Beauftragung unverändert.

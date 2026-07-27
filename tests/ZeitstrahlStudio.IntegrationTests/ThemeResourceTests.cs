@@ -109,14 +109,20 @@ public sealed class ThemeResourceTests
     }
 
     [Fact]
-    public void SharedControlStyles_PreserveStandardDropdownBehavior()
+    public void SharedControlStyles_PreserveDropdownBindingsWithThemeAwareSurfaces()
     {
         var path = Path.Combine(FindAppRoot(), "Themes", "ControlStyles.xaml");
         var xaml = File.ReadAllText(path);
 
         Assert.Contains("<Style TargetType=\"ComboBox\">", xaml, StringComparison.Ordinal);
-        Assert.DoesNotContain("<ControlTemplate TargetType=\"ComboBox\">", xaml, StringComparison.Ordinal);
-        Assert.DoesNotContain("TargetType=\"ComboBoxItem\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("<ControlTemplate TargetType=\"ComboBox\">", xaml, StringComparison.Ordinal);
+        Assert.Contains("Content=\"{TemplateBinding SelectionBoxItem}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("ContentTemplate=\"{TemplateBinding SelectionBoxItemTemplate}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("ContentTemplateSelector=\"{TemplateBinding ItemTemplateSelector}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("ContentStringFormat=\"{TemplateBinding SelectionBoxItemStringFormat}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("TargetType=\"ComboBoxItem\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("ContentSource=\"Content\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"PART_Popup\"", xaml, StringComparison.Ordinal);
         Assert.Contains("TargetType=\"CalendarItem\"", xaml, StringComparison.Ordinal);
         Assert.Contains("TargetType=\"ContextMenu\"", xaml, StringComparison.Ordinal);
         Assert.DoesNotContain("Background=\"White\"", xaml, StringComparison.OrdinalIgnoreCase);

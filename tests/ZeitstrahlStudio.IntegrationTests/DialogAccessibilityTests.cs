@@ -127,37 +127,46 @@ public sealed class DialogAccessibilityTests
     }
 
     [Fact]
-    public async Task ComboBoxPopup_PreservesLabelsAndUsesDarkNativeSurfaceAtRuntime()
+    public async Task ComboBoxes_RenderSelectedLabelsOnDarkClosedAndOpenSurfaces()
     {
         await RunOnStaThread(() =>
         {
-            var dialog = new ApplicationSettingsDialog(ApplicationTheme.Dark);
-            dialog.Resources.MergedDictionaries.Insert(0, new ResourceDictionary
-            {
-                Source = new Uri(
-                    "/ZeitstrahlStudio.App;component/Themes/Theme.Dark.xaml",
-                    UriKind.Relative),
-            });
-            Layout(dialog, 520, 330);
-            var comboBox = Assert.IsType<ComboBox>(dialog.FindName("ApplicationThemeBox"));
-            _ = comboBox.ApplyTemplate();
+            var applicationDialog = new ApplicationSettingsDialog(ApplicationTheme.Dark);
+            AddDarkTheme(applicationDialog);
+            Layout(applicationDialog, 520, 330);
+            var applicationTheme = Assert.IsType<ComboBox>(applicationDialog.FindName("ApplicationThemeBox"));
+            AssertDarkClosedComboBox(applicationTheme, "Dunkel");
 
-            Assert.Contains(
-                FindVisualDescendants<TextBlock>(comboBox),
-                text => text.Text == "Dunkel");
-
-            comboBox.IsDropDownOpen = true;
-            comboBox.UpdateLayout();
-            var popup = Assert.IsType<Popup>(comboBox.Template.FindName("PART_Popup", comboBox));
-            Assert.NotNull(popup.Child);
-            var backgrounds = FindVisualDescendants<Border>(popup.Child)
-                .Select(border => border.Background)
-                .OfType<SolidColorBrush>()
-                .Select(brush => brush.Color)
+            applicationTheme.IsDropDownOpen = true;
+            applicationTheme.UpdateLayout();
+            var popup = Assert.IsType<Popup>(applicationTheme.Template.FindName("PART_Popup", applicationTheme));
+            var popupBorder = Assert.IsType<Border>(popup.Child);
+            Assert.Equal(Color.FromRgb(0x1E, 0x29, 0x3B), AssertSolidColor(popupBorder.Background));
+            Assert.NotEqual(Colors.White, AssertSolidColor(popupBorder.Background));
+            popupBorder.Measure(new Size(applicationTheme.ActualWidth, 240));
+            popupBorder.Arrange(new Rect(0, 0, applicationTheme.ActualWidth, popupBorder.DesiredSize.Height));
+            popupBorder.UpdateLayout();
+            var popupLabels = FindVisualDescendants<TextBlock>(popupBorder)
+                .Select(text => text.Text)
                 .ToArray();
+            Assert.Contains("Windows-Einstellung übernehmen", popupLabels);
+            Assert.Contains("Hell", popupLabels);
+            Assert.Contains("Dunkel", popupLabels);
 
-            Assert.DoesNotContain(Colors.White, backgrounds);
-            Assert.Contains(Color.FromRgb(0x0F, 0x17, 0x2A), backgrounds);
+            var projectDialog = new ProjectSettingsDialog(new ProjectSettingsDialogViewModel(
+                new ProjectSettings
+                {
+                    Theme = ApplicationTheme.Dark,
+                    PreferredOrientation = TimelineOrientation.Horizontal,
+                }));
+            AddDarkTheme(projectDialog);
+            Layout(projectDialog, 620, 650);
+            AssertDarkClosedComboBox(
+                Assert.IsType<ComboBox>(projectDialog.FindName("ProjectThemeBox")),
+                "Dunkel");
+            AssertDarkClosedComboBox(
+                Assert.IsType<ComboBox>(projectDialog.FindName("ProjectOrientationBox")),
+                "Horizontal");
         });
     }
 
@@ -214,6 +223,73 @@ public sealed class DialogAccessibilityTests
         using var stream = File.Create(path);
         encoder.Save(stream);
     }
+
+    private static void AddDarkTheme(FrameworkElement element) =>
+        element.Resources.MergedDictionaries.Insert(0, new ResourceDictionary
+        {
+            Source = new Uri(
+                "/ZeitstrahlStudio.App;component/Themes/Theme.Dark.xaml",
+                UriKind.Relative),
+        });
+
+    private static void AssertDarkClosedComboBox(ComboBox comboBox, string expectedLabel)
+    {
+        _ = comboBox.ApplyTemplate();
+        comboBox.UpdateLayout();
+
+        Assert.Contains(
+            FindVisualDescendants<TextBlock>(comboBox),
+            text => string.Equals(text.Text, expectedLabel, StringComparison.Ordinal));
+        Assert.Equal(Color.FromRgb(0x0F, 0x17, 0x2A), AssertSolidColor(comboBox.Background));
+        var fieldBorder = Assert.IsType<Border>(comboBox.Template.FindName("FieldBorder", comboBox));
+        Assert.Equal(Color.FromRgb(0x0F, 0x17, 0x2A), AssertSolidColor(fieldBorder.Background));
+
+        var width = Math.Max(1, (int)Math.Ceiling(comboBox.ActualWidth));
+        var height = Math.Max(1, (int)Math.Ceiling(comboBox.ActualHeight));
+        var bitmap = new RenderTargetBitmap(width, height, 96, 96, PixelFormats.Pbgra32);
+        var drawing = new DrawingVisual();
+        using (var context = drawing.RenderOpen())
+        {
+            context.DrawRectangle(new VisualBrush(comboBox), null, new Rect(0, 0, width, height));
+        }
+
+        bitmap.Render(drawing);
+        var pixels = new byte[width * height * 4];
+        bitmap.CopyPixels(pixels, width * 4, 0);
+
+        var darkPixels = 0;
+        var brightPixels = 0;
+        var samplePixels = 0;
+        var contentRight = Math.Max(4, width - 32);
+        for (var y = 3; y < height - 3; y++)
+        {
+            for (var x = 3; x < contentRight; x++)
+            {
+                var offset = ((y * width) + x) * 4;
+                var blue = pixels[offset];
+                var green = pixels[offset + 1];
+                var red = pixels[offset + 2];
+                if (red < 120 && green < 120 && blue < 120)
+                {
+                    darkPixels++;
+                }
+
+                if (red > 175 && green > 175 && blue > 175)
+                {
+                    brightPixels++;
+                }
+
+                samplePixels++;
+            }
+        }
+
+        Assert.True(darkPixels > samplePixels * 0.70, $"Das Feld für '{expectedLabel}' wurde nicht überwiegend dunkel gerendert.");
+        var selectedText = FindVisualDescendants<TextBlock>(comboBox).Single(text => text.Text == expectedLabel);
+        Assert.True(brightPixels >= 4, $"Der ausgewählte Text '{expectedLabel}' wurde nicht sichtbar gerendert. Helle Pixel: {brightPixels}; Textfarbe: {selectedText.Foreground}.");
+        Assert.True(brightPixels < samplePixels * 0.25, $"Das Feld für '{expectedLabel}' enthält weiterhin eine helle Systemfläche.");
+    }
+
+    private static Color AssertSolidColor(Brush brush) => Assert.IsType<SolidColorBrush>(brush).Color;
 
     private static Button FindButton(DependencyObject root, string automationName) =>
         FindDescendants<Button>(root).Single(button =>

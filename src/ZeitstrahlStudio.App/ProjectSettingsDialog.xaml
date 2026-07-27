@@ -47,12 +47,16 @@
         <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
             <StackPanel Margin="24,14,24,20">
                 <TextBlock Style="{StaticResource LabelStyle}" Text="Farbschema" />
-                <ComboBox ItemsSource="{Binding ThemeOptions}"
+                <ComboBox x:Name="ProjectThemeBox"
+                          AutomationProperties.Name="Projektweites Farbschema"
+                          ItemsSource="{Binding ThemeOptions}"
                           SelectedItem="{Binding SelectedTheme}"
                           DisplayMemberPath="Label" />
 
                 <TextBlock Style="{StaticResource LabelStyle}" Text="Bevorzugte Zeitstrahlansicht" />
-                <ComboBox ItemsSource="{Binding OrientationOptions}"
+                <ComboBox x:Name="ProjectOrientationBox"
+                          AutomationProperties.Name="Bevorzugte Zeitstrahlansicht"
+                          ItemsSource="{Binding OrientationOptions}"
                           SelectedItem="{Binding SelectedOrientation}"
                           DisplayMemberPath="Label" />
 
