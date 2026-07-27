@@ -46,6 +46,27 @@ public sealed class ProjectSettingsDialogViewModelTests
     }
 
     [Fact]
+    public void ProjectSettings_UsesSharedPaletteAndStillAcceptsCustomHexColor()
+    {
+        var viewModel = new ProjectSettingsDialogViewModel(new ProjectSettings
+        {
+            DefaultEventColorHex = "#DC2626",
+        });
+
+        Assert.Same(EventColorPalette.Options, viewModel.ColorOptions);
+        Assert.True(viewModel.ColorOptions.Count >= 12);
+        Assert.Equal("#DC2626", viewModel.SelectedPaletteColorHex);
+
+        viewModel.SelectedPaletteColorHex = "#16A34A";
+        Assert.Equal("#16A34A", viewModel.DefaultEventColorHex);
+
+        viewModel.DefaultEventColorHex = "#1A2B3C";
+        Assert.Null(viewModel.SelectedPaletteColorHex);
+        Assert.True(viewModel.TryBuildResult());
+        Assert.Equal("#1A2B3C", viewModel.Result!.DefaultEventColorHex);
+    }
+
+    [Fact]
     public void EventEditor_UsesConfiguredDefaultColorOnlyForNewEvents()
     {
         var newEvent = new EventEditorDialogViewModel(null, "#AABBCC");

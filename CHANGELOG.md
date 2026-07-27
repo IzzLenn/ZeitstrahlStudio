@@ -7,6 +7,8 @@ Alle wichtigen Änderungen an Zeitstrahl Studio werden in dieser Datei dokumenti
 ### Geändert
 
 - ComboBoxen und ihre Popup-Einträge verwenden im Dunkelmodus durchgehend dunkle Flächen und lesbare Labels; `DisplayMemberPath`, Auswahlbindungen und Tastaturbedienung bleiben erhalten
+- Ausgewählte Registerkarten in Hauptansicht, Ereigniseditor und Detailinspektor sowie DatePicker und Kalender verwenden konsistente themefähige Flächen
+- Projekteinstellungen verwenden für die Standardereignisfarbe dieselbe visuelle Palette und freie `#RRGGBB`-Eingabe wie der Ereigniseditor
 - Einstellungen bereits im Startbildschirm zugänglich gemacht und das globale Farbschema lokal sowie atomar gespeichert
 - Projektwechsel und Projekterstellung überschreiben das gewählte globale Hell-/Dunkel-Schema nicht mehr
 - Ereigniseditor um eine visuelle, tastaturzugängliche Farbpalette mit Live-Vorschau ergänzt; freie `#RRGGBB`-Eingaben bleiben möglich

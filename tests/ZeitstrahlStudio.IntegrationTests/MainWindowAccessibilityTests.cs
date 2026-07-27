@@ -226,6 +226,57 @@ public sealed class MainWindowAccessibilityTests
     }
 
     [Fact]
+    public async Task MainAndInspectorTabsUseDarkSelectedHeadersAtRuntime()
+    {
+        await RunOnStaThread(() =>
+        {
+            var viewModel = CreateViewModelWithProject();
+            try
+            {
+                var window = new MainWindow(viewModel);
+                window.Resources.MergedDictionaries.Insert(0, new ResourceDictionary
+                {
+                    Source = new Uri(
+                        "/ZeitstrahlStudio.App;component/Themes/Theme.Dark.xaml",
+                        UriKind.Relative),
+                });
+                var inspector = Assert.IsType<Border>(window.FindName("InspectorPanel"));
+                inspector.Visibility = Visibility.Visible;
+                Layout(window, 1_280, 760);
+
+                var tabControls = FindLogicalDescendants<TabControl>(window).ToArray();
+                var mainTabs = tabControls.Single(control => control.Items.OfType<TabItem>()
+                    .Any(item => Equals(item.Header, "Zeitstrahl")));
+                var detailTabs = tabControls.Single(control => control.Items.OfType<TabItem>()
+                    .Any(item => Equals(item.Header, "Allgemein")));
+
+                mainTabs.SelectedIndex = 0;
+                mainTabs.UpdateLayout();
+                AssertDarkSelectedTab(Assert.IsType<TabItem>(mainTabs.Items[0]), "Zeitstrahl");
+                mainTabs.SelectedIndex = 1;
+                mainTabs.UpdateLayout();
+                AssertDarkSelectedTab(Assert.IsType<TabItem>(mainTabs.Items[1]), "Ereignisliste");
+
+                foreach (var (index, header) in new[]
+                         {
+                             (0, "Allgemein"),
+                             (1, "Anhänge"),
+                             (2, "Notizen"),
+                         })
+                {
+                    detailTabs.SelectedIndex = index;
+                    detailTabs.UpdateLayout();
+                    AssertDarkSelectedTab(Assert.IsType<TabItem>(detailTabs.Items[index]), header);
+                }
+            }
+            finally
+            {
+                DisposeViewModel(viewModel);
+            }
+        });
+    }
+
+    [Fact]
     public async Task ProjectSettings_CanSwitchFromGlobalDarkToStoredProjectLightTheme()
     {
         ApplicationTheme? appliedTheme = null;
@@ -569,6 +620,18 @@ public sealed class MainWindowAccessibilityTests
                 yield return descendant;
             }
         }
+    }
+
+    private static void AssertDarkSelectedTab(TabItem tab, string expectedHeader)
+    {
+        Assert.Equal(expectedHeader, tab.Header);
+        Assert.True(tab.IsSelected);
+        _ = tab.ApplyTemplate();
+        tab.UpdateLayout();
+        var headerBorder = Assert.IsType<Border>(tab.Template.FindName("HeaderBorder", tab));
+        Assert.Equal(Color.FromRgb(0x1E, 0x3A, 0x8A), AssertSolidColor(headerBorder.Background));
+        Assert.NotEqual(Colors.White, AssertSolidColor(headerBorder.Background));
+        Assert.Equal(Color.FromRgb(0xBF, 0xDB, 0xFE), AssertSolidColor(tab.Foreground));
     }
 
     private static IEnumerable<T> FindVisualDescendants<T>(DependencyObject root)

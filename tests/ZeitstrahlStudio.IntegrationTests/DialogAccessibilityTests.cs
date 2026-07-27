@@ -127,6 +127,74 @@ public sealed class DialogAccessibilityTests
     }
 
     [Fact]
+    public async Task EventTabsDeadlinePickerAndDefaultColorPaletteUseDarkThemeAtRuntime()
+    {
+        await RunOnStaThread(() =>
+        {
+            var editor = new EventEditorDialog(null);
+            AddDarkTheme(editor);
+            Layout(editor, 900, 720);
+            var editorTabs = Assert.Single(FindDescendants<TabControl>(editor));
+            Assert.Equal(2, editorTabs.Items.Count);
+
+            editorTabs.SelectedIndex = 0;
+            editorTabs.UpdateLayout();
+            AssertDarkSelectedTab(Assert.IsType<TabItem>(editorTabs.Items[0]), "Inhalt und Datum");
+            editorTabs.SelectedIndex = 1;
+            editorTabs.UpdateLayout();
+            AssertDarkSelectedTab(Assert.IsType<TabItem>(editorTabs.Items[1]), "Frist, Einordnung und Links");
+
+            var editorViewModel = Assert.IsType<EventEditorDialogViewModel>(editor.DataContext);
+            var deadline = Assert.IsType<DatePicker>(editor.FindName("DeadlineDatePicker"));
+            _ = deadline.ApplyTemplate();
+            deadline.UpdateLayout();
+            Assert.False(deadline.IsEnabled);
+            var dateBorder = Assert.IsType<Border>(deadline.Template.FindName("DateFieldBorder", deadline));
+            Assert.Equal(Color.FromRgb(0x33, 0x41, 0x55), AssertSolidColor(dateBorder.Background));
+
+            editorViewModel.HasDeadline = true;
+            editor.UpdateLayout();
+            Assert.True(deadline.IsEnabled);
+            Assert.Equal(Color.FromRgb(0x0F, 0x17, 0x2A), AssertSolidColor(dateBorder.Background));
+            var calendarButton = Assert.IsType<Button>(deadline.Template.FindName("PART_Button", deadline));
+            _ = calendarButton.ApplyTemplate();
+            var calendarButtonBorder = Assert.IsType<Border>(calendarButton.Template.FindName("CalendarButtonBorder", calendarButton));
+            Assert.NotEqual(Colors.White, AssertSolidColor(calendarButtonBorder.Background));
+
+            var selectedDate = new DateTime(2026, 7, 27);
+            deadline.SelectedDate = selectedDate;
+            deadline.GetBindingExpression(DatePicker.SelectedDateProperty)?.UpdateSource();
+            deadline.UpdateLayout();
+            Assert.Equal(selectedDate, editorViewModel.DeadlineDate);
+            var dateText = Assert.IsType<DatePickerTextBox>(deadline.Template.FindName("PART_TextBox", deadline));
+            Assert.False(string.IsNullOrWhiteSpace(dateText.Text));
+            var datePopup = Assert.IsType<Popup>(deadline.Template.FindName("PART_Popup", deadline));
+            var calendar = Assert.IsType<Calendar>(datePopup.Child);
+            Assert.Equal(Color.FromRgb(0x1E, 0x29, 0x3B), AssertSolidColor(calendar.Background));
+
+            var settingsViewModel = new ProjectSettingsDialogViewModel(new ProjectSettings
+            {
+                Theme = ApplicationTheme.Dark,
+                DefaultEventColorHex = "#DC2626",
+            });
+            var settings = new ProjectSettingsDialog(settingsViewModel);
+            AddDarkTheme(settings);
+            Layout(settings, 620, 650);
+            var palette = Assert.IsType<ListBox>(settings.FindName("DefaultEventColorPalette"));
+            Assert.Same(settingsViewModel.ColorOptions, palette.ItemsSource);
+            Assert.True(palette.Items.Count >= 12);
+            Assert.Equal("#DC2626", palette.SelectedValue);
+
+            palette.SelectedValue = "#16A34A";
+            palette.GetBindingExpression(Selector.SelectedValueProperty)?.UpdateSource();
+            palette.UpdateLayout();
+            Assert.Equal("#16A34A", settingsViewModel.DefaultEventColorHex);
+            var preview = Assert.IsType<Border>(settings.FindName("DefaultEventColorPreview"));
+            Assert.Equal(Color.FromRgb(0x16, 0xA3, 0x4A), AssertSolidColor(preview.Background));
+        });
+    }
+
+    [Fact]
     public async Task ComboBoxes_RenderSelectedLabelsOnDarkClosedAndOpenSurfaces()
     {
         await RunOnStaThread(() =>
@@ -222,6 +290,18 @@ public sealed class DialogAccessibilityTests
         encoder.Frames.Add(BitmapFrame.Create(bitmap));
         using var stream = File.Create(path);
         encoder.Save(stream);
+    }
+
+    private static void AssertDarkSelectedTab(TabItem tab, string expectedHeader)
+    {
+        Assert.Equal(expectedHeader, tab.Header);
+        Assert.True(tab.IsSelected);
+        _ = tab.ApplyTemplate();
+        tab.UpdateLayout();
+        var headerBorder = Assert.IsType<Border>(tab.Template.FindName("HeaderBorder", tab));
+        Assert.Equal(Color.FromRgb(0x1E, 0x3A, 0x8A), AssertSolidColor(headerBorder.Background));
+        Assert.NotEqual(Colors.White, AssertSolidColor(headerBorder.Background));
+        Assert.Equal(Color.FromRgb(0xBF, 0xDB, 0xFE), AssertSolidColor(tab.Foreground));
     }
 
     private static void AddDarkTheme(FrameworkElement element) =>

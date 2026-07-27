@@ -130,6 +130,27 @@ public sealed class ThemeResourceTests
     }
 
     [Fact]
+    public void SharedControlStyles_RenderTabsAndDatePickersWithoutNativeWhiteSurfaces()
+    {
+        var path = Path.Combine(FindAppRoot(), "Themes", "ControlStyles.xaml");
+        var xaml = File.ReadAllText(path);
+
+        Assert.Contains("<ControlTemplate TargetType=\"TabItem\">", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"HeaderBorder\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("Value=\"{DynamicResource NavigationSelectedBackgroundBrush}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("<ControlTemplate TargetType=\"DatePicker\">", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"DateFieldBorder\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"PART_TextBox\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"PART_Button\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"PART_Popup\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("IsOpen=\"{TemplateBinding IsDropDownOpen}\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("<ControlTemplate TargetType=\"DatePickerTextBox\">", xaml, StringComparison.Ordinal);
+        Assert.Contains("CalendarStyle\" Value=\"{DynamicResource ThemedCalendarStyle}\"", xaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("Background=\"White\"", xaml, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Background=\"#FFFFFF\"", xaml, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void DarkTheme_OverridesNativeSelectionSurfacesWithoutReplacingControlTemplates()
     {
         var brushes = ReadBrushes(Path.Combine(FindAppRoot(), "Themes", "Theme.Dark.xaml"));

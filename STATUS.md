@@ -655,3 +655,54 @@ Ergebnis: Debug und Release jeweils 0 Warnungen und 0 Fehler; jeweils 63/63 Unit
 ## Nächster konkreter Arbeitsschritt (27.07.2026, Auswahlfeldkorrektur)
 
 Aktualisierten Installer installieren und die geschlossenen sowie geöffneten Auswahlfelder in globalen Einstellungen, Projekteinstellungen, Hauptfiltern und Ereignisdialog visuell prüfen. Andere UI- oder Funktionsbereiche bleiben bis zu einer neuen ausdrücklichen Beauftragung unverändert.
+
+## UI-Nachkorrektur Registerkarten, Fälligkeitsdatum und Standardfarbe (27.07.2026)
+
+### Ursache und enger Änderungsumfang
+
+- Die erneute visuelle Abnahme zeigte, dass ausgewählte native WPF-`TabItem`-Header trotz gesetzter Theme-Brushes weiterhin eine fast weiße Systemfläche zeichneten. Betroffen waren „Zeitstrahl/Ereignisliste“, „Inhalt und Datum/Frist, Einordnung und Links“ sowie „Allgemein/Anhänge/Notizen“ im Detailinspektor.
+- Der native `DatePicker` zeichnete internes Textfeld und Kalenderbutton abweichend zu den übrigen Eingabefeldern; der intern erzeugte Kalender übernahm ohne explizite Styleübergabe sogar einen nativen Verlaufspinsel.
+- Ausschließlich die gemeinsamen Präsentationstemplates für `TabItem`, `DatePicker` und `DatePickerTextBox`, die stabile Testadressierung des Fälligkeitsfelds sowie der vorhandene Standardfarbenbereich der Projekteinstellungen wurden geändert. Registerinhalte, Ereignis-/Datumslogik, Filter, Befehle und andere UI-Bereiche blieben unverändert.
+- Die vorhandenen Benutzeränderungen in `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` wurden erneut nicht berührt.
+
+### Umsetzung
+
+- `TabItem` rendert Headerfläche, Rahmen, Hover, Auswahl und Deaktivierung nun ausschließlich über semantische Theme-Ressourcen. Ausgewählte Register verwenden im Dunkelmodus `NavigationSelectedBackgroundBrush` (`#1E3A8A`) und `NavigationSelectedForegroundBrush` (`#BFDBFE`) statt einer weißen nativen Fläche.
+- `DatePicker` verwendet dieselbe Eingabehintergrund-, Rahmen-, Fokus-, Fehler- und Deaktiviertdarstellung wie Text- und Auswahlfelder. `PART_TextBox`, `PART_Button`, `PART_Popup`, `SelectedDate` und `IsDropDownOpen` bleiben erhalten; das Kalendericon ist ein lokaler Vektorpfad und kein neues Asset oder Unicode-Ersatzsymbol.
+- `DatePickerTextBox` rendert Texteingabe beziehungsweise „Datum auswählen“ ohne native weiße Innenfläche. Der intern erzeugte Kalender erhält `ThemedCalendarStyle` ausdrücklich über `CalendarStyle`, damit auch die aufgeklappte Fläche dunkel bleibt.
+- Die Projekteinstellungen verwenden jetzt dieselben zwölf `EventColorPalette.Options`, dieselbe Live-Vorschau und dieselbe freie `#RRGGBB`-Eingabe wie der Ereigniseditor. `SelectedPaletteColorHex` synchronisiert die Palette mit `DefaultEventColorHex`; freie gültige Hexwerte bleiben möglich und werden unverändert gespeichert.
+- ADR-038 und `CHANGELOG.md` wurden an diesen Theme- und Palettenvertrag angepasst.
+
+### Bearbeitungs- und Fehlerprotokoll
+
+- Der normale Patch-Helfer scheiterte erneut vor Dateizugriff am Windows-Sandbox-Startfehler. Alle Ersetzungen wurden deshalb über eindeutig gezählte Blöcke beziehungsweise Start-/Endmarken vorgenommen und anschließend mit Diff-Prüfung und Build kontrolliert.
+- Eine erste Bereichsersetzung traf wegen verschobener Indizes Teile des CheckBox-/ViewModel-Umfelds; der unmittelbar folgende Debug-Build schlug dadurch fehl. Die betroffenen eng begrenzten Bereiche wurden vollständig aus dem unveränderten Vertrag rekonstruiert. Derselbe Debug-Build bestand danach mit 0 Warnungen und 0 Fehlern.
+- Der erste DatePicker-Laufzeittest erwartete ein dauerhaft geöffnetes Popup in einem nur angeordneten, nicht tatsächlich angezeigten Testfenster. WPF schließt dieses Popup in dieser Umgebung sofort. Der Test prüft daher den real erzeugten `Calendar` und seine Themefläche; die `IsDropDownOpen`-Bindung wird zusätzlich statisch vertraglich geprüft.
+- Der dabei sichtbare native Kalender-Verlauf wurde nicht ignoriert: `ThemedCalendarStyle` wird nun explizit an den DatePicker übergeben; danach bestanden alle vier neuen gezielten Verträge.
+
+### Neue Regressionstests
+
+- Hauptfenster-Laufzeittest schaltet „Zeitstrahl“ und „Ereignisliste“ sowie „Allgemein“, „Anhänge“ und „Notizen“ durch und prüft bei jedem ausgewählten Header dunkle Fläche und helle Schrift.
+- Dialog-Laufzeittest schaltet beide Ereigniseditor-Register durch und prüft denselben Themevertrag.
+- DatePicker-Laufzeittest prüft deaktivierte und aktive Hintergrundfläche, nicht weißen Kalenderbutton, gesetzten Datumswert, sichtbaren Datumstext und den dunkel gestylten internen Kalender.
+- Paletten-Laufzeit- und ViewModel-Tests prüfen dieselbe Optionsinstanz wie im Ereigniseditor, zwölf Farbfelder, Auswahlrückfluss, Live-Vorschau und weiterhin gültige freie Hexwerte.
+- Statischer Themevertrag prüft die erforderlichen TabItem-/DatePicker-Parts, Popupbindung, expliziten CalendarStyle und das Fehlen fest codierter weißer Flächen.
+
+### Erfolgreiche Abschlussverifikation
+
+```powershell
+dotnet restore ZeitstrahlStudio.sln
+dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore --no-build
+dotnet build ZeitstrahlStudio.sln -c Release --no-restore
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
+dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
+dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
+.\build.ps1 -Task BuildInstaller -Version 0.3.0
+```
+
+Ergebnis: Debug und Release jeweils 0 Warnungen und 0 Fehler; jeweils 63/63 Unit-Tests und 121/121 Integrationstests bestanden. Formatprüfung und selbstenthaltender `win-x64`-Publish erfolgreich. Inno Setup 6.7.3 erzeugte den aktualisierten Installer `ZeitstrahlStudio-0.3.0-win-x64-setup.exe` mit 62.737.699 Bytes und SHA-256 `E755C1F968CDCC919CD99D546B1693E9E920E154D147210304B8875DA8A27389`.
+
+## Nächster konkreter Arbeitsschritt (27.07.2026, Register-/DatePicker-Korrektur)
+
+Aktualisierten Installer installieren und die ausgewählten Registerkarten in Hauptansicht, Ereigniseditor und Detailinspektor, das deaktivierte/aktive Fälligkeitsdatum einschließlich Kalender sowie die Standardfarbpalette visuell prüfen. Andere UI- oder Funktionsbereiche bleiben bis zu einer neuen ausdrücklichen Beauftragung unverändert.

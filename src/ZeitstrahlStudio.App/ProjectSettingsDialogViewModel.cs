@@ -42,6 +42,8 @@ public sealed class ProjectSettingsDialogViewModel : ObservableObject
 
     public IReadOnlyList<SelectionOption<TimelineOrientation>> OrientationOptions { get; }
 
+    public IReadOnlyList<ColorPaletteOption> ColorOptions => EventColorPalette.Options;
+
     public SelectionOption<ApplicationTheme> SelectedTheme
     {
         get => selectedTheme;
@@ -57,7 +59,26 @@ public sealed class ProjectSettingsDialogViewModel : ObservableObject
     public string DefaultEventColorHex
     {
         get => defaultEventColorHex;
-        set => SetProperty(ref defaultEventColorHex, value);
+        set
+        {
+            if (SetProperty(ref defaultEventColorHex, value))
+            {
+                OnPropertyChanged(nameof(SelectedPaletteColorHex));
+            }
+        }
+    }
+
+    public string? SelectedPaletteColorHex
+    {
+        get => ColorOptions.FirstOrDefault(option =>
+            string.Equals(option.Hex, DefaultEventColorHex, StringComparison.OrdinalIgnoreCase))?.Hex;
+        set
+        {
+            if (!string.IsNullOrWhiteSpace(value))
+            {
+                DefaultEventColorHex = value;
+            }
+        }
     }
 
     public double TimelineCardFontSize
