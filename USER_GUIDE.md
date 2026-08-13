@@ -105,6 +105,8 @@ Dies gilt für Ereignisanlage, -bearbeitung, -löschung, Friständerungen, Farb�
 - Ziehen Sie Dateien per Drag-and-drop auf ein Ereignis, die Ereignisliste oder den Anhangsbereich.
 - Oder klicken Sie in der Bearbeitungsmaske auf **Anhang hinzufügen**.
 
+Jede erfolgreich hinzugefügte Datei wird sofort als vollständige, intern eindeutig benannte Kopie in den Projektarbeitsordner übernommen. Der externe Ursprungspfad bleibt nur Metainformation. Beim Speichern wird die Kopie in das `.zeitprojekt`-Archiv aufgenommen; eine fehlende oder nachträglich veränderte Projektkopie verhindert, dass ein vorhandenes gültiges Archiv überschrieben wird.
+
 ### Unterstützte Formate
 
 - PDF
@@ -113,12 +115,15 @@ Dies gilt für Ereignisanlage, -bearbeitung, -löschung, Friständerungen, Farb�
 - Excel: XLSX
 - Webseitenlinks
 
-### Dokumentvorschau
+### Dokumentvorschau und Öffnen
 
 - PDF-Dateien werden direkt in der Anwendung angezeigt.
 - Bilder werden direkt in der Vorschau dargestellt.
 - DOCX- und XLSX-Dateien zeigen Metadaten und extrahierten Text.
-- Mit **In Windows öffnen** wird die Projektkopie im Standardprogramm geöffnet.
+- Ein Doppelklick auf einen Eintrag im Reiter **Anhänge** prüft genau diese Projektkopie und übergibt sie an das unter Windows konfigurierte Standardprogramm.
+- Mit **Öffnen** kann ein Anhang weiterhin ausdrücklich ausgewählt und im Standardprogramm geöffnet werden.
+
+Ausführbare Dateien, Skripte und Verknüpfungen werden aus Sicherheitsgründen nicht direkt per Doppelklick gestartet. Verwenden Sie dafür nur dann die bewusste Aktion **Öffnen**, wenn Sie der Datei vertrauen. Vor jeder Übergabe prüft Zeitstrahl Studio den internen Pfad, Reparse Points, Dateigröße, Stabilität und SHA-256-Prüfsumme.
 
 ### OCR
 
@@ -194,9 +199,13 @@ Mit **Filter zurücksetzen** werden alle Filter aufgehoben.
 
 1. Wählen Sie **Export → HTML-Export**.
 2. Legen Sie die horizontale oder vertikale Startansicht fest und entscheiden Sie, ob Miniaturen und private Notizen enthalten sein dürfen.
-3. Speichern Sie die HTML-Datei und öffnen Sie sie in einem aktuellen Browser.
+3. Lassen Sie den orangefarbenen Hinweis zur exportierten Momentaufnahme aktiviert oder schalten Sie ihn für diesen Export aus.
+4. Aktivieren Sie optional **Alle hinterlegten Dokumente als Kopien mitgeben**.
+5. Speichern Sie ohne Dokumentkopien eine `.html`-Einzeldatei. Mit Dokumentkopien speichern Sie ein `.zip`-Paket.
 
-Die erzeugte Einzeldatei ist eine vollständig lokale Momentaufnahme. Der Hinweis am oberen Rand macht kenntlich, dass Änderungen in der HTML-Datei nicht in das Projekt zurückgeschrieben werden. Es werden keine externen Bibliotheken oder Ressourcen nachgeladen.
+Die erzeugte Einzeldatei ist eine vollständig lokale Momentaufnahme. Der standardmäßig sichtbare Hinweis am oberen Rand macht kenntlich, dass Änderungen in der HTML-Datei nicht in das Projekt zurückgeschrieben werden. Es werden keine externen Bibliotheken oder Ressourcen nachgeladen.
+
+Das Dokumentpaket enthält `index.html`, `LESMICH.txt` und alle zum Exportzeitpunkt validierten Projektkopien im Ordner `Dokumente`. Entpacken Sie das ZIP vollständig und öffnen Sie danach `index.html`. Dokumentnamen und vorhandene Vorschaubilder sind mit der jeweils mitgelieferten Kopie verknüpft. Bilder und PDFs werden abhängig vom Browser meist direkt angezeigt; andere Dateitypen werden je nach lokaler Browser- und Windows-Konfiguration heruntergeladen oder an ein Standardprogramm übergeben. Öffnen Sie `index.html` nicht direkt innerhalb des ZIP-Archivs, weil relative Dokumentverweise dort nicht zuverlässig funktionieren.
 
 Der Projektkopf zeigt Titel, Kurzbeschreibung, Ereigniszahl, Projektzeitraum und Exportzeitpunkt. Die Projektbeschreibung lässt sich aufklappen. Ereignisse erscheinen als Karten mit vollständigem Rahmen in der Ereignisfarbe; sehr helle oder dunkle Farben erhalten zusätzlich eine neutrale Außenkontur.
 
@@ -211,11 +220,11 @@ Bedienung im Browser:
 - **Design: Hell / Dunkel** wechselt nur die Darstellung der exportierten Datei. Die Wahl wird als reine Darstellungspräferenz lokal im Browserspeicher abgelegt; es werden keine Projektdaten gespeichert oder übertragen.
 - **Drucken** öffnet die Browser-Druckfunktion. Für den Druck wechselt der Export vorübergehend auf eine kontrastreiche vertikale 100-%-Ansicht, öffnet Projektbeschreibung und Ereignisdetails und stellt anschließend Ausrichtung, Zoom, Scrollposition, Filterpanel und geöffnete Details wieder her.
 
-Auf schmalen Fenstern ordnen sich Kennzahlen, Werkzeuggruppen und vertikale Karten untereinander an. Dokumente bleiben aus Sicherheits- und Größengründen als Namen beziehungsweise Miniaturen eingebettet; die Originaldateien werden nicht Teil der HTML-Datei. Externe HTTP(S)-Links werden erst nach einer Bestätigung geöffnet.
+Auf schmalen Fenstern ordnen sich Kennzahlen, Werkzeuggruppen und vertikale Karten untereinander an. In der HTML-Einzeldatei bleiben Dokumente aus Sicherheits- und Größengründen Namen beziehungsweise eingebettete Miniaturen. Nur bei ausdrücklich aktiviertem Dokumentpaket werden vollständige Kopien in das ZIP aufgenommen und relativ verlinkt. Externe HTTP(S)-Links werden erst nach einer Bestätigung geöffnet.
 
 ### Projektexport
 
-Mit **Datei → Exportieren** wird das gesamte Projekt als `.zeitprojekt`-Archiv gespeichert. Dieses Archiv enthält alle Ereignisse, Dokumente, Analysen und Einstellungen.
+Mit **Datei → Exportieren** wird das gesamte Projekt als `.zeitprojekt`-Archiv gespeichert. Dieses Archiv enthält alle Ereignisse, Dokumentkopien, Analysen und Einstellungen. Zeitstrahl Studio vergleicht jede referenzierte Dokumentkopie beim Export mit gespeicherter Größe und SHA-256. Bei einer fehlenden oder veränderten Kopie wird der Export abgebrochen und ein bereits vorhandenes Zielarchiv bleibt unverändert.
 
 ## Sicherung und Wiederherstellung
 

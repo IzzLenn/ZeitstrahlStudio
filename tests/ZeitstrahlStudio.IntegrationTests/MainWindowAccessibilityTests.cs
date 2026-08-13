@@ -58,6 +58,11 @@ public sealed class MainWindowAccessibilityTests
                 Assert.NotNull(FindAutomationNamedDescendant(
                     window,
                     "Anhänge des ausgewählten Ereignisses"));
+                var attachmentList = Assert.IsType<ListBox>(window.FindName("AttachmentList"));
+                Assert.Contains(
+                    "Doppelklick",
+                    AutomationProperties.GetHelpText(attachmentList),
+                    StringComparison.Ordinal);
 
                 Assert.Contains(
                     "Strg+S",

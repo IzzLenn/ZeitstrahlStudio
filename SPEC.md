@@ -362,6 +362,8 @@ Wenn die ursprüngliche Datei später verschoben oder gelöscht wird:
 
 Es muss verhindert werden, dass zwei Anhänge aufgrund gleicher Dateinamen versehentlich überschrieben werden.
 
+Vor dem atomaren Ersetzen eines vollständigen Projektarchivs muss jede in der Projektdatenbank referenzierte Dokumentkopie im Arbeitsordner vorhanden sein und weiterhin zu ihrer gespeicherten Größe und SHA-256-Prüfsumme passen. Eine fehlende oder veränderte Kopie bricht den Export verständlich ab; ein bereits vorhandenes gültiges Zielarchiv bleibt unverändert.
+
 ## 7.4 Drag-and-drop
 
 Der Benutzer muss Dateien per Drag-and-drop:
@@ -413,6 +415,8 @@ Für DOCX- und XLSX-Dateien soll mindestens Folgendes angezeigt werden:
 * erkannte Metadaten
 * extrahierter Text oder eine kompakte Inhaltsvorschau
 * Schaltfläche zum Öffnen im Windows-Standardprogramm
+
+Ein Doppelklick auf einen sichtbaren dokumentartigen Anhang muss genau dessen geprüfte Projektkopie im Windows-Standardprogramm öffnen. Die Zugehörigkeit zum aktuell ausgewählten Ereignis sowie Pfad, Größe und Prüfsumme sind vorher erneut zu prüfen. Für ausführbare Dateien, Skripte und Verknüpfungen ist der direkte Doppelklick zu sperren; sie dürfen nur über die ausdrücklich gewählte Öffnen-Aktion übergeben werden.
 
 Eine vollständige originalgetreue Word- oder Excel-Darstellung innerhalb der Anwendung ist nicht zwingend erforderlich.
 
@@ -923,7 +927,7 @@ Farben dürfen nicht das einzige Merkmal zur Unterscheidung wichtiger Zustände 
 
 # 14. Standalone-HTML-Export
 
-Erstelle zusätzlich einen Export als einzelne, eigenständige HTML-Datei.
+Erstelle zusätzlich einen Export als einzelne, eigenständige HTML-Datei. Optional kann der Benutzer stattdessen ein transportables ZIP-Paket mit derselben HTML-Momentaufnahme und Kopien aller hinterlegten Dokumente erzeugen.
 
 Die HTML-Datei muss:
 
@@ -950,13 +954,15 @@ Der HTML-Export soll mindestens ermöglichen:
 * Anzeige kleiner Dokumentvorschauen
 * Anzeige der Dokumentnamen als Verweise
 
-Die Originaldokumente müssen nicht in die einzelne HTML-Datei eingebettet werden.
+Die Originaldokumente werden nicht in die einzelne HTML-Datei eingebettet. Ohne Dokumentoption bleiben Namen und eingebettete Miniaturen reine Hinweise ohne lokalen Dateipfad.
+
+Bei aktivierter Dokumentoption muss der Export atomar ein ZIP-Paket mit mindestens `index.html`, `LESMICH.txt` und den validierten Kopien unter `Dokumente/{Anhang-ID}.{sichere Endung}` erzeugen. Originaldateinamen dürfen nicht als Archivpfad verwendet werden. Vor und während des Kopierens sind Projektpfad, Größe und SHA-256 erneut zu prüfen; bei einem Fehler darf kein unvollständiges Paket ein vorhandenes Ziel ersetzen. Nach vollständigem Entpacken verweisen Dokumentnamen und vorhandene Miniaturen relativ auf die jeweils mitgelieferte Kopie. Ob ein Browser die Datei direkt anzeigt, herunterlädt oder an ein Windows-Standardprogramm übergibt, richtet sich nach Dateityp und lokaler Browserkonfiguration.
 
 Webseitenlinks dürfen als anklickbare Links ausgegeben werden. Vor dem Öffnen eines externen Links soll eindeutig erkennbar sein, dass die lokale HTML-Datei verlassen wird.
 
-Füge einen deutlichen Hinweis hinzu, dass die HTML-Datei eine exportierte Momentaufnahme ist und Änderungen nicht zurück in das Projekt geschrieben werden.
+Zeige standardmäßig einen deutlichen farbigen Hinweis, dass die HTML-Datei eine exportierte Momentaufnahme ist und Änderungen nicht zurück in das Projekt geschrieben werden. Der HTML-Exportdialog muss einen unabhängigen Toggle anbieten, mit dem der Benutzer diesen Hinweis für den konkreten Export deaktivieren kann.
 
-Die HTML-Datei darf keine Daten an externe Dienste senden.
+HTML-Einzeldatei und Dokumentpaket dürfen keine Daten an externe Dienste senden.
 
 ---
 
@@ -1346,11 +1352,13 @@ Die Anwendung gilt erst als vollständig, wenn mindestens folgende Szenarien fun
 1. Mehrere PDFs per Drag-and-drop hinzufügen.
 2. Bild, DOCX und XLSX hinzufügen.
 3. PDF innerhalb der Anwendung anzeigen.
-4. PDF im Standardprogramm öffnen.
-5. extrahierten Text durchsuchen.
-6. Originaldatei außerhalb der Anwendung verschieben.
-7. Projektkopie bleibt weiterhin verfügbar.
-8. Hinweis wird protokolliert.
+4. Einen sichtbaren Anhang doppelklicken und genau diese geprüfte Projektkopie im Windows-Standardprogramm öffnen.
+5. PDF zusätzlich über die ausdrückliche Öffnen-Aktion im Standardprogramm öffnen.
+6. extrahierten Text durchsuchen.
+7. Originaldatei außerhalb der Anwendung verschieben oder löschen.
+8. Projektkopie bleibt weiterhin verfügbar.
+9. Projekt speichern, auf einen zweiten Rechner übertragen und die dort enthaltene Dokumentkopie erneut öffnen.
+10. Hinweis wird protokolliert.
 
 ## Szenario 5: Zeitstrahl
 
@@ -1385,14 +1393,19 @@ Die Anwendung gilt erst als vollständig, wenn mindestens folgende Szenarien fun
 
 ## Szenario 8: HTML-Export
 
-1. eigenständige HTML-Datei erzeugen.
-2. Computer vom Internet trennen.
-3. HTML-Datei lokal im Browser öffnen.
-4. zwischen horizontaler und vertikaler Ansicht wechseln.
-5. Ereignisse durchsuchen.
-6. Beschreibungen aufklappen.
-7. Druckvorschau des Browsers öffnen.
-8. sicherstellen, dass keine externen Ressourcen geladen werden.
+1. eigenständige HTML-Datei mit aktiviertem Momentaufnahmehinweis erzeugen.
+2. Hinweis im Exportdialog deaktivieren und zweite HTML-Datei ohne sichtbares Warnbanner erzeugen.
+3. Computer vom Internet trennen.
+4. beide HTML-Dateien lokal im Browser öffnen.
+5. zwischen horizontaler und vertikaler Ansicht wechseln.
+6. Ereignisse durchsuchen.
+7. Beschreibungen aufklappen.
+8. Druckvorschau des Browsers öffnen.
+9. HTML-Exportpaket mit allen Dokumentkopien als ZIP erzeugen.
+10. ZIP vollständig entpacken und `index.html` öffnen.
+11. Dokumentname sowie vorhandene Dokumentvorschau anklicken und die zugehörige mitgelieferte Datei öffnen beziehungsweise vom Browser lokal übergeben lassen.
+12. Größe und SHA-256 der mitgelieferten Kopien mit dem Projektbestand vergleichen.
+13. sicherstellen, dass keine externen Ressourcen geladen und keine Daten übertragen werden.
 
 ## Szenario 9: Projekttransfer
 

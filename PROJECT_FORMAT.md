@@ -70,7 +70,7 @@ Importe überschreiben nie ohne bestätigte Benutzerentscheidung einen vorhanden
 
 ## Atomarer Export
 
-Der Export führt zuerst einen SQLite-WAL-Checkpoint aus und arbeitet dann aus dem konsistenten Arbeitsordner. Er schreibt ein neues Archiv im Zielverzeichnis, berechnet alle Prüfsummen während des Schreibens, öffnet das Archiv anschließend erneut zur vollständigen Validierung und ersetzt die bestehende Zieldatei erst dann atomar. Bei Abbruch oder Fehler wird nur die unvollständige temporäre Datei entfernt.
+Der Export führt zuerst einen SQLite-WAL-Checkpoint aus und arbeitet dann aus dem konsistenten Arbeitsordner. Er schreibt ein neues Archiv im Zielverzeichnis und berechnet alle Prüfsummen während des Schreibens. Jede in SQLite referenzierte Anhangsdatei muss dabei im Archiv enthalten sein und zu ihrer gespeicherten Größe sowie SHA-256-Prüfsumme passen. Anschließend wird das Archiv erneut vollständig validiert und die bestehende Zieldatei erst dann atomar ersetzt. Bei Abbruch, fehlender Dokumentkopie, Integritätsabweichung oder anderem Fehler wird nur die unvollständige temporäre Datei entfernt; ein vorhandenes Ziel bleibt unverändert.
 
 ## Kompatibilitätsregeln
 

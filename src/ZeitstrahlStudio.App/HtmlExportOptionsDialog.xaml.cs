@@ -22,7 +22,9 @@ public partial class HtmlExportOptionsDialog : Window
                 ? TimelineOrientation.Vertical
                 : TimelineOrientation.Horizontal,
             IncludeThumbnailsBox.IsChecked == true,
-            IncludeNotesBox.IsChecked == true);
+            IncludeNotesBox.IsChecked == true,
+            ShowSnapshotBannerBox.IsChecked == true,
+            IncludeDocumentCopiesBox.IsChecked == true);
         DialogResult = true;
     }
 }

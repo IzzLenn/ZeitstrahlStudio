@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using System.Data.Common;
+using System.IO.Compression;
+using System.Security.Cryptography;
 using System.Text;
 using SkiaSharp;
 using ZeitstrahlStudio.Application;
@@ -7,14 +9,26 @@ using ZeitstrahlStudio.Domain;
 
 namespace ZeitstrahlStudio.Export;
 
-/// <summary>Erzeugt eine einzelne offlinefähige HTML-Momentaufnahme ohne externe Ressourcen.</summary>
+/// <summary>Erzeugt eine offlinefähige HTML-Momentaufnahme als Einzeldatei oder geprüftes Dokumentpaket.</summary>
 public sealed class StandaloneHtmlExportService : IHtmlExportService
 {
+    private const int CopyBufferSize = 128 * 1024;
     private const long MaximumImageSourceBytes = 50L * 1024 * 1024;
     private const int MaximumImageEdge = 8_000;
     private const long MaximumImagePixels = 24_000_000;
     private const int MaximumThumbnailWidth = 360;
     private const int MaximumThumbnailHeight = 240;
+    private const string PackageHtmlPath = "index.html";
+    private const string PackageReadmePath = "LESMICH.txt";
+    private const string PackageReadme = """
+        Zeitstrahl Studio – HTML-Exportpaket
+
+        1. Entpacken Sie dieses ZIP-Archiv vollständig in einen lokalen Ordner.
+        2. Öffnen Sie anschließend index.html in einem modernen Browser.
+        3. Die Dokumentverweise in der HTML-Datei öffnen die mitgelieferten Kopien aus dem Ordner Dokumente.
+
+        Das Paket arbeitet vollständig lokal und sendet keine Daten an externe Dienste.
+        """;
     private readonly IAttachmentFileService attachmentFileService;
     private readonly IPdfPreviewService pdfPreviewService;
     private readonly IAttachmentAnalysisStore analysisStore;
@@ -44,11 +58,16 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
 
         var fullTargetPath = Path.GetFullPath(targetPath);
         var extension = Path.GetExtension(fullTargetPath);
-        if (!extension.Equals(".html", StringComparison.OrdinalIgnoreCase) &&
-            !extension.Equals(".htm", StringComparison.OrdinalIgnoreCase))
+        var validExtension = options.IncludeDocumentCopies
+            ? extension.Equals(".zip", StringComparison.OrdinalIgnoreCase)
+            : extension.Equals(".html", StringComparison.OrdinalIgnoreCase) ||
+              extension.Equals(".htm", StringComparison.OrdinalIgnoreCase);
+        if (!validExtension)
         {
             throw new ArgumentException(
-                "Die Zieldatei des Standalone-Exports muss die Endung .html oder .htm besitzen.",
+                options.IncludeDocumentCopies
+                    ? "Das HTML-Exportpaket mit Dokumentkopien muss die Endung .zip besitzen."
+                    : "Die Zieldatei des Standalone-Exports muss die Endung .html oder .htm besitzen.",
                 nameof(targetPath));
         }
 
@@ -60,7 +79,17 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
                 "Der Zielordner für den HTML-Export wurde nicht gefunden.");
         }
 
-        var payload = await CreatePayloadAsync(workspace, options, cancellationToken).ConfigureAwait(false);
+        var documentExports = options.IncludeDocumentCopies
+            ? CreateDocumentExports(workspace.Project)
+            : [];
+        var documentPaths = documentExports.ToDictionary(
+            item => item.Attachment.Id,
+            item => item.PackagePath);
+        var payload = await CreatePayloadAsync(
+            workspace,
+            options,
+            documentPaths,
+            cancellationToken).ConfigureAwait(false);
         cancellationToken.ThrowIfCancellationRequested();
         var json = StandaloneHtmlDataEncoder.Serialize(payload);
         var html = StandaloneHtmlTemplate.Content.Replace(
@@ -72,23 +101,41 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
             $".{Path.GetFileName(fullTargetPath)}.{Guid.NewGuid():N}.tmp");
         try
         {
-            await File.WriteAllTextAsync(
-                temporaryPath,
-                html,
-                new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
-                cancellationToken).ConfigureAwait(false);
-            File.Move(temporaryPath, fullTargetPath, overwrite: true);
+            if (options.IncludeDocumentCopies)
+            {
+                await WritePackageAsync(
+                    workspace,
+                    html,
+                    documentExports,
+                    temporaryPath,
+                    cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await File.WriteAllTextAsync(
+                    temporaryPath,
+                    html,
+                    new UTF8Encoding(encoderShouldEmitUTF8Identifier: false),
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            ReplaceAtomically(temporaryPath, fullTargetPath);
+        }
+        catch (InvalidDataException)
+        {
+            throw;
         }
         catch (UnauthorizedAccessException exception)
         {
             throw new UnauthorizedAccessException(
-                "Die HTML-Datei konnte nicht gespeichert werden. Bitte prüfen Sie die Zugriffsrechte des Zielordners.",
+                "Der HTML-Export konnte nicht gespeichert werden. Bitte prüfen Sie die Zugriffsrechte des Zielordners.",
                 exception);
         }
         catch (IOException exception)
         {
             throw new IOException(
-                "Die HTML-Datei konnte nicht vollständig gespeichert werden. " +
+                "Der HTML-Export konnte nicht vollständig gespeichert werden. " +
                 "Bitte prüfen Sie freien Speicherplatz und Dateisperren.",
                 exception);
         }
@@ -110,6 +157,7 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
     private async Task<HtmlProjectPayload> CreatePayloadAsync(
         ProjectWorkspace workspace,
         HtmlExportOptions options,
+        IReadOnlyDictionary<Guid, string> documentPaths,
         CancellationToken cancellationToken)
     {
         var chronologicalEvents = workspace.Project.GetChronologicalEvents();
@@ -127,6 +175,7 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
                     workspace,
                     timelineEvent,
                     options,
+                    documentPaths,
                     token).ConfigureAwait(false);
             }).ConfigureAwait(false);
 
@@ -139,6 +188,7 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
             workspace.Project.OverallEnd?.ToString("yyyy-MM-dd"),
             DateTimeOffset.UtcNow,
             options.InitialOrientation == TimelineOrientation.Horizontal ? "horizontal" : "vertical",
+            options.ShowSnapshotBanner,
             chronologicalEvents.Select(timelineEvent => results[timelineEvent.Id]).ToArray());
     }
 
@@ -146,6 +196,7 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
         ProjectWorkspace workspace,
         TimelineEvent timelineEvent,
         HtmlExportOptions options,
+        IReadOnlyDictionary<Guid, string> documentPaths,
         CancellationToken cancellationToken)
     {
         var extractedTexts = new List<string>();
@@ -171,15 +222,25 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
             }
         }
 
-        var thumbnailDataUrl = options.IncludeThumbnails
-            ? await CreateThumbnailDataUrlAsync(workspace, timelineEvent, cancellationToken).ConfigureAwait(false)
+        var primaryAttachment = TimelineThumbnailSelection.SelectPrimary(timelineEvent);
+        var thumbnailDataUrl = options.IncludeThumbnails && primaryAttachment is not null
+            ? await CreateThumbnailDataUrlAsync(
+                workspace,
+                primaryAttachment,
+                cancellationToken).ConfigureAwait(false)
+            : null;
+        var thumbnailDocumentPath = thumbnailDataUrl is not null &&
+                                    primaryAttachment is not null &&
+                                    documentPaths.TryGetValue(primaryAttachment.Id, out var primaryPath)
+            ? primaryPath
             : null;
         var attachments = timelineEvent.Attachments
             .Select(attachment => new HtmlAttachmentPayload(
                 attachment.OriginalFileName,
                 attachment.MediaType,
                 attachment.FileSize,
-                attachment.LinkedPdfPage))
+                attachment.LinkedPdfPage,
+                documentPaths.TryGetValue(attachment.Id, out var documentPath) ? documentPath : null))
             .ToArray();
         var webLinks = timelineEvent.WebLinks
             .Select(link => new HtmlWebLinkPayload(link.Address.AbsoluteUri, link.Label))
@@ -233,20 +294,15 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
             attachments,
             webLinks,
             thumbnailDataUrl,
+            thumbnailDocumentPath,
             searchText);
     }
 
     private async Task<string?> CreateThumbnailDataUrlAsync(
         ProjectWorkspace workspace,
-        TimelineEvent timelineEvent,
+        Attachment primary,
         CancellationToken cancellationToken)
     {
-        var primary = TimelineThumbnailSelection.SelectPrimary(timelineEvent);
-        if (primary is null)
-        {
-            return null;
-        }
-
         try
         {
             var localPath = await attachmentFileService.GetValidatedLocalPathAsync(
@@ -361,8 +417,298 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
         if (fullTargetPath.StartsWith(workspaceRoot, StringComparison.OrdinalIgnoreCase))
         {
             throw new InvalidOperationException(
-                "Die HTML-Datei darf nicht innerhalb des aktiven Projektarbeitsordners gespeichert werden. " +
+                "Der HTML-Export darf nicht innerhalb des aktiven Projektarbeitsordners gespeichert werden. " +
                 "Bitte wählen Sie einen anderen Zielordner.");
+        }
+    }
+
+    private static IReadOnlyList<HtmlDocumentExport> CreateDocumentExports(TimelineProject project)
+    {
+        var exports = new List<HtmlDocumentExport>();
+        var knownIds = new HashSet<Guid>();
+        foreach (var timelineEvent in project.GetChronologicalEvents())
+        {
+            foreach (var attachment in timelineEvent.Attachments)
+            {
+                if (!knownIds.Add(attachment.Id))
+                {
+                    throw new InvalidDataException(
+                        $"Die Anhangs-ID '{attachment.Id}' ist im Projekt mehrfach vergeben.");
+                }
+
+                exports.Add(new HtmlDocumentExport(
+                    attachment,
+                    $"Dokumente/{attachment.Id:N}{GetSafeDocumentExtension(attachment)}"));
+            }
+        }
+
+        return exports;
+    }
+
+    private async Task WritePackageAsync(
+        ProjectWorkspace workspace,
+        string html,
+        IReadOnlyList<HtmlDocumentExport> documentExports,
+        string temporaryPath,
+        CancellationToken cancellationToken)
+    {
+        await using (var output = new FileStream(
+            temporaryPath,
+            FileMode.CreateNew,
+            FileAccess.ReadWrite,
+            FileShare.None,
+            CopyBufferSize,
+            FileOptions.Asynchronous | FileOptions.SequentialScan))
+        {
+            using (var archive = new ZipArchive(output, ZipArchiveMode.Create, leaveOpen: true))
+            {
+                await WriteTextEntryAsync(
+                    archive,
+                    PackageHtmlPath,
+                    html,
+                    CompressionLevel.Optimal,
+                    cancellationToken).ConfigureAwait(false);
+                await WriteTextEntryAsync(
+                    archive,
+                    PackageReadmePath,
+                    PackageReadme,
+                    CompressionLevel.Optimal,
+                    cancellationToken).ConfigureAwait(false);
+
+                foreach (var documentExport in documentExports)
+                {
+                    cancellationToken.ThrowIfCancellationRequested();
+                    try
+                    {
+                        var localPath = await attachmentFileService.GetValidatedLocalPathAsync(
+                            workspace,
+                            documentExport.Attachment,
+                            cancellationToken).ConfigureAwait(false);
+                        var entry = archive.CreateEntry(
+                            documentExport.PackagePath,
+                            CompressionLevel.NoCompression);
+                        await using var source = new FileStream(
+                            localPath,
+                            FileMode.Open,
+                            FileAccess.Read,
+                            FileShare.Read,
+                            CopyBufferSize,
+                            FileOptions.Asynchronous | FileOptions.SequentialScan);
+                        await using var destination = entry.Open();
+                        var copied = await CopyAndHashAsync(
+                            source,
+                            destination,
+                            cancellationToken).ConfigureAwait(false);
+                        if (copied.Length != documentExport.Attachment.FileSize ||
+                            !string.Equals(
+                                copied.Sha256,
+                                documentExport.Attachment.Sha256,
+                                StringComparison.OrdinalIgnoreCase))
+                        {
+                            throw new InvalidDataException(
+                                $"Die Projektkopie von „{documentExport.Attachment.OriginalFileName}“ " +
+                                "stimmt beim Kopieren nicht mit ihren gespeicherten Metadaten überein.");
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        throw;
+                    }
+                    catch (Exception exception) when (
+                        exception is IOException or UnauthorizedAccessException or
+                        InvalidOperationException or ArgumentException)
+                    {
+                        throw new InvalidDataException(
+                            $"Die Projektkopie von „{documentExport.Attachment.OriginalFileName}“ " +
+                            $"konnte nicht in das HTML-Exportpaket übernommen werden: {exception.Message}",
+                            exception);
+                    }
+                }
+            }
+
+            await output.FlushAsync(cancellationToken).ConfigureAwait(false);
+            output.Flush(flushToDisk: true);
+        }
+
+        await VerifyPackageAsync(
+            temporaryPath,
+            html,
+            documentExports,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task WriteTextEntryAsync(
+        ZipArchive archive,
+        string entryPath,
+        string text,
+        CompressionLevel compressionLevel,
+        CancellationToken cancellationToken)
+    {
+        var entry = archive.CreateEntry(entryPath, compressionLevel);
+        await using var destination = entry.Open();
+        var data = Encoding.UTF8.GetBytes(text);
+        await destination.WriteAsync(data, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task VerifyPackageAsync(
+        string packagePath,
+        string html,
+        IReadOnlyList<HtmlDocumentExport> documentExports,
+        CancellationToken cancellationToken)
+    {
+        await using var input = new FileStream(
+            packagePath,
+            FileMode.Open,
+            FileAccess.Read,
+            FileShare.Read,
+            CopyBufferSize,
+            FileOptions.Asynchronous | FileOptions.SequentialScan);
+        using var archive = new ZipArchive(input, ZipArchiveMode.Read, leaveOpen: false);
+        var expectedPaths = new HashSet<string>(StringComparer.Ordinal)
+        {
+            PackageHtmlPath,
+            PackageReadmePath,
+        };
+        foreach (var documentExport in documentExports)
+        {
+            expectedPaths.Add(documentExport.PackagePath);
+        }
+
+        var actualPaths = archive.Entries.Select(entry => entry.FullName).ToArray();
+        if (actualPaths.Length != expectedPaths.Count ||
+            actualPaths.Distinct(StringComparer.Ordinal).Count() != actualPaths.Length ||
+            actualPaths.Any(path => !expectedPaths.Contains(path)))
+        {
+            throw new InvalidDataException("Das erzeugte HTML-Exportpaket besitzt eine unerwartete Dateistruktur.");
+        }
+
+        await VerifyTextEntryAsync(
+            archive,
+            PackageHtmlPath,
+            html,
+            "Die index.html des erzeugten HTML-Exportpakets ist unvollständig oder beschädigt.",
+            cancellationToken).ConfigureAwait(false);
+        await VerifyTextEntryAsync(
+            archive,
+            PackageReadmePath,
+            PackageReadme,
+            "Die LESMICH.txt des erzeugten HTML-Exportpakets ist unvollständig oder beschädigt.",
+            cancellationToken).ConfigureAwait(false);
+
+        foreach (var documentExport in documentExports)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            var entry = archive.GetEntry(documentExport.PackagePath)
+                ?? throw new InvalidDataException(
+                    $"Das erzeugte HTML-Exportpaket enthält „{documentExport.Attachment.OriginalFileName}“ nicht.");
+            if (entry.Length != documentExport.Attachment.FileSize)
+            {
+                throw new InvalidDataException(
+                    $"Die Größe von „{documentExport.Attachment.OriginalFileName}“ im HTML-Exportpaket stimmt nicht.");
+            }
+
+            await using var entryStream = entry.Open();
+            var hash = await SHA256.HashDataAsync(entryStream, cancellationToken).ConfigureAwait(false);
+            if (!string.Equals(
+                    Convert.ToHexString(hash),
+                    documentExport.Attachment.Sha256,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidDataException(
+                    $"Die Prüfsumme von „{documentExport.Attachment.OriginalFileName}“ im HTML-Exportpaket stimmt nicht.");
+            }
+        }
+    }
+
+    private static async Task VerifyTextEntryAsync(
+        ZipArchive archive,
+        string entryPath,
+        string expectedText,
+        string errorMessage,
+        CancellationToken cancellationToken)
+    {
+        var entry = archive.GetEntry(entryPath)
+            ?? throw new InvalidDataException(errorMessage);
+        var expectedBytes = Encoding.UTF8.GetBytes(expectedText);
+        if (entry.Length != expectedBytes.Length)
+        {
+            throw new InvalidDataException(errorMessage);
+        }
+
+        await using var entryStream = entry.Open();
+        var actualHash = await SHA256.HashDataAsync(entryStream, cancellationToken).ConfigureAwait(false);
+        var expectedHash = SHA256.HashData(expectedBytes);
+        if (!CryptographicOperations.FixedTimeEquals(actualHash, expectedHash))
+        {
+            throw new InvalidDataException(errorMessage);
+        }
+    }
+    private static async Task<(long Length, string Sha256)> CopyAndHashAsync(
+        Stream source,
+        Stream destination,
+        CancellationToken cancellationToken)
+    {
+        var buffer = new byte[CopyBufferSize];
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        long length = 0;
+        while (true)
+        {
+            var read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false);
+            if (read == 0)
+            {
+                break;
+            }
+
+            hash.AppendData(buffer, 0, read);
+            await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+            length = checked(length + read);
+        }
+
+        return (length, Convert.ToHexString(hash.GetHashAndReset()).ToLowerInvariant());
+    }
+
+    private static string GetSafeDocumentExtension(Attachment attachment)
+    {
+        foreach (var candidate in new[] { attachment.OriginalFileName, attachment.ProjectRelativePath })
+        {
+            string extension;
+            try
+            {
+                extension = Path.GetExtension(candidate);
+            }
+            catch (ArgumentException)
+            {
+                continue;
+            }
+
+            if (extension.Length is >= 2 and <= 20 &&
+                extension[0] == '.' &&
+                extension[1..].All(char.IsAsciiLetterOrDigit))
+            {
+                return extension.ToLowerInvariant();
+            }
+        }
+
+        return ".bin";
+    }
+
+    private static void ReplaceAtomically(string temporaryPath, string targetPath)
+    {
+        if (!File.Exists(targetPath))
+        {
+            File.Move(temporaryPath, targetPath);
+            return;
+        }
+
+        var backupPath = targetPath + $".{Guid.NewGuid():N}.previous";
+        File.Replace(temporaryPath, targetPath, backupPath, ignoreMetadataErrors: true);
+        try
+        {
+            File.Delete(backupPath);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            // Der gültige vorherige Export bleibt bei einer nicht möglichen Bereinigung wiederherstellbar.
         }
     }
 
@@ -410,6 +756,7 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
         string? OverallEnd,
         DateTimeOffset ExportedAtUtc,
         string InitialOrientation,
+        bool ShowSnapshotBanner,
         IReadOnlyList<HtmlEventPayload> Events);
 
     private sealed record HtmlEventPayload(
@@ -431,6 +778,7 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
         IReadOnlyList<HtmlAttachmentPayload> Attachments,
         IReadOnlyList<HtmlWebLinkPayload> WebLinks,
         string? ThumbnailDataUrl,
+        string? ThumbnailDocumentPath,
         string SearchText);
 
     private sealed record HtmlDeadlinePayload(
@@ -446,7 +794,10 @@ public sealed class StandaloneHtmlExportService : IHtmlExportService
         string FileName,
         string MediaType,
         long FileSize,
-        int? LinkedPdfPage);
+        int? LinkedPdfPage,
+        string? DocumentPath);
 
     private sealed record HtmlWebLinkPayload(string Address, string? Label);
+
+    private sealed record HtmlDocumentExport(Attachment Attachment, string PackagePath);
 }

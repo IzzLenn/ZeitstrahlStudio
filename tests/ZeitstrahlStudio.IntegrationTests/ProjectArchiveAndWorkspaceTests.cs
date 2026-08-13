@@ -265,6 +265,59 @@ public sealed class ProjectArchiveAndWorkspaceTests
         Assert.Empty(Directory.EnumerateFiles(root.Path, ".gesperrt.zeitprojekt.*.tmp"));
     }
 
+    [Theory]
+    [InlineData("missing", "fehlt")]
+    [InlineData("size", "Größe")]
+    [InlineData("checksum", "Prüfsumme")]
+    public async Task Export_InvalidReferencedAttachmentLeavesExistingArchiveUnchanged(
+        string corruption,
+        string expectedMessage)
+    {
+        await using var root = new TemporaryRoot();
+        var repository = new SqliteProjectRepository();
+        var service = new ProjectArchiveService(repository, new FixedTimeProvider(BaseTime));
+        var source = await CreatePopulatedWorkspaceAsync(root.Path, repository);
+        var archivePath = System.IO.Path.Combine(root.Path, "bestand.zeitprojekt");
+        await service.ExportAsync(
+            source.WorkingDirectory,
+            archivePath,
+            progress: null,
+            CancellationToken.None);
+        var originalArchiveBytes = await File.ReadAllBytesAsync(archivePath);
+        var attachmentPath = System.IO.Path.Combine(
+            source.WorkingDirectory,
+            source.Attachment.ProjectRelativePath.Replace('/', System.IO.Path.DirectorySeparatorChar));
+
+        switch (corruption)
+        {
+            case "missing":
+                File.Delete(attachmentPath);
+                break;
+            case "size":
+                await File.WriteAllBytesAsync(
+                    attachmentPath,
+                    new byte[checked((int)source.Attachment.FileSize + 1)]);
+                break;
+            case "checksum":
+                await File.WriteAllBytesAsync(
+                    attachmentPath,
+                    Enumerable.Repeat((byte)'x', checked((int)source.Attachment.FileSize)).ToArray());
+                break;
+            default:
+                throw new ArgumentOutOfRangeException(nameof(corruption));
+        }
+
+        var exception = await Assert.ThrowsAsync<InvalidDataException>(() => service.ExportAsync(
+            source.WorkingDirectory,
+            archivePath,
+            progress: null,
+            CancellationToken.None));
+
+        Assert.Contains(expectedMessage, exception.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.Equal(originalArchiveBytes, await File.ReadAllBytesAsync(archivePath));
+        Assert.Empty(Directory.EnumerateFiles(root.Path, ".bestand.zeitprojekt.*.tmp"));
+    }
+
     [Fact]
     public async Task WorkspaceCheckpoint_PersistsRecoveryCopyWithoutExportingArchive()
     {

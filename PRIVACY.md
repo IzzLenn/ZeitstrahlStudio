@@ -23,9 +23,11 @@ Zeitstrahl Studio verarbeitet ausschließlich Daten, die Sie selbst eingeben ode
 Alle Daten werden lokal auf Ihrem Rechner gespeichert:
 
 - Projektarchive (`.zeitprojekt`) an einem von Ihnen gewählten Ort
+- Vollständige, intern eindeutig benannte Dokumentkopien im lokalen Projektarbeitsordner und im gespeicherten Projektarchiv
 - Lokaler Arbeitsordner unter `%LocalAppData%\Zeitstrahl Studio`
 - Automatische Sicherungen unter `%LocalAppData%\Zeitstrahl Studio\Backups`
 - Technische Protokolle unter `%LocalAppData%\Zeitstrahl Studio\Logs`
+- Optional von Ihnen erzeugte HTML-Dokumentpakete an einem gewählten Zielort
 
 ## Was nicht geschieht
 
@@ -40,13 +42,17 @@ Zeitstrahl Studio überträgt keine Daten an externe Server oder Dienste:
 
 ## Standalone-HTML-Export
 
-Eine exportierte HTML-Einzeldatei enthält ausschließlich die beim Export gewählten Projektdaten und optional verkleinerte Miniaturen beziehungsweise private Notizen. Sie arbeitet offline, lädt keine externen Ressourcen und sendet keine Daten an Dienste oder Server.
+Eine exportierte HTML-Einzeldatei enthält ausschließlich die beim Export gewählten Projektdaten und optional verkleinerte Miniaturen beziehungsweise private Notizen. Der orangefarbene Momentaufnahmehinweis kann für den konkreten Export deaktiviert werden; dies ändert weder Inhalt noch Offline-Verhalten. Die Datei arbeitet offline, lädt keine externen Ressourcen und sendet keine Daten an Dienste oder Server.
+
+Wenn Sie **Alle hinterlegten Dokumente als Kopien mitgeben** aktivieren, enthält das lokale ZIP-Paket zusätzlich die vollständigen, zum Exportzeitpunkt geprüften Projektkopien. Dateinamen und Miniaturen in `index.html` verweisen relativ auf diese Dateien. Das Paket kann dadurch sämtliche vertraulichen Inhalte der ausgewählten Dokumente enthalten und sollte nur an berechtigte Empfänger weitergegeben werden. Auch dieser Export lädt keine externen Ressourcen und überträgt selbst keine Daten.
 
 Der Hell-/Dunkel-Umschalter des Exports speichert nur den Wert `zeitstrahl-studio-export-theme` als lokale Darstellungspräferenz im Browserspeicher (`localStorage`). Dort werden keine Projektinhalte, Suchbegriffe oder Filterwerte abgelegt. Externe HTTP(S)-Links verlassen die lokale Datei erst nach einer ausdrücklichen Bestätigung.
 
-## Externe Links
+## Externe Links und Standardprogramme
 
 Webseitenlinks werden nur gespeichert und auf Ihren ausdrücklichen Wunsch hin im Standardbrowser geöffnet. Beim Öffnen verlassen Sie die Anwendung; dies erfordert gegebenenfalls eine Internetverbindung.
+
+Ein Dokument wird erst nach einem Doppelklick oder einer ausdrücklich gewählten Öffnen-Aktion an das unter Windows konfigurierte Standardprogramm übergeben. Zeitstrahl Studio prüft zuvor ausschließlich die lokale Projektkopie. Das anschließend gestartete Drittprogramm unterliegt seinen eigenen Einstellungen und Datenschutzbedingungen; insbesondere kann ein dort aktivierter Cloud-Dienst Daten übertragen. Zeitstrahl Studio startet selbst keinen Upload.
 
 ## OCR und Dokumentenanalyse
 

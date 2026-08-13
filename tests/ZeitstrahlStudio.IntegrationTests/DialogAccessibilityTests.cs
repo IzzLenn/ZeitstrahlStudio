@@ -96,6 +96,12 @@ public sealed class DialogAccessibilityTests
             Assert.Equal("HTML-Exportoptionen", AutomationProperties.GetName(optionsPanel));
             var orientation = Assert.IsType<ComboBox>(dialog.FindName("OrientationBox"));
             Assert.Equal(1, orientation.SelectedIndex);
+            var snapshotBanner = Assert.IsType<CheckBox>(dialog.FindName("ShowSnapshotBannerBox"));
+            Assert.Equal("Orangen Momentaufnahme-Hinweis im HTML anzeigen", AutomationProperties.GetName(snapshotBanner));
+            Assert.True(snapshotBanner.IsChecked);
+            var documentCopies = Assert.IsType<CheckBox>(dialog.FindName("IncludeDocumentCopiesBox"));
+            Assert.Equal("Alle Dokumentkopien in ein HTML-Exportpaket aufnehmen", AutomationProperties.GetName(documentCopies));
+            Assert.False(documentCopies.IsChecked);
             var export = FindButton(dialog, "HTML exportieren und Zielpfad auswählen");
             var cancel = FindButton(dialog, "HTML-Export abbrechen");
             Assert.True(export.IsDefault);

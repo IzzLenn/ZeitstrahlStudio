@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using Microsoft.Data.Sqlite;
 using ZeitstrahlStudio.Application;
+using ZeitstrahlStudio.Domain;
 
 namespace ZeitstrahlStudio.Infrastructure;
 
@@ -67,6 +68,7 @@ public sealed partial class ProjectArchiveService
                 progress,
                 cancellationToken).ConfigureAwait(false);
 
+            ValidateReferencedAttachments(project, manifestFiles);
             await VerifyArchiveAsync(temporaryPath, manifestFiles, cancellationToken).ConfigureAwait(false);
             ReplaceAtomically(temporaryPath, targetPath);
         }
@@ -160,6 +162,46 @@ public sealed partial class ProjectArchiveService
         await output.FlushAsync(cancellationToken).ConfigureAwait(false);
         output.Flush(flushToDisk: true);
         return manifestFiles;
+    }
+
+    private static void ValidateReferencedAttachments(
+        TimelineProject project,
+        IReadOnlyList<ProjectArchiveFileEntry> archivedFiles)
+    {
+        var archivedFilesByPath = new Dictionary<string, ProjectArchiveFileEntry>(
+            StringComparer.OrdinalIgnoreCase);
+        foreach (var archivedFile in archivedFiles)
+        {
+            if (!archivedFilesByPath.TryAdd(archivedFile.Path, archivedFile))
+            {
+                throw new InvalidDataException(
+                    $"Die Datei '{archivedFile.Path}' ist im Projektarchiv mehrfach vorhanden.");
+            }
+        }
+
+        foreach (var attachment in project.Events.SelectMany(timelineEvent => timelineEvent.Attachments))
+        {
+            var attachmentPath = ArchivePathValidator.ValidateAndNormalize(attachment.ProjectRelativePath);
+            if (!archivedFilesByPath.TryGetValue(attachmentPath, out var archivedFile))
+            {
+                throw new InvalidDataException(
+                    $"Die im Projekt referenzierte Anhangsdatei '{attachment.OriginalFileName}' fehlt.");
+            }
+
+            if (archivedFile.Length != attachment.FileSize)
+            {
+                throw new InvalidDataException(
+                    $"Die Größe der im Projekt referenzierten Anhangsdatei " +
+                    $"'{attachment.OriginalFileName}' stimmt nicht mit den gespeicherten Metadaten überein.");
+            }
+
+            if (!string.Equals(archivedFile.Sha256, attachment.Sha256, StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidDataException(
+                    $"Die Prüfsumme der im Projekt referenzierten Anhangsdatei " +
+                    $"'{attachment.OriginalFileName}' stimmt nicht mit den gespeicherten Metadaten überein.");
+            }
+        }
     }
 
     private static IReadOnlyList<SourceFile> CollectSourceFiles(string workspaceRoot)

@@ -88,6 +88,7 @@ internal static class StandaloneHtmlTemplate
       --shadow-lg: 0 24px 60px rgba(0, 0, 0, .42);
     }
     * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
     html, body { width: 100%; height: 100%; }
     body { margin: 0; color: var(--ink); background: var(--page); }
     button, input, select, summary { font: inherit; }
@@ -277,6 +278,8 @@ internal static class StandaloneHtmlTemplate
     .badge.deadline { color: var(--deadline-ink); background: var(--deadline); border-color: var(--warning-line); }
     .badge.document { color: var(--accent-ink); background: var(--accent-soft); border-color: var(--accent); }
     .thumbnail-wrap { padding: 0 1rem .15rem; }
+    .thumbnail-link { display: block; border-radius: var(--radius-sm); }
+    .thumbnail-link:hover .thumbnail { border-color: var(--accent); }
     .thumbnail {
       display: block; width: 100%; max-height: 12rem; object-fit: contain;
       background: var(--panel-muted); border: 1px solid var(--line); border-radius: var(--radius-sm);
@@ -302,7 +305,7 @@ internal static class StandaloneHtmlTemplate
     .tag-list li { padding: .22rem .5rem; color: var(--tag-ink); background: var(--tag); border-radius: 999px; font-size: .72rem; font-weight: 700; }
     .document-list, .link-list { margin: .35rem 0 .75rem; padding-left: 1.15rem; }
     .document-list li, .link-list li { margin: .38rem 0; line-height: 1.45; overflow-wrap: anywhere; }
-    .external-link { color: var(--accent); font-weight: 700; text-underline-offset: .15em; }
+    .document-link, .external-link { color: var(--accent); font-weight: 700; text-underline-offset: .15em; }
     .external-note { display: inline-block; margin-left: .4rem; color: var(--warning-ink); font-size: .68rem; font-weight: 800; }
     .gap {
       position: relative; z-index: 3; align-self: center; flex: none; padding: .5rem .7rem;
@@ -400,7 +403,7 @@ internal static class StandaloneHtmlTemplate
 </head>
 <body>
   <div class="app-shell">
-    <aside class="snapshot" aria-label="Hinweis zur Momentaufnahme">
+    <aside id="snapshotNotice" class="snapshot" aria-label="Hinweis zur Momentaufnahme" hidden>
       <span class="snapshot-label">Exportierte Momentaufnahme</span>
       <span>Änderungen in dieser Datei werden nicht in das Zeitstrahl-Studio-Projekt zurückgeschrieben. Die Datei arbeitet vollständig lokal und sendet keine Daten an externe Dienste.</span>
     </aside>
@@ -501,6 +504,8 @@ internal static class StandaloneHtmlTemplate
   (function () {
     "use strict";
     var project = JSON.parse(document.getElementById("timelineData").textContent);
+    var snapshotNotice = document.getElementById("snapshotNotice");
+    snapshotNotice.hidden = !project.showSnapshotBanner;
     var root = document.documentElement;
     var timeline = document.getElementById("timeline");
     var viewport = document.getElementById("viewport");
@@ -530,6 +535,13 @@ internal static class StandaloneHtmlTemplate
       if (className) { node.className = className; }
       if (text !== undefined && text !== null) { node.textContent = text; }
       return node;
+    }
+
+    function configureDocumentLink(anchor, documentPath) {
+      anchor.href = documentPath;
+      anchor.target = "_blank";
+      anchor.rel = "noopener noreferrer";
+      anchor.referrerPolicy = "no-referrer";
     }
 
     function appendText(parent, label, value) {
@@ -599,7 +611,16 @@ internal static class StandaloneHtmlTemplate
         image.src = eventData.thumbnailDataUrl;
         image.alt = "Dokumentvorschau zu " + eventData.title;
         image.loading = "lazy";
-        imageWrap.appendChild(image);
+        if (eventData.thumbnailDocumentPath) {
+          var imageLink = createElement("a", "thumbnail-link");
+          configureDocumentLink(imageLink, eventData.thumbnailDocumentPath);
+          imageLink.setAttribute("aria-label", "Mitgeliefertes Dokument zu " + eventData.title + " öffnen");
+          imageLink.title = "Mitgeliefertes Dokument öffnen";
+          imageLink.appendChild(image);
+          imageWrap.appendChild(imageLink);
+        } else {
+          imageWrap.appendChild(image);
+        }
         card.appendChild(imageWrap);
       }
 
@@ -629,9 +650,19 @@ internal static class StandaloneHtmlTemplate
         detailContent.appendChild(createElement("h3", "detail-heading", "Dokumentverweise"));
         var documents = createElement("ul", "document-list");
         eventData.attachments.forEach(function (attachment) {
+          var listItem = createElement("li");
+          if (attachment.documentPath) {
+            var documentLink = createElement("a", "document-link", attachment.fileName);
+            configureDocumentLink(documentLink, attachment.documentPath);
+            documentLink.setAttribute("aria-label", "Mitgeliefertes Dokument " + attachment.fileName + " öffnen");
+            listItem.appendChild(documentLink);
+          } else {
+            listItem.appendChild(document.createTextNode(attachment.fileName));
+          }
           var suffix = " (" + attachment.mediaType + ", " + formatBytes(attachment.fileSize);
           if (attachment.linkedPdfPage) { suffix += ", Seite " + attachment.linkedPdfPage; }
-          documents.appendChild(createElement("li", null, attachment.fileName + suffix + ")"));
+          listItem.appendChild(document.createTextNode(suffix + ")"));
+          documents.appendChild(listItem);
         });
         detailContent.appendChild(documents);
       }

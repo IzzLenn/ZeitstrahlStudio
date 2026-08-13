@@ -13,8 +13,10 @@ Diese Anleitung beschreibt, wie Zeitstrahl Studio lokal gebaut, getestet und ver
 ## Schnellstart
 
 ```powershell
-.\build.ps1 -Task All -Version 0.2.1
+.\build.ps1 -Task All -Version 1.0.0
 ```
+
+Für ein tatsächlich zu verteilendes Release muss der Git-Arbeitsbaum vorher vollständig sauber sein, weil `samples/` unverändert aus dem Arbeitsbaum in portable ZIP und Installer kopiert wird.
 
 Dieser Befehl führt aus:
 
@@ -75,7 +77,7 @@ Die Ausgabe befindet sich in `artifacts\publish\win-x64`.
 ### Portable ZIP
 
 ```powershell
-.\build.ps1 -Task PackagePortable -Version 0.1.0
+.\build.ps1 -Task PackagePortable -Version 1.0.0
 ```
 
 Die ZIP-Datei wird in `artifacts\release` abgelegt.
@@ -83,7 +85,7 @@ Die ZIP-Datei wird in `artifacts\release` abgelegt.
 ### Installer
 
 ```powershell
-.\build.ps1 -Task BuildInstaller -Version 0.1.0
+.\build.ps1 -Task BuildInstaller -Version 1.0.0
 ```
 
 Falls Inno Setup nicht installiert ist, wird der Schritt übersprungen und eine Hinweismeldung ausgegeben.

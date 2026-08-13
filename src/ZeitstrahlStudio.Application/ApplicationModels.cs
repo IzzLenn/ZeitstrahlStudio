@@ -80,7 +80,9 @@ public sealed record PdfExportOptions(
 public sealed record HtmlExportOptions(
     TimelineOrientation InitialOrientation,
     bool IncludeThumbnails,
-    bool IncludeNotes);
+    bool IncludeNotes,
+    bool ShowSnapshotBanner = true,
+    bool IncludeDocumentCopies = false);
 
 /// <summary>Validiertes Ergebnis eines Projektimports.</summary>
 public sealed record ProjectImportResult(

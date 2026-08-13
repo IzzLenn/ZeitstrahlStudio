@@ -123,6 +123,190 @@ public sealed class MainWindowViewModelDropTests
         Assert.Contains("2 Anhang", auditEntry.Description);
     }
 
+    [Fact]
+    public async Task OpenAttachmentDirectCommand_OpensOnlyClickedAttachmentOfSelectedEvent()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Öffnen-Test", Timestamp);
+        var selectedEvent = TimelineEvent.Create(
+            Guid.NewGuid(),
+            "Ausgewähltes Ereignis",
+            EventDate.Year(2025),
+            Timestamp);
+        var otherEvent = TimelineEvent.Create(
+            Guid.NewGuid(),
+            "Anderes Ereignis",
+            EventDate.Year(2026),
+            Timestamp.AddSeconds(1));
+        var selectedAttachment = CreateAttachment("beleg.pdf");
+        var otherAttachment = CreateAttachment("fremd.pdf");
+        selectedEvent.AddAttachment(selectedAttachment, Timestamp.AddMinutes(1));
+        otherEvent.AddAttachment(otherAttachment, Timestamp.AddMinutes(1));
+        project.AddEvent(selectedEvent, Timestamp.AddMinutes(2));
+        project.AddEvent(otherEvent, Timestamp.AddMinutes(2));
+        var workspace = new ProjectWorkspace(project, Path.GetTempPath(), "öffnen-test.zeitprojekt", false);
+        var opened = new TaskCompletionSource<(ProjectWorkspace Workspace, Attachment Attachment)>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var attachmentFiles = CreateProxy<IAttachmentFileService>(
+            new Dictionary<string, Func<object?[], object?>>
+            {
+                [nameof(IAttachmentFileService.OpenWithDefaultApplicationAsync)] = arguments =>
+                {
+                    opened.TrySetResult(((ProjectWorkspace)arguments[0]!, (Attachment)arguments[1]!));
+                    return Task.CompletedTask;
+                },
+            });
+        var dialogs = CreateProxy<IUserDialogService>(new Dictionary<string, Func<object?[], object?>>
+        {
+            [nameof(IUserDialogService.RequestAttachmentToOpen)] = _ =>
+                throw new InvalidOperationException("Der direkte Doppelklick darf keinen Auswahldialog öffnen."),
+        });
+
+        await using var viewModel = CreateAttachmentOpenViewModel(workspace, attachmentFiles, dialogs);
+        await viewModel.OpenPathAsync(workspace.ArchivePath!);
+        viewModel.SelectedEvent = selectedEvent;
+
+        Assert.True(viewModel.OpenAttachmentDirectCommand.CanExecute(selectedAttachment));
+        Assert.False(viewModel.OpenAttachmentDirectCommand.CanExecute(otherAttachment));
+        viewModel.OpenAttachmentDirectCommand.Execute(selectedAttachment);
+
+        var actual = await opened.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => !viewModel.IsBusy);
+        Assert.Same(workspace, actual.Workspace);
+        Assert.Same(selectedAttachment, actual.Attachment);
+        Assert.Contains("Windows-Standardprogramm", viewModel.StatusMessage, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task OpenAttachmentDirectCommand_BlocksRiskyFileButExplicitCommandStillOpensIt()
+    {
+        var project = TimelineProject.Create(Guid.NewGuid(), "Sicherheits-Test", Timestamp);
+        var timelineEvent = TimelineEvent.Create(
+            Guid.NewGuid(),
+            "Ereignis",
+            EventDate.Year(2025),
+            Timestamp);
+        var riskyAttachment = CreateAttachment("wartung.cmd");
+        timelineEvent.AddAttachment(riskyAttachment, Timestamp.AddMinutes(1));
+        project.AddEvent(timelineEvent, Timestamp.AddMinutes(2));
+        var workspace = new ProjectWorkspace(project, Path.GetTempPath(), "sicherheits-test.zeitprojekt", false);
+        var opened = new TaskCompletionSource<Attachment>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var openCount = 0;
+        var attachmentFiles = CreateProxy<IAttachmentFileService>(
+            new Dictionary<string, Func<object?[], object?>>
+            {
+                [nameof(IAttachmentFileService.OpenWithDefaultApplicationAsync)] = arguments =>
+                {
+                    openCount++;
+                    opened.TrySetResult((Attachment)arguments[1]!);
+                    return Task.CompletedTask;
+                },
+            });
+        var blocked = new TaskCompletionSource<string>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var dialogs = CreateProxy<IUserDialogService>(new Dictionary<string, Func<object?[], object?>>
+        {
+            [nameof(IUserDialogService.RequestAttachmentToOpen)] = _ => riskyAttachment,
+            [nameof(IUserDialogService.ShowError)] = arguments =>
+            {
+                blocked.TrySetResult((string)arguments[0]!);
+                return null;
+            },
+        });
+
+        await using var viewModel = CreateAttachmentOpenViewModel(workspace, attachmentFiles, dialogs);
+        await viewModel.OpenPathAsync(workspace.ArchivePath!);
+        viewModel.SelectedEvent = timelineEvent;
+
+        Assert.True(viewModel.OpenAttachmentDirectCommand.CanExecute(riskyAttachment));
+        viewModel.OpenAttachmentDirectCommand.Execute(riskyAttachment);
+
+        var message = await blocked.Task.WaitAsync(TimeSpan.FromSeconds(5));
+        await WaitUntilAsync(() => !viewModel.IsBusy);
+        Assert.Equal(0, openCount);
+        Assert.Contains("nicht per Doppelklick geöffnet", message, StringComparison.Ordinal);
+        Assert.Contains("Schaltfläche „Öffnen“", message, StringComparison.Ordinal);
+
+        Assert.True(viewModel.OpenAttachmentCommand.CanExecute(null));
+        viewModel.OpenAttachmentCommand.Execute(null);
+
+        Assert.Same(riskyAttachment, await opened.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+        await WaitUntilAsync(() => !viewModel.IsBusy);
+        Assert.Equal(1, openCount);
+    }
+
+    private static MainWindowViewModel CreateAttachmentOpenViewModel(
+        ProjectWorkspace workspace,
+        IAttachmentFileService attachmentFiles,
+        IUserDialogService dialogs)
+    {
+        var workspaceService = CreateProxy<IProjectWorkspaceService>(
+            new Dictionary<string, Func<object?[], object?>>
+            {
+                [nameof(IProjectWorkspaceService.OpenAsync)] = _ => Task.FromResult(workspace),
+            });
+        var recentProjects = CreateProxy<IRecentProjectsService>(
+            new Dictionary<string, Func<object?[], object?>>
+            {
+                [nameof(IRecentProjectsService.GetAsync)] = _ =>
+                    Task.FromResult<IReadOnlyList<RecentProject>>([]),
+            });
+        var recovery = CreateProxy<IProjectRecoveryService>(
+            new Dictionary<string, Func<object?[], object?>>
+            {
+                [nameof(IProjectRecoveryService.FindAsync)] = _ =>
+                    Task.FromResult<IReadOnlyList<RecoveryCandidate>>([]),
+            });
+        var search = CreateProxy<IProjectSearchService>(
+            new Dictionary<string, Func<object?[], object?>>
+            {
+                [nameof(IProjectSearchService.SearchAsync)] = _ =>
+                    Task.FromResult<IReadOnlyList<SearchResult>>([]),
+            });
+        return new MainWindowViewModel(
+            workspaceService,
+            recentProjects,
+            recovery,
+            CreateProxy<IProjectAutosaveService>(),
+            CreateProxy<IBackupService>(),
+            CreateProxy<ITimelineThumbnailService>(),
+            CreateProxy<IApplicationThemeService>(),
+            CreateProxy<ILocalLogService>(),
+            CreateProxy<IAuditLogService>(),
+            search,
+            CreateProxy<IHtmlExportService>(),
+            CreateProxy<IAttachmentImportService>(),
+            attachmentFiles,
+            CreateProxy<IAttachmentAnalysisQueue>(),
+            CreateProxy<IAttachmentAnalysisStore>(),
+            new ProjectEventEditingService(),
+            dialogs);
+    }
+
+    private static Attachment CreateAttachment(string fileName)
+    {
+        var id = Guid.NewGuid();
+        return new Attachment(
+            id,
+            fileName,
+            "application/octet-stream",
+            1,
+            new string('a', 64),
+            null,
+            Timestamp,
+            $"attachments/{Guid.NewGuid():N}/{id:N}{Path.GetExtension(fileName)}",
+            AttachmentState.Ready);
+    }
+
+    private static async Task WaitUntilAsync(Func<bool> condition)
+    {
+        var timeout = DateTime.UtcNow.AddSeconds(5);
+        while (!condition() && DateTime.UtcNow < timeout)
+        {
+            await Task.Delay(10);
+        }
+
+        Assert.True(condition());
+    }
+
     private static T CreateProxy<T>(
         IReadOnlyDictionary<string, Func<object?[], object?>>? handlers = null)
         where T : class

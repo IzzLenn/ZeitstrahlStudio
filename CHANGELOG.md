@@ -4,7 +4,21 @@ Alle wichtigen Änderungen an Zeitstrahl Studio werden in dieser Datei dokumenti
 
 ## [Unveröffentlicht]
 
+Noch keine Einträge.
+
+## [1.0.0] - 2026-08-13
+
+### Hinzugefügt
+
+- HTML-Exportdialog mit unabhängigem Toggle für den orangefarbenen Momentaufnahmehinweis
+- Optionales, atomar erzeugtes HTML-ZIP-Paket mit `index.html`, `LESMICH.txt` und sämtlichen validierten Dokumentkopien unter kollisionsfreien GUID-Pfaden
+- Anklickbare Dokumentnamen und vorhandene Vorschaubilder im vollständig entpackten HTML-Dokumentpaket
+- Direkter Doppelklick auf sichtbare Anhänge zum geprüften Öffnen der Projektkopie im Windows-Standardprogramm; riskante ausführbare, Skript- und Verknüpfungsdateien bleiben dem bewussten Öffnen-Dialog vorbehalten
+
 ### Geändert
+
+- Vollständiger Projektarchivexport erzwingt für jede referenzierte Dokumentkopie gespeicherten Pfad, Größe und SHA-256, bevor ein vorhandenes Ziel atomar ersetzt wird
+- Assembly-, Build- und Installer-Version für das Release auf 1.0.0 vereinheitlicht
 
 - Die vertikale Achse des Standalone-HTML-Zeitstrahls wird in Desktopansichten relativ zum sichtbaren Arbeitsbereich mittig positioniert; horizontale Ansicht und kompakte Mobilanordnung bleiben unverändert
 - Kontrollkästchen zeigen im Dunkelmodus ungeprüften, aktivierten, teilweise aktivierten und deaktivierten Zustand ohne Hover klar an; Hover und Tastaturfokus erzeugen keine helle Fläche, Bindings, Tastaturbedienung und UI-Automation bleiben erhalten

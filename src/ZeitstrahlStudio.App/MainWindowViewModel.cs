@@ -10,6 +10,36 @@ namespace ZeitstrahlStudio.App;
 public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDisposable
 {
     private static readonly CultureInfo GermanCulture = CultureInfo.GetCultureInfo("de-DE");
+    private static readonly HashSet<string> RiskyDirectOpenExtensions = new(StringComparer.OrdinalIgnoreCase)
+    {
+        ".appref-ms",
+        ".application",
+        ".appx",
+        ".bat",
+        ".cmd",
+        ".com",
+        ".cpl",
+        ".exe",
+        ".hta",
+        ".jse",
+        ".js",
+        ".lnk",
+        ".msi",
+        ".msix",
+        ".msp",
+        ".pif",
+        ".ps1",
+        ".psd1",
+        ".psm1",
+        ".reg",
+        ".scf",
+        ".scr",
+        ".url",
+        ".vbe",
+        ".vbs",
+        ".wsf",
+        ".wsh",
+    };
     private readonly IProjectWorkspaceService workspaceService;
     private readonly IRecentProjectsService recentProjectsService;
     private readonly IProjectRecoveryService recoveryService;
@@ -190,6 +220,9 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         OpenAttachmentCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(OpenAttachmentAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
+        OpenAttachmentDirectCommand = new AsyncRelayCommand<Attachment>(
+            attachment => ExecuteGuardedAsync(() => OpenAttachmentDirectAsync(attachment)),
+            CanOpenAttachmentDirectly);
         RemoveAttachmentCommand = new AsyncRelayCommand(
             () => ExecuteGuardedAsync(RemoveAttachmentAsync),
             () => !IsBusy && SelectedEvent?.Attachments.Count > 0);
@@ -241,6 +274,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
     public AsyncRelayCommand PdfExportCommand { get; }
     public AsyncRelayCommand HtmlExportCommand { get; }
     public AsyncRelayCommand OpenAttachmentCommand { get; }
+    public AsyncRelayCommand<Attachment> OpenAttachmentDirectCommand { get; }
     public AsyncRelayCommand RemoveAttachmentCommand { get; }
     public AsyncRelayCommand CancelAttachmentImportCommand { get; }
 
@@ -356,6 +390,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
                 PreviewImageCommand.RaiseCanExecuteChanged();
                 PreviewPdfCommand.RaiseCanExecuteChanged();
                 OpenAttachmentCommand.RaiseCanExecuteChanged();
+                OpenAttachmentDirectCommand.RaiseCanExecuteChanged();
                 RemoveAttachmentCommand.RaiseCanExecuteChanged();
                 OnPropertyChanged(nameof(CanAcceptDroppedFiles));
                 OnPropertyChanged(nameof(HasSelectedEvent));
@@ -1448,7 +1483,10 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
             return;
         }
 
-        StatusMessage = "Offlinefähige HTML-Momentaufnahme wird erzeugt …";
+        var exportKind = request.Options.IncludeDocumentCopies ? "HTML-Exportpaket" : "HTML";
+        StatusMessage = request.Options.IncludeDocumentCopies
+            ? "Offlinefähiges HTML-Exportpaket mit Dokumentkopien wird erzeugt …"
+            : "Offlinefähige HTML-Momentaufnahme wird erzeugt …";
         await htmlExportService.ExportAsync(
             CurrentWorkspace,
             request.Options,
@@ -1458,31 +1496,68 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         await WriteAuditAsync(
             "HtmlExport",
             CurrentWorkspace.Project.Id,
-            $"Zeitstrahl als HTML „{Path.GetFileName(request.TargetPath)}“ exportiert",
+            $"Zeitstrahl als {exportKind} „{Path.GetFileName(request.TargetPath)}“ exportiert",
             timestampUtc).ConfigureAwait(true);
-        StatusMessage = $"HTML „{Path.GetFileName(request.TargetPath)}“ wurde erfolgreich exportiert.";
+        StatusMessage = $"{exportKind} „{Path.GetFileName(request.TargetPath)}“ wurde erfolgreich exportiert.";
     }
 
     private async Task OpenAttachmentAsync()
     {
-        if (CurrentWorkspace is null || SelectedEvent is null)
+        var workspace = CurrentWorkspace;
+        var timelineEvent = SelectedEvent;
+        if (workspace is null || timelineEvent is null)
         {
             return;
         }
 
-        var attachment = dialogs.RequestAttachmentToOpen(SelectedEvent);
+        var attachment = dialogs.RequestAttachmentToOpen(timelineEvent);
         if (attachment is null)
         {
             return;
         }
 
+        await OpenAttachmentCoreAsync(workspace, attachment).ConfigureAwait(true);
+    }
+
+    private async Task OpenAttachmentDirectAsync(Attachment requestedAttachment)
+    {
+        var workspace = CurrentWorkspace;
+        var timelineEvent = SelectedEvent;
+        var attachment = timelineEvent?.Attachments.SingleOrDefault(
+            item => item.Id == requestedAttachment.Id);
+        if (workspace is null || attachment is null)
+        {
+            return;
+        }
+
+        if (RiskyDirectOpenExtensions.Contains(Path.GetExtension(attachment.OriginalFileName)) ||
+            RiskyDirectOpenExtensions.Contains(Path.GetExtension(attachment.ProjectRelativePath)))
+        {
+            var message =
+                $"„{attachment.OriginalFileName}“ wird aus Sicherheitsgründen nicht per Doppelklick geöffnet. " +
+                "Ausführbare Dateien, Skripte und Verknüpfungen können nur bewusst über die Schaltfläche „Öffnen“ gestartet werden.";
+            StatusMessage = message;
+            dialogs.ShowError(message);
+            return;
+        }
+
+        await OpenAttachmentCoreAsync(workspace, attachment).ConfigureAwait(true);
+    }
+
+    private async Task OpenAttachmentCoreAsync(ProjectWorkspace workspace, Attachment attachment)
+    {
         StatusMessage = $"Projektkopie von „{attachment.OriginalFileName}“ wird geprüft …";
         await attachmentFileService.OpenWithDefaultApplicationAsync(
-            CurrentWorkspace,
+            workspace,
             attachment,
             lifetimeCancellation.Token).ConfigureAwait(true);
         StatusMessage = $"„{attachment.OriginalFileName}“ wurde an das Windows-Standardprogramm übergeben.";
     }
+
+    private bool CanOpenAttachmentDirectly(Attachment attachment) =>
+        !IsBusy &&
+        CurrentWorkspace is not null &&
+        SelectedEvent?.Attachments.Any(item => item.Id == attachment.Id) == true;
 
     private async Task RemoveAttachmentAsync()
     {
@@ -1961,6 +2036,7 @@ public sealed partial class MainWindowViewModel : ObservableObject, IAsyncDispos
         PdfExportCommand.RaiseCanExecuteChanged();
         HtmlExportCommand.RaiseCanExecuteChanged();
         OpenAttachmentCommand.RaiseCanExecuteChanged();
+        OpenAttachmentDirectCommand.RaiseCanExecuteChanged();
         RemoveAttachmentCommand.RaiseCanExecuteChanged();
         CancelAttachmentImportCommand.RaiseCanExecuteChanged();
         RaiseSearchCommandStates();

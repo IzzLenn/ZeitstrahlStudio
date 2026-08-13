@@ -358,14 +358,20 @@ public sealed class WpfUserDialogService : IUserDialogService
 
         var safeName = string.Concat(project.Name.Select(character =>
             Path.GetInvalidFileNameChars().Contains(character) ? '_' : character));
+        var includeDocuments = optionsDialog.Options.IncludeDocumentCopies;
+        var baseName = string.IsNullOrWhiteSpace(safeName) ? "Zeitstrahl" : safeName;
         var targetDialog = new SaveFileDialog
         {
-            Title = "Zeitstrahl als eigenständige HTML-Datei speichern",
-            Filter = "HTML-Datei (*.html)|*.html",
-            DefaultExt = ".html",
+            Title = includeDocuments
+                ? "HTML-Exportpaket mit Dokumenten als ZIP speichern"
+                : "Zeitstrahl als eigenständige HTML-Datei speichern",
+            Filter = includeDocuments
+                ? "ZIP-Archiv (*.zip)|*.zip"
+                : "HTML-Datei (*.html)|*.html",
+            DefaultExt = includeDocuments ? ".zip" : ".html",
             AddExtension = true,
             OverwritePrompt = true,
-            FileName = string.IsNullOrWhiteSpace(safeName) ? "Zeitstrahl" : safeName,
+            FileName = includeDocuments ? baseName + "-HTML-Paket" : baseName,
         };
         return targetDialog.ShowDialog(System.Windows.Application.Current.MainWindow) == true
             ? new HtmlExportRequest(optionsDialog.Options, targetDialog.FileName)

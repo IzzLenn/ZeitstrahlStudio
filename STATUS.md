@@ -1,14 +1,14 @@
 # Projektstatus
 
-Status: In Entwicklung - vertikale Achse des Standalone-HTML-Exports mittig ausgerichtet
+Status: In Entwicklung - Dokumenttransfer und optionales HTML-Exportpaket für Version 1.0.0 umgesetzt
 
 Letzte Aktualisierung: 13.08.2026
 
 ## Aktuelle Phase
 
-Die vertikale Achse des Standalone-HTML-Exports wurde in Desktopansichten relativ zum tatsächlich sichtbaren Arbeitsbereich mittig ausgerichtet. Die Berechnung berücksichtigt Fensterbreite und aktuellen Zoom, ohne horizontale Ansicht oder kompakte Mobilanordnung zu verändern.
+Dokumentanhänge lassen sich jetzt aus der Ereignis-Detailansicht per Doppelklick sicher mit dem Windows-Standardprogramm öffnen. Anhänge werden weiterhin als projektinterne Kopien gespeichert; der Projektarchivexport prüft nun zusätzlich jede referenzierte Kopie gegen Größe und SHA-256. Der HTML-Export kann das Momentaufnahme-Warnbanner ausblenden und wahlweise ein geprüftes ZIP-Paket mit `index.html`, Anleitung und allen referenzierten Dokumentkopien erzeugen.
 
-Implementierung, Regressionstest, Pixelmessung in Chromium, vollständige Debug-/Release-Verifikation sowie neue selbstenthaltende App und Installer sind abgeschlossen. Die benutzereigenen Änderungen unter `samples/` bleiben unangetastet und außerhalb des Commits.
+Implementierung, automatisierte Debug-/Release-Verifikation, HTML-Sichtprüfung und die Vorbereitung von Version 1.0.0 sind abgeschlossen. Die benutzereigenen Änderungen unter `samples/` bleiben unangetastet und außerhalb des Commits beziehungsweise der hierfür erzeugten Prüfpakete.
 ## Prüfung der Entwicklungsumgebung
 
 - Windows 10 x64, Version 10.0.19045
@@ -863,3 +863,64 @@ Ergebnis: Debug und Release jeweils 0 Warnungen und 0 Fehler; jeweils 63/63 Unit
 ## Nächster konkreter Arbeitsschritt (13.08.2026, HTML-Zentrierung)
 
 Den neuen Installer oder die portable EXE verwenden, ein Projekt als HTML exportieren und die mittige vertikale Achse mit dem vollständigen Beispielprojekt visuell abnehmen.
+
+## Dokumenttransfer und HTML-Exportpaket für Version 1.0.0 (13.08.2026)
+
+### Umgesetzte Bedienung
+
+- Im HTML-Exportdialog kann das orange Momentaufnahme-Warnbanner unabhängig von den übrigen Exportoptionen ein- oder ausgeschaltet werden. Die bisherige Einzeldatei bleibt bei deaktivierten Dokumentkopien vollständig abwärtskompatibel.
+- Ein zweiter Export-Schalter erzeugt statt einer einzelnen HTML-Datei ein ZIP-Paket mit `index.html`, `LESMICH.txt` und den benötigten Projektkopien unter `Dokumente/`.
+- Dokumentname und vorhandene Dokumentvorschau im Paketexport sind relative Links auf die mitgelieferte Datei. Das Paket muss vor dem Öffnen vollständig entpackt werden; dies wird im Dialog und in `LESMICH.txt` erklärt.
+- Ein Doppelklick auf einen konkreten Anhang in der Ereignis-Detailansicht öffnet die validierte Projektkopie über das konfigurierte Windows-Standardprogramm. Ein Doppelklick auf freien Listenraum löst nichts aus.
+- Potenziell ausführbare, skriptfähige oder verknüpfende Formate werden beim direkten Doppelklick bewusst nicht gestartet. Der bereits vorhandene explizite Öffnen-Dialog bleibt für eine bewusste Benutzerentscheidung erhalten.
+
+### Projektkopien und Integrität
+
+- Der vorhandene Importpfad kopiert jeden Anhang weiterhin sofort streamend und mit GUID-basiertem Namen nach `attachments/{eventId}/{attachmentId}.{ext}` im Projektarbeitsordner. Die Funktion hängt nach dem Import nicht mehr von der ursprünglichen Quelldatei ab.
+- Vor dem atomaren Export eines `.zeitprojekt`-Archivs wird nun zusätzlich geprüft, ob jede in SQLite referenzierte Anhangsdatei im Manifest vorhanden ist und ob gespeicherte Länge und SHA-256 mit der tatsächlich geschriebenen Kopie übereinstimmen.
+- Fehlende, verkürzte oder bei gleicher Länge manipulierte Projektkopien verhindern den Export; ein vorhandenes Zielarchiv bleibt dabei byteidentisch erhalten.
+- Der HTML-Paketexport verwendet ausschließlich GUID-basierte relative Zielpfade, validiert jede Projektkopie über den zentralen Anhangsdienst, prüft Länge und SHA-256 während des Kopierens und öffnet das fertig geschlossene ZIP erneut zur Inhalts- und Prüfsummenprüfung.
+- `index.html`, `LESMICH.txt` und alle Dokumente werden zunächst in einer temporären Datei erzeugt. Erst nach vollständiger Prüfung wird das Ziel atomar ersetzt; bei Fehler oder Abbruch werden temporäre Dateien entfernt.
+- Es wurden keine neuen Produktionsabhängigkeiten, Netzwerkzugriffe oder Cloud-Funktionen eingeführt.
+
+### Automatisierte Prüfung und visuelle QA
+
+- 46/46 gezielte Integrationstests für HTML-Export, Dialog-/Hauptfenster-Barrierefreiheit, direktes Dokumentöffnen und Projektarchivschutz bestanden.
+- Vollständiger Abschlusslauf in Debug und Release: jeweils 63/63 Unit-Tests und 137/137 Integrationstests bestanden; beide Builds meldeten 0 Warnungen und 0 Fehler.
+- `dotnet restore ZeitstrahlStudio.sln` und `dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore` waren erfolgreich.
+- Selbstenthaltender `win-x64`-Publish, portables ZIP und Inno-Setup-Installer für Version 1.0.0 wurden erfolgreich erzeugt.
+- Reale QA-Pakete mit und ohne Warnbanner wurden erzeugt. Der integrierte Browserdienst stellte keine Browserinstanz bereit; lokales Chromium zeigte den Paketexport auf Desktopbreite mit Banner und den responsiven Einzeldateiexport auf Mobilbreite ohne Banner und ohne helle Leerstelle korrekt an.
+- Die lokale Browser-Automationssitzung lief nach den erzeugten Screenshots beim Schließen beziehungsweise erneuten Öffnen in einen Timeout. Deshalb wird keine nicht beobachtete End-to-End-Linknavigation behauptet; relative Dokumentpfade, sichere Linkattribute, Paketinhalt und Bytegleichheit sind stattdessen automatisiert geprüft.
+
+Erfolgreich ausgeführte Abschlussbefehle:
+
+```powershell
+dotnet restore ZeitstrahlStudio.sln
+dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore --no-build
+dotnet build ZeitstrahlStudio.sln -c Release --no-restore
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
+dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
+.\build.ps1 -Task Publish -Version 1.0.0
+.\build.ps1 -Task BuildInstaller -Version 1.0.0
+git diff --check
+```
+
+### Versions- und GitHub-Release-Vorbereitung
+
+- `Directory.Build.props`, `build.ps1` und das Inno-Setup-Skript verwenden jetzt Version 1.0.0 beziehungsweise 1.0.0.0.
+- `CHANGELOG.md` enthält einen datierten Abschnitt 1.0.0. `RELEASE.md` enthält einen fehlersicheren PowerShell-Ablauf für Prüfung, Fast-Forward-Merge, vollständigen Build, Tag `v1.0.0`, atomaren Push und `gh release create`.
+- Der Vergleich mit dem zuletzt abgerufenen Remote-Stand `origin/ui/redesign-0.3.0` (`cc2e4c7`) zeigt vor diesem Meilenstein sieben lokale Commits ohne Remote-Rückstand. Seitdem kamen insbesondere global persistente Themeeinstellungen, die Darkmode-Nachkorrekturen für Auswahl-/Menü-/Checkboxzustände und native Titelleisten, visuelle Ereignis- und Standardfarbenwahl, vollständige farbige Ereignisrahmen sowie der neu gestaltete responsive Offline-HTML-Export mit mittiger vertikaler Desktopachse hinzu. Dieser Meilenstein ergänzt Dokument-Doppelklick, Archivintegrität, Warnbanner-Schalter und Dokumentpaketexport.
+- `SPEC.md`, `USER_GUIDE.md`, `PRIVACY.md`, `ARCHITECTURE.md`, `PROJECT_FORMAT.md`, `DECISIONS.md`, `CHANGELOG.md`, `MANUAL_RELEASE_CHECKLIST.md`, `README.md`, `BUILD.md` und `RELEASE.md` wurden aktualisiert.
+- Die bereits vor Arbeitsbeginn veränderten Dateien `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` wurden weder bearbeitet noch gestaged. Für die lokalen Prüfpakete wurden die committed Fassungen aus Git verwendet, damit keine nicht autorisierten Benutzeränderungen in Release-Artefakte gelangen.
+- Der vorgeschriebene Patch-Helfer scheiterte erneut vor Dateizugriff am Windows-Sandbox-`spawn_ready`-Timeout. Dokumentänderungen erfolgten deshalb ausschließlich über eindeutig gezählte Einmal-Ersetzungen und wurden unmittelbar mit Diff-, Build- und Testprüfungen kontrolliert.
+
+### Verbleibende manuelle Release-Gates
+
+- Auf einem realen Windows-System einen ungefährlichen Anhang per Doppelklick öffnen und bestätigen, dass das registrierte Standardprogramm verwendet wird; zusätzlich einen blockierten ausführbaren beziehungsweise skriptfähigen Typ prüfen.
+- Ein Dokumentpaket vollständig entpacken und die Links in Edge, Firefox und Chrome anklicken. Außerdem den Installer auf Windows 10 und Windows 11 installieren und die Prüfliste in `MANUAL_RELEASE_CHECKLIST.md` abarbeiten.
+- Vor dem GitHub-Release müssen die zwei unabhängigen Änderungen unter `samples/` bewusst committed oder anderweitig durch den Benutzer aufgelöst werden. Der dokumentierte Release-Befehl bricht bei einem nicht sauberen Arbeitsbaum absichtlich ab.
+
+## Nächster konkreter Arbeitsschritt (13.08.2026, Version 1.0.0)
+
+Die zwei bestehenden Beispieländerungen bewusst behandeln, danach den in `RELEASE.md` dokumentierten v1.0.0-Ablauf ausführen und die verbleibenden Windows-/Browser-Sichtprüfungen protokollieren.

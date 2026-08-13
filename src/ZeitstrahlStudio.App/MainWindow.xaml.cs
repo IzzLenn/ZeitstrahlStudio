@@ -259,6 +259,24 @@ public partial class MainWindow : Window
         }
     }
 
+    private void AttachmentList_MouseDoubleClick(object sender, MouseButtonEventArgs e)
+    {
+        if (e.ChangedButton != MouseButton.Left ||
+            sender is not ListBox listBox ||
+            e.OriginalSource is not DependencyObject source ||
+            ItemsControl.ContainerFromElement(listBox, source) is not ListBoxItem
+            {
+                DataContext: Attachment attachment,
+            } ||
+            !viewModel.OpenAttachmentDirectCommand.CanExecute(attachment))
+        {
+            return;
+        }
+
+        viewModel.OpenAttachmentDirectCommand.Execute(attachment);
+        e.Handled = true;
+    }
+
     private void AttachmentDropZone_DragOver(object sender, DragEventArgs e)
     {
         if (!TryGetDroppedPaths(e.Data, out var paths) || viewModel.SelectedEvent is not { } target)

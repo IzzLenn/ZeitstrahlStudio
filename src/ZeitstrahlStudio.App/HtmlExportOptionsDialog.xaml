@@ -2,10 +2,10 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         Title="Standalone-HTML-Export"
-        Width="560"
-        Height="500"
-        MinWidth="520"
-        MinHeight="420"
+        Width="600"
+        Height="620"
+        MinWidth="540"
+        MinHeight="500"
         ShowInTaskbar="False"
         WindowStartupLocation="CenterOwner"
         Background="{DynamicResource DialogBackgroundBrush}">
@@ -36,7 +36,7 @@
                            Text="Standalone-HTML exportieren" />
                 <TextBlock Margin="0,4,0,0"
                            Foreground="{DynamicResource HeaderMutedBrush}"
-                           Text="Eine responsive Einzeldatei ohne Server oder externe Ressourcen." />
+                           Text="Eine responsive lokale Momentaufnahme ohne Server oder externe Ressourcen." />
             </StackPanel>
         </Border>
 
@@ -78,6 +78,27 @@
                           AutomationProperties.Name="Interne Notizen in HTML einbetten"
                           Content="Interne Notizen in die Momentaufnahme aufnehmen" />
 
+                <CheckBox x:Name="ShowSnapshotBannerBox"
+                          Margin="0,14,0,0"
+                          IsChecked="True"
+                          AutomationProperties.Name="Orangen Momentaufnahme-Hinweis im HTML anzeigen"
+                          Content="Orangen Hinweis zur exportierten Momentaufnahme anzeigen" />
+                <TextBlock Margin="22,4,0,0"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           FontSize="{StaticResource FontSizeXs}"
+                           Text="Der Hinweis erklärt, dass Änderungen am Export nicht in das Projekt zurückgeschrieben werden."
+                           TextWrapping="Wrap" />
+
+                <CheckBox x:Name="IncludeDocumentCopiesBox"
+                          Margin="0,14,0,0"
+                          AutomationProperties.Name="Alle Dokumentkopien in ein HTML-Exportpaket aufnehmen"
+                          Content="Alle hinterlegten Dokumente als Kopien mitgeben" />
+                <TextBlock Margin="22,4,0,0"
+                           Foreground="{DynamicResource MutedTextBrush}"
+                           FontSize="{StaticResource FontSizeXs}"
+                           Text="Erzeugt ein transportables ZIP-Paket mit index.html und dem Ordner Dokumente. Das Paket muss vor dem Öffnen vollständig entpackt werden."
+                           TextWrapping="Wrap" />
+
                 <Border Margin="0,18,0,0"
                         Padding="11"
                         Background="{DynamicResource WarningLightBrush}"
@@ -85,7 +106,7 @@
                         BorderThickness="1"
                         CornerRadius="{DynamicResource ControlCornerRadius}">
                     <TextBlock Foreground="{DynamicResource WarningTextBrush}"
-                               Text="Die HTML-Datei enthält eine unveränderliche Momentaufnahme. Webseitenlinks sind als externe Ziele gekennzeichnet und fragen vor dem Öffnen nach. Im nächsten Schritt wählen Sie den Zielpfad."
+                               Text="Webseitenlinks sind als externe Ziele gekennzeichnet und fragen vor dem Öffnen nach. Im nächsten Schritt wählen Sie abhängig von den Optionen eine HTML-Datei oder ein ZIP-Paket als Ziel."
                                TextWrapping="Wrap" />
                 </Border>
             </StackPanel>

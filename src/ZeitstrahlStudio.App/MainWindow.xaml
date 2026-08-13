@@ -1086,8 +1086,11 @@
                                     <Grid.RowDefinitions><RowDefinition Height="Auto" /><RowDefinition Height="*" /><RowDefinition Height="Auto" /></Grid.RowDefinitions>
                                     <TextBlock Foreground="{DynamicResource MutedTextBrush}" FontSize="{StaticResource FontSizeXs}"
                                                Text="Dateien hier ablegen oder auswählen." />
-                                    <ListBox Grid.Row="1" Margin="0,9" AutomationProperties.Name="Anhänge des ausgewählten Ereignisses"
+                                    <ListBox x:Name="AttachmentList" Grid.Row="1" Margin="0,9"
+                                             AutomationProperties.Name="Anhänge des ausgewählten Ereignisses"
+                                             AutomationProperties.HelpText="Doppelklick öffnet das Dokument im Windows-Standardprogramm."
                                              ItemsSource="{Binding SelectedEvent.Attachments}" BorderThickness="0"
+                                             MouseDoubleClick="AttachmentList_MouseDoubleClick"
                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                                         <ListBox.ItemTemplate>
                                             <DataTemplate>

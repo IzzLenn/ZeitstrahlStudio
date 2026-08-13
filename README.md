@@ -4,7 +4,7 @@ Zeitstrahl Studio ist eine vollständig lokale, deutschsprachige Windows-Desktop
 
 ## Aktueller Stand
 
-Version 0.2.1 ist fertiggestellt. Solution, Schichtengrenzen, fachliches Grundmodell, SQLite-Persistenz, lokale Volltextsuche und kombinierbare Filter, sichere atomare `.zeitprojekt`-Archive, Autosave/Recovery, manuelle und rotierende lokale Sicherungen samt validierter Wiederherstellung, die verbundene WPF-Projekt-/Ereignisoberfläche, Dokumentimport und -analyse, lokale OCR, die virtualisierte horizontale/vertikale Zeitstrahlansicht mit verzögert geladenen Dokumentminiaturen und projektbezogenen Hell-/Dunkel-/Schriftvorgaben sowie PDF- und eigenständiger Offline-HTML-Export sind implementiert und automatisiert getestet. Ein frei erfundenes, weitergebbares Beispielprojekt mit lokalen PDF-, Bild-, DOCX- und XLSX-Testdokumenten sowie ein 5.000-Ereignisse-Lasttest sind enthalten. Buildskript, portable ZIP-Datei, Installer mit `.zeitprojekt`-Dateizuordnung, Benutzerhandbuch, Datenschutzhinweis und Release-Dokumentation sind verfügbar.
+Version 1.0.0 ist für die lokale Release-Erstellung vorbereitet. Solution, Schichtengrenzen, fachliches Grundmodell, SQLite-Persistenz, lokale Volltextsuche und kombinierbare Filter, sichere atomare `.zeitprojekt`-Archive, Autosave/Recovery, lokale Sicherungen, die WPF-Projekt-/Ereignisoberfläche, Dokumentimport und -analyse, lokale OCR, die virtualisierte horizontale/vertikale Zeitstrahlansicht sowie PDF-Export und responsiver Offline-HTML-Export sind implementiert und automatisiert getestet. Importierte Dokumente werden vollständig und kollisionsfrei in das Projekt übernommen, beim Projekttransfer erneut auf Größe und SHA-256 geprüft und lassen sich per Doppelklick über das Windows-Standardprogramm öffnen. Der HTML-Export kann den Momentaufnahmehinweis ausblenden und optional ein transportables ZIP mit `index.html` und allen validierten Dokumentkopien erzeugen. Ein frei erfundenes Beispielprojekt mit lokalen PDF-, Bild-, DOCX- und XLSX-Testdokumenten sowie ein 5.000-Ereignisse-Lasttest sind enthalten. Buildskript, selbstenthaltende portable Version, Installer mit `.zeitprojekt`-Dateizuordnung, Benutzerhandbuch, Datenschutzhinweis und Release-Dokumentation sind verfügbar.
 
 ## Beispielprojekt
 
@@ -27,7 +27,7 @@ Voraussetzungen:
 Schnellstart für den vollständigen Release-Build:
 
 ```powershell
-.\build.ps1 -Task All -Version 0.1.0
+.\build.ps1 -Task All -Version 1.0.0
 ```
 
 Einzelne Schritte:

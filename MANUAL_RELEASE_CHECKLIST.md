@@ -45,6 +45,15 @@ Diese Checkliste enthält Prüfungen, die in der Entwicklungsumgebung nicht voll
 - [ ] Bereits geöffneten Dialog bei laufendem Wechsel Dunkel → Hell → Dunkel prüfen
 - [ ] Nach dem Themewechsel neu geöffneten Dialog auf passende native Titelleiste prüfen
 
+## Dokumentkopien und Öffnen
+
+- [ ] PDF, Bild, DOCX und XLSX hinzufügen; externe Quelldateien anschließend verschieben oder löschen
+- [ ] Im Detailreiter **Anhänge** jeden Eintrag doppelklicken und prüfen, dass genau die Projektkopie im jeweiligen Windows-Standardprogramm geöffnet wird
+- [ ] Doppelklick auf freien Listenbereich ausführen und prüfen, dass keine Datei geöffnet wird
+- [ ] Testanhang mit riskanter Skript- oder Verknüpfungsendung doppelklicken und die verständliche Blockade prüfen
+- [ ] Denselben vertrauenswürdigen Testanhang nur bewusst über **Öffnen** auswählen; Sicherheitsauswirkung ausdrücklich beurteilen
+- [ ] Projekt speichern, auf einen zweiten Rechner übertragen und dort alle Dokumentkopien erneut öffnen
+
 ## Standalone-HTML-Export
 
 - [ ] HTML-Export in Microsoft Edge öffnen
@@ -62,6 +71,13 @@ Diese Checkliste enthält Prüfungen, die in der Entwicklungsumgebung nicht voll
 - [ ] Zoom über Schaltflächen und `Strg + Mausrad` testen
 - [ ] Verschieben des Zeitstrahls per Ziehen testen
 - [ ] Projektkennzahlen, Projektbeschreibung und optionale Miniaturen prüfen
+- [ ] Export mit aktiviertem orangefarbenem Momentaufnahmehinweis öffnen und Banner prüfen
+- [ ] Hinweis im Exportdialog deaktivieren; zweite Datei öffnen und prüfen, dass keine helle oder leere Bannerfläche verbleibt
+- [ ] Dokumentoption deaktivieren und prüfen, dass eine einzelne `.html` ohne lokale Dokumentpfade entsteht
+- [ ] Dokumentoption aktivieren und vollständiges ZIP mit `index.html`, `LESMICH.txt` und allen Dateien unter `Dokumente` prüfen
+- [ ] ZIP vollständig entpacken; Dokumentnamen und vorhandene Vorschaubilder anklicken und die jeweils richtige lokale Kopie prüfen
+- [ ] Gleichnamige Anhänge prüfen: beide müssen unterschiedliche GUID-Pfade besitzen und byteidentisch zum Projektbestand sein
+- [ ] HTML-Dokumentpaket offline in Edge, Firefox und Chrome testen; Browserunterschiede bei Anzeige, Download oder Übergabe an Windows dokumentieren
 - [ ] Druckbutton und Browser-Druckvorschau im Hell- sowie Dunkeldesign prüfen
 - [ ] Im Druck prüfen: Werkzeugleiste verborgen, vertikale 100-%-Ansicht, Projektbeschreibung und alle Ereignisdetails sichtbar, sinnvolle Seitenumbrüche
 - [ ] Nach Abbruch beziehungsweise Ende des Druckens Wiederherstellung von Ausrichtung, Zoom, Scrollposition, Filterpanel, Projektbeschreibung und Ereignisdetails prüfen
@@ -83,6 +99,7 @@ Diese Checkliste enthält Prüfungen, die in der Entwicklungsumgebung nicht voll
 - [ ] Beispielprojekt speichern
 - [ ] Beispielprojekt exportieren
 - [ ] Exportiertes Projekt auf einem zweiten Rechner importieren
+- [ ] Nach dem Transfer jede hinterlegte Dokumentkopie öffnen und mit Dateigröße sowie SHA-256 des Ausgangsprojekts vergleichen
 - [ ] Reales mehrgigabytegroßes `.zeitprojekt`-Archiv importieren
 - [ ] Großes Archiv speichern
 - [ ] Großes Archiv sichern
@@ -94,6 +111,8 @@ Diese Checkliste enthält Prüfungen, die in der Entwicklungsumgebung nicht voll
 - [ ] Volles Laufwerk beim Export simulieren und Fehlermeldung prüfen
 - [ ] Nicht löschbare Sicherung simulieren und Fehlermeldung prüfen
 - [ ] Beschädigtes `.zeitprojekt`-Archiv importieren und Fehlermeldung prüfen
+- [ ] Referenzierte Projektkopie löschen sowie bei gleicher Länge manipulieren; Speichern muss jeweils abbrechen und das vorhandene `.zeitprojekt` byteidentisch erhalten
+- [ ] Für das HTML-Dokumentpaket eine Projektkopie manipulieren; Export muss abbrechen und ein vorhandenes Ziel-ZIP byteidentisch erhalten
 - [ ] Projektordner während der Bearbeitung extern löschen und Verhalten prüfen
 
 ## Installer und Deinstallation
