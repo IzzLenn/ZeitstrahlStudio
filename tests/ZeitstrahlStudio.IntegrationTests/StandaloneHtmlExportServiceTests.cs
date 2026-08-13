@@ -126,6 +126,8 @@ public sealed partial class StandaloneHtmlExportServiceTests : IDisposable
         Assert.Contains("base-uri 'none'", html, StringComparison.Ordinal);
         Assert.Contains("form-action 'none'", html, StringComparison.Ordinal);
         Assert.Contains("border: 2px solid var(--event-color)", html, StringComparison.Ordinal);
+        Assert.Contains("function updateTimelinePosition()", html, StringComparison.Ordinal);
+        Assert.Contains("(viewport.clientWidth - scaledTimelineWidth) / 2", html, StringComparison.Ordinal);
         Assert.Contains("window.print()", html, StringComparison.Ordinal);
         Assert.Contains("window.confirm", html, StringComparison.Ordinal);
         Assert.DoesNotContain("<script src=", html, StringComparison.OrdinalIgnoreCase);

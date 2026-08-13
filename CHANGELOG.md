@@ -6,6 +6,7 @@ Alle wichtigen Änderungen an Zeitstrahl Studio werden in dieser Datei dokumenti
 
 ### Geändert
 
+- Die vertikale Achse des Standalone-HTML-Zeitstrahls wird in Desktopansichten relativ zum sichtbaren Arbeitsbereich mittig positioniert; horizontale Ansicht und kompakte Mobilanordnung bleiben unverändert
 - Kontrollkästchen zeigen im Dunkelmodus ungeprüften, aktivierten, teilweise aktivierten und deaktivierten Zustand ohne Hover klar an; Hover und Tastaturfokus erzeugen keine helle Fläche, Bindings, Tastaturbedienung und UI-Automation bleiben erhalten
 - Native Titelleisten des Hauptfensters und aller anwendungseigenen WPF-Dialoge folgen dem effektiven Hell-/Dunkelmodus sowohl beim Start als auch beim laufenden Wechsel
 - Der Standalone-HTML-Export wurde vollständig als responsive Offline-Projektübersicht mit Kennzahlen, neuem Zeitstrahl- und Kartenlayout, vollständigen Ereignisfarbrahmen, Suche, aufklappbaren Filtern, Themeumschaltung, Detail-/Zoom-/Drag-Bedienung und druckoptimierter Ansicht neu gestaltet

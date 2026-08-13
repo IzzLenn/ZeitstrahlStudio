@@ -53,6 +53,7 @@ Diese Checkliste enthält Prüfungen, die in der Entwicklungsumgebung nicht voll
 - [ ] Offline-Verhalten mit deaktiviertem Netzwerk prüfen
 - [ ] Desktoplayout und schmale Ansicht einschließlich 200-%-Browserzoom prüfen
 - [ ] Horizontale und vertikale Ausrichtung sowie vollständige farbige Kartenrahmen prüfen
+- [ ] In der vertikalen Desktopansicht prüfen, dass die Zeitachse bei breitem und schmalem Browserfenster mittig im sichtbaren Arbeitsbereich liegt
 - [ ] Systemdesign beim ersten Start, manuelle Hell-/Dunkel-Umschaltung und lokale Persistenz nach Neuladen prüfen
 - [ ] Volltextsuche und `/`-Tastenkürzel testen
 - [ ] Filterpanel, Aktivzähler, `Esc`, Zurücksetzen und kombinierte Zeitraum-/Farbe-/Schlagwort-/Fristfilter testen

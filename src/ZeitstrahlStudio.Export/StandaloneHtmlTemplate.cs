@@ -705,12 +705,21 @@ internal static class StandaloneHtmlTemplate
     function updateZoomSurface() {
       timeline.style.transform = "scale(" + zoom + ")";
       zoomLabel.textContent = Math.round(zoom * 100) + " %";
+      updateTimelinePosition();
       if (zoomFrame !== null) { window.cancelAnimationFrame(zoomFrame); }
       zoomFrame = window.requestAnimationFrame(function () {
+        updateTimelinePosition();
         zoomSurface.style.width = Math.max(viewport.clientWidth, Math.ceil(timeline.scrollWidth * zoom)) + "px";
         zoomSurface.style.height = Math.max(viewport.clientHeight, Math.ceil(timeline.scrollHeight * zoom)) + "px";
         zoomFrame = null;
       });
+    }
+
+    function updateTimelinePosition() {
+      var centerVertical = orientation === "vertical" && window.matchMedia("(min-width: 761px)").matches;
+      var scaledTimelineWidth = timeline.scrollWidth * zoom;
+      var centeredLeft = Math.max(0, (viewport.clientWidth - scaledTimelineWidth) / 2);
+      timeline.style.left = centerVertical ? centeredLeft + "px" : "0px";
     }
 
     function setZoom(nextZoom) {

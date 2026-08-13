@@ -1,15 +1,14 @@
 # Projektstatus
 
-Status: In Entwicklung - UI-Nachkorrektur für Checkboxen und native Titelleisten sowie vollständige Überarbeitung des Standalone-HTML-Exports
+Status: In Entwicklung - vertikale Achse des Standalone-HTML-Exports mittig ausgerichtet
 
 Letzte Aktualisierung: 13.08.2026
 
 ## Aktuelle Phase
 
-Die aktuelle Nutzerabnahme betrifft drei klar begrenzte Bereiche: Kontrollkästchen müssen ihre Haken- beziehungsweise Teilmarkierung im Dunkelmodus ohne Hover zeigen und dürfen beim Überfahren nicht aufhellen; die nativen Titelleisten aller anwendungseigenen WPF-Fenster müssen dem effektiven Theme folgen; der Standalone-HTML-Export wird als responsive, sichere und druckbare Offline-Projektansicht vollständig neu gestaltet.
+Die vertikale Achse des Standalone-HTML-Exports wurde in Desktopansichten relativ zum tatsächlich sichtbaren Arbeitsbereich mittig ausgerichtet. Die Berechnung berücksichtigt Fensterbreite und aktuellen Zoom, ohne horizontale Ansicht oder kompakte Mobilanordnung zu verändern.
 
-Implementierung, gezielte automatisierte Prüfung und vollständige Debug-/Release-Verifikation sind abgeschlossen. Die neue HTML-Datei wurde zusätzlich bei 1440×900, 1024×600 und 390×844 in lokalem Chromium gerendert und interaktiv geprüft. Selbstenthaltender `win-x64`-Publish und aktualisierter 0.3.0-Installer wurden erfolgreich erzeugt. Die benutzereigenen Änderungen unter `samples/` bleiben unangetastet und außerhalb des Commits; als offenes Release-Gate bleibt ausschließlich die reale WPF-Sichtprüfung der Checkboxen und nativen Titelleisten auf Windows 10 und Windows 11.
-
+Implementierung, Regressionstest, Pixelmessung in Chromium, vollständige Debug-/Release-Verifikation sowie neue selbstenthaltende App und Installer sind abgeschlossen. Die benutzereigenen Änderungen unter `samples/` bleiben unangetastet und außerhalb des Commits.
 ## Prüfung der Entwicklungsumgebung
 
 - Windows 10 x64, Version 10.0.19045
@@ -824,3 +823,43 @@ Ergebnis:
 ## Nächster konkreter Arbeitsschritt (13.08.2026)
 
 Den aktualisierten Installer beziehungsweise die portable EXE auf Windows 10 und Windows 11 starten und gemäß `MANUAL_RELEASE_CHECKLIST.md` die Checkboxzustände ohne Hover, Hover/Fokus ohne helle Fläche sowie Hauptfenster-, bereits geöffnete und später geöffnete Dialogtitelleisten bei Dunkel → Hell → Dunkel visuell abnehmen.
+
+## HTML-Nachkorrektur: vertikale Zeitachse mittig ausgerichtet (13.08.2026)
+
+### Umsetzung
+
+- Ausschließlich die Positionierung des vertikalen Standalone-HTML-Zeitstrahls wurde angepasst.
+- Bei Desktopbreiten ab 761 Pixeln wird die skalierte Breite des vertikalen Zeitstrahls gegen die tatsächliche Breite des sichtbaren Arbeitsbereichs gerechnet. Solange der Zeitstrahl hineinpasst, erhält er links und rechts denselben freien Raum; die Achse liegt damit exakt in der Mitte.
+- Die horizontale Ansicht bleibt bei `left: 0`. Die einspaltige Mobilansicht bis 760 Pixel behält bewusst ihre links geführte Achse, damit die Kartenbreite vollständig nutzbar bleibt.
+- Zoom, Filter, Detailzustände, Druckmodus und Drag-Navigation bleiben unverändert. Ein zusätzlicher HTML-Vertragstest verhindert den Verlust der Zentrierungsberechnung.
+- Die benutzereigenen Änderungen in `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` wurden nicht bearbeitet und bleiben außerhalb des Commits.
+
+### Visuelle Browserprüfung
+
+- Die produktiv erzeugte Datei `artifacts/html-export-centered-qa.html` wurde lokal in Chromium geprüft.
+- Gemessene Abweichung zwischen Achsenmitte und Mitte des sichtbaren Arbeitsbereichs: bei 2048, 1440 und 1024 Pixel Fensterbreite jeweils `0,00 px`.
+- Die horizontale Ansicht blieb unverändert bei `left: 0`; es traten keine JavaScript-Fehler und keine HTTP(S)-Anfragen auf.
+- Sichtgeprüfter Screenshot: `artifacts/html-export-centered-vertical.png`.
+- Der integrierte Browserdienst stellte erneut keine Browserinstanz bereit; deshalb wurde die lokale Chromium-Prüfung über Playwright 1.60.0 ausgeführt.
+
+### Erfolgreiche Verifikation und neue Artefakte
+
+```powershell
+dotnet restore ZeitstrahlStudio.sln
+dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore --no-build
+dotnet build ZeitstrahlStudio.sln -c Release --no-restore
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
+dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
+dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
+.\build.ps1 -Task BuildInstaller -Version 0.3.0
+```
+
+Ergebnis: Debug und Release jeweils 0 Warnungen und 0 Fehler; jeweils 63/63 Unit-Tests und 130/130 Integrationstests bestanden. Die drei gezielten HTML-Exporttests und die Formatprüfung bestanden ebenfalls.
+
+- Installer: `ZeitstrahlStudio-0.3.0-win-x64-setup.exe`, 62.730.937 Bytes, SHA-256 `E8C564E9112318E5BE28033F5D0E82360063011901B27D6531DC032245D79808`.
+- Portable App: `artifacts/publish/win-x64/ZeitstrahlStudio.App.exe`, 152.576 Bytes, SHA-256 `F26D91C1BD2BF936A035BA1A6FE0C33A2A7568695CAF4EA19A6D57DAD7ABA69D`.
+
+## Nächster konkreter Arbeitsschritt (13.08.2026, HTML-Zentrierung)
+
+Den neuen Installer oder die portable EXE verwenden, ein Projekt als HTML exportieren und die mittige vertikale Achse mit dem vollständigen Beispielprojekt visuell abnehmen.
