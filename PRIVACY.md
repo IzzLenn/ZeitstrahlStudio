@@ -1,6 +1,6 @@
 # Datenschutzerklärung für Zeitstrahl Studio
 
-**Stand:** 19. Juli 2026
+**Stand:** 13. August 2026
 
 ## Zusammenfassung
 
@@ -37,6 +37,12 @@ Zeitstrahl Studio überträgt keine Daten an externe Server oder Dienste:
 - Keine Cloud-Synchronisation
 - Keine automatische Datenübertragung
 - Keine automatischen Hintergrundzugriffe auf Webseiten
+
+## Standalone-HTML-Export
+
+Eine exportierte HTML-Einzeldatei enthält ausschließlich die beim Export gewählten Projektdaten und optional verkleinerte Miniaturen beziehungsweise private Notizen. Sie arbeitet offline, lädt keine externen Ressourcen und sendet keine Daten an Dienste oder Server.
+
+Der Hell-/Dunkel-Umschalter des Exports speichert nur den Wert `zeitstrahl-studio-export-theme` als lokale Darstellungspräferenz im Browserspeicher (`localStorage`). Dort werden keine Projektinhalte, Suchbegriffe oder Filterwerte abgelegt. Externe HTTP(S)-Links verlassen die lokale Datei erst nach einer ausdrücklichen Bestätigung.
 
 ## Externe Links
 

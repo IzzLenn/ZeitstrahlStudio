@@ -39,22 +39,32 @@ Diese Checkliste enthält Prüfungen, die in der Entwicklungsumgebung nicht voll
 - [ ] Kartenlesbarkeit bei kleinen Schriftgrößen prüfen
 - [ ] Kartenlesbarkeit bei großen Schriftgrößen prüfen
 - [ ] Fokusvisualisierung in Listen und Buttons prüfen
+- [ ] Kontrollkästchen im Dunkelmodus ungeprüft, aktiviert, teilweise aktiviert und deaktiviert ohne Hover prüfen
+- [ ] Bei Kontrollkästchen Hover und Tastaturfokus prüfen: keine helle Fläche, Haken beziehungsweise Teilmarkierung weiterhin sichtbar
+- [ ] Native Titelleiste des Hauptfensters beim Start in Hell und Dunkel auf Windows 10 sowie Windows 11 prüfen
+- [ ] Bereits geöffneten Dialog bei laufendem Wechsel Dunkel → Hell → Dunkel prüfen
+- [ ] Nach dem Themewechsel neu geöffneten Dialog auf passende native Titelleiste prüfen
 
 ## Standalone-HTML-Export
 
 - [ ] HTML-Export in Microsoft Edge öffnen
 - [ ] HTML-Export in Mozilla Firefox öffnen
 - [ ] HTML-Export in Google Chrome öffnen
-- [ ] Offline-Verhalten prüfen (Netzwerk deaktivieren)
-- [ ] Volltextsuche im HTML-Export testen
-- [ ] Zeitraumfilter im HTML-Export testen
-- [ ] Farbfilter im HTML-Export testen
-- [ ] Schlagwortfilter im HTML-Export testen
-- [ ] Fristfilter im HTML-Export testen
-- [ ] Zoom im HTML-Export testen
-- [ ] Verschieben des Zeitstrahls im HTML-Export testen
-- [ ] Druckvorschau im Browser testen
-- [ ] Externe Linkwarnung anzeigen und bestätigen
+- [ ] Offline-Verhalten mit deaktiviertem Netzwerk prüfen
+- [ ] Desktoplayout und schmale Ansicht einschließlich 200-%-Browserzoom prüfen
+- [ ] Horizontale und vertikale Ausrichtung sowie vollständige farbige Kartenrahmen prüfen
+- [ ] Systemdesign beim ersten Start, manuelle Hell-/Dunkel-Umschaltung und lokale Persistenz nach Neuladen prüfen
+- [ ] Volltextsuche und `/`-Tastenkürzel testen
+- [ ] Filterpanel, Aktivzähler, `Esc`, Zurücksetzen und kombinierte Zeitraum-/Farbe-/Schlagwort-/Fristfilter testen
+- [ ] Ereignisdetails einzeln sowie über **Alle öffnen / Alle schließen** testen
+- [ ] Detailzustand bei Ansichts- und Filterwechsel prüfen
+- [ ] Zoom über Schaltflächen und `Strg + Mausrad` testen
+- [ ] Verschieben des Zeitstrahls per Ziehen testen
+- [ ] Projektkennzahlen, Projektbeschreibung und optionale Miniaturen prüfen
+- [ ] Druckbutton und Browser-Druckvorschau im Hell- sowie Dunkeldesign prüfen
+- [ ] Im Druck prüfen: Werkzeugleiste verborgen, vertikale 100-%-Ansicht, Projektbeschreibung und alle Ereignisdetails sichtbar, sinnvolle Seitenumbrüche
+- [ ] Nach Abbruch beziehungsweise Ende des Druckens Wiederherstellung von Ausrichtung, Zoom, Scrollposition, Filterpanel, Projektbeschreibung und Ereignisdetails prüfen
+- [ ] Externe Linkwarnung anzeigen, einmal abbrechen und einmal bestätigen
 
 ## PDF-Export
 

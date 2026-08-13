@@ -1,14 +1,14 @@
 # Projektstatus
 
-Status: In Entwicklung - UI-Nachkorrektur für Einstellungen, Darkmode und Ereigniskarten
+Status: In Entwicklung - UI-Nachkorrektur für Checkboxen und native Titelleisten sowie vollständige Überarbeitung des Standalone-HTML-Exports
 
-Letzte Aktualisierung: 27.07.2026
+Letzte Aktualisierung: 13.08.2026
 
 ## Aktuelle Phase
 
-Die visuelle Nutzerabnahme vom 27.07.2026 hat Regressionen im vorherigen UI-Korrekturmeilenstein aufgedeckt. Die Nachkorrektur ist implementiert: Der zusätzliche Einstellungsbutton innerhalb der Startseite wurde entfernt; ausschließlich der bereits vorhandene Button rechts in der oberen Befehlsleiste bleibt vor und nach dem Öffnen eines Projekts aktiv. Das eigene globale ComboBox-Template wurde vollständig zurückgenommen, weil es `DisplayMemberPath` umging und `SelectionOption`-/`SearchChoice`-Objekttexte anzeigte. Native WPF-Auswahlzustände erhalten ihre Hell-/Dunkelfarben nun über die Theme-Ressourcenschlüssel, ohne Dropdown-Funktion oder Bindings zu ersetzen.
+Die aktuelle Nutzerabnahme betrifft drei klar begrenzte Bereiche: Kontrollkästchen müssen ihre Haken- beziehungsweise Teilmarkierung im Dunkelmodus ohne Hover zeigen und dürfen beim Überfahren nicht aufhellen; die nativen Titelleisten aller anwendungseigenen WPF-Fenster müssen dem effektiven Theme folgen; der Standalone-HTML-Export wird als responsive, sichere und druckbare Offline-Projektansicht vollständig neu gestaltet.
 
-Der Wechsel von global Dunkel zu Hell innerhalb eines geöffneten Projekts vergleicht das Dialogergebnis jetzt mit dem tatsächlich an den Dialog übergebenen Ausgangszustand. Der Ereigniskartenrahmen verwendet auch bei Auswahl, Hover und Layoutkonflikt vollständig die Ereignisfarbe; Auswahl und Konflikt bleiben über getrennte äußere Markierungen erkennbar. Die vorhandenen Nutzeränderungen unter `samples/` bleiben unangetastet.
+Implementierung, gezielte automatisierte Prüfung und vollständige Debug-/Release-Verifikation sind abgeschlossen. Die neue HTML-Datei wurde zusätzlich bei 1440×900, 1024×600 und 390×844 in lokalem Chromium gerendert und interaktiv geprüft. Selbstenthaltender `win-x64`-Publish und aktualisierter 0.3.0-Installer wurden erfolgreich erzeugt. Die benutzereigenen Änderungen unter `samples/` bleiben unangetastet und außerhalb des Commits; als offenes Release-Gate bleibt ausschließlich die reale WPF-Sichtprüfung der Checkboxen und nativen Titelleisten auf Windows 10 und Windows 11.
 
 ## Prüfung der Entwicklungsumgebung
 
@@ -743,3 +743,84 @@ Ergebnis: Debug und Release jeweils 0 Warnungen und 0 Fehler; jeweils 63/63 Unit
 ## Nächster konkreter Arbeitsschritt (27.07.2026, Hauptmenü-Markierung)
 
 Aktualisierten Installer installieren, im Dunkelmodus das Menü „Ansicht“ öffnen und die Lesbarkeit beim Überfahren aller Einträge mit Maus sowie Tastatur visuell prüfen. Andere UI- oder Funktionsbereiche bleiben bis zu einer neuen ausdrücklichen Beauftragung unverändert.
+
+## UI-Nachkorrektur Checkboxen, native Fenstertitelleisten und HTML-Export (13.08.2026)
+
+### Enger Änderungsumfang
+
+- Ausschließlich der gemeinsame Checkbox-Stil, die Synchronisierung nativer WPF-Titelleisten und die Darstellung beziehungsweise Bedienung des Standalone-HTML-Exports wurden geändert.
+- Projektformat, Datenbank, Ereignislogik, Suche, PDF-Export und vorhandene Dropdown-/Register-/DatePicker-Verträge bleiben unverändert.
+- Die benutzereigenen Änderungen in `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` wurden nicht bearbeitet und bleiben ungestaged sowie uncommitted.
+- Es wurde keine neue Produktionsabhängigkeit eingeführt.
+
+### Kontrollkästchen im Dunkelmodus
+
+- Das globale WPF-`CheckBox`-Template zeichnet eine dauerhaft dunkle Grundfläche, einen klaren Akzentzustand für geprüft beziehungsweise unbestimmt und kontrastierte Haken-/Teilglyphen.
+- Hover ändert ausschließlich den Rahmen; Tastaturfokus ändert Rahmen und Fokusdicke. Keine dieser Interaktionen ersetzt die Fläche durch einen hellen nativen Zustand.
+- Ungeprüft, geprüft, unbestimmt und deaktiviert werden ohne Mauszeiger geprüft. `IsChecked`, `IsThreeState`, Two-Way-Binding, Tabstopp, Leertaste und UI-Automation bleiben erhalten.
+
+### Native Fenstertitelleisten
+
+- `ApplicationThemeService` synchronisiert nach jedem effektiven Themewechsel die native Titelleiste aller bereits erzeugten anwendungseigenen WPF-Fenster.
+- Ein globaler `Window.Loaded`-Handler übernimmt denselben Zustand für später geöffnete Dialoge.
+- Die DWM-Anbindung verwendet das aktuelle Immersive-Dark-Mode-Attribut mit Legacy-Fallback. Windows 11 erhält zusätzlich Caption- und Textfarben aus den Theme-Ressourcen; Hell setzt die Windows-Standardfarben zurück.
+- Fehlende oder nicht unterstützte DWM-Funktionen werden als reine Darstellungserweiterung behandelt und dürfen kein Fenster verhindern.
+
+### Vollständige Neugestaltung des Standalone-HTML-Exports
+
+- Responsive Vollfenster-Shell mit Offline-/Momentaufnahmehinweis, Projektkopf, aufklappbarer Projektbeschreibung und Kennzahlen für Ereigniszahl, Zeitraum und Exportzeitpunkt.
+- Gruppierte Werkzeugleiste für horizontale/vertikale Ausrichtung, Zoom, Zurücksetzen, Detailsteuerung, Hell/Dunkel und Drucken. Auf Mobilbreite brechen die Gruppen vollständig sichtbar um.
+- Kompakte Volltextsuche und ein aufklappbares, am Fenster begrenztes Filterpanel für Zeitraum, Farbe, Schlagwort und Friststatus mit Aktivzähler und Rücksetzen.
+- Neu gezeichneter horizontaler beziehungsweise vertikaler Zeitstrahl mit alternierenden Karten, Zeitlückenmarkern, vollständigem farbigem Ereignisrahmen, neutraler Kontrastkontur, Badges, Miniaturen und Detailbereichen.
+- Maus-/Pointer-Ziehen, Schaltflächen- und `Strg + Mausrad`-Zoom, `/` für die Suche, `Esc` für das Filterpanel, ARIA-Zustände, sichtbarer Fokus und reduzierte Bewegungen. Passende geöffnete Details bleiben bei Ansichts- und Filterwechseln erhalten.
+- Lokaler Hell-/Dunkel-Umschalter mit Systempräferenz als Startwert und ausschließlich `zeitstrahl-studio-export-theme` im Browserspeicher.
+- Reversibler Druckmodus: vertikal, 100 %, papierkontrastreiche Variablen sowie geöffnete Projektbeschreibung und Ereignisdetails; danach Wiederherstellung von Ausrichtung, Zoom, Scrollposition, Filterpanel, Projektbeschreibung und offenen Details.
+- Verschärfte CSP und weiterhin keine externen Ressourcen, keine Netzwerk-APIs und keine unsichere HTML-Injektion; Projektdaten werden nur als Textknoten beziehungsweise validierte DOM-Attribute eingesetzt.
+
+### Regressionstests und Browser-QA
+
+- `CheckBoxThemeTests` prüfen statisch und zur Laufzeit sämtliche Checkboxzustände, fehlende helle Hover-/Fokusfläche, sichtbare kontrastierte Glyphen, Two-Way-Binding und UI-Automation.
+- `NativeWindowTitleBarThemeTests` prüfen Attributfolge, Legacy-Fallback, Windows-11-Farben, Light-Reset, COLORREF-Konvertierung und gemerkten Themezustand.
+- Drei `StandaloneHtmlExportServiceTests` prüfen Einzeldatei, Offline-/CSP-/DOM-Sicherheitsvertrag, neue Shell-/Filter-/Theme-/Druckelemente, vollständigen Ereignisfarbrahmen sowie vorhandene Exportoptionen und atomare Dateibehandlung.
+- Kombinierter gezielter Lauf für Checkboxen, Titelleisten, Anwendungstheme, Theme-Ressourcen und HTML-Export: 21/21 Tests bestanden.
+- Der integrierte Browserdienst war in dieser Sitzung nicht verfügbar. Die produktiv erzeugte QA-Datei wurde daher mit lokalem Chromium über Playwright 1.60.0 geprüft: 1440×900, 1024×600 und 390×844; Suche, Filter, Ausrichtung, Zoom, Detailzustand, Hell/Dunkel, Kartenkontur, Druckzustand und Zustandswiederherstellung bestanden. Es traten keine JavaScript-Fehler und keine HTTP(S)-Anfragen auf.
+- Sichtgeprüfte Artefakte: `artifacts/html-export-desktop-dark.png`, `artifacts/html-export-desktop-light.png`, `artifacts/html-export-1024x600.png`, `artifacts/html-export-mobile-390.png` und `artifacts/html-export-print-preview.png`.
+
+### Dokumentation und Bearbeitungsprotokoll
+
+- ADR-031 und ADR-038, `CHANGELOG.md`, `USER_GUIDE.md`, `PRIVACY.md` und `MANUAL_RELEASE_CHECKLIST.md` wurden an den umgesetzten Vertrag angepasst.
+- Der normale Patch-Helfer scheiterte wiederholt vor jedem Dateizugriff am bekannten Windows-Sandbox-Timeout. Danach wurden ausschließlich exakt gezählte Einmal-Ersetzungen beziehungsweise eindeutig begrenzte Abschnitte verwendet und durch Diff, Build und Tests kontrolliert.
+
+### Erfolgreiche Abschlussverifikation
+
+```powershell
+dotnet restore ZeitstrahlStudio.sln
+dotnet build ZeitstrahlStudio.sln -c Debug --no-restore
+dotnet test ZeitstrahlStudio.sln -c Debug --no-restore --no-build
+dotnet build ZeitstrahlStudio.sln -c Release --no-restore
+dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
+dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
+dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
+.\build.ps1 -Task BuildInstaller -Version 0.3.0
+git diff --check
+```
+
+Ergebnis:
+
+- Restore erfolgreich; alle Projekte waren aktuell.
+- Debug- und Release-Build jeweils mit 0 Warnungen und 0 Fehlern.
+- Debug und Release: jeweils 63/63 Unit-Tests und 130/130 Integrationstests bestanden.
+- Gezielter Theme-/Checkbox-/Titelleisten-/HTML-Lauf: 21/21 Tests bestanden; die drei HTML-Exporttests bestanden nach der finalen Responsive-Korrektur erneut separat.
+- `dotnet format --verify-no-changes` und `git diff --check` erfolgreich.
+- Selbstenthaltender `win-x64`-Publish erfolgreich.
+- Inno Setup 6.7.3 erzeugte `ZeitstrahlStudio-0.3.0-win-x64-setup.exe` mit 62.746.009 Bytes und SHA-256 `5A8F01AAA1E91D5AF2052EBF6C7A4D86E78CFC33AB7834ABA6DE30F42AE287E8`.
+- Portable, selbstenthaltende Anwendung: `artifacts/publish/win-x64/ZeitstrahlStudio.App.exe`, 152.576 Bytes, SHA-256 `C6E822086732D6CA3B4AF486A7EC5D0890883FB8B11A8783EA3FC3FA3D214302`.
+
+### Offenes manuelles Release-Gate
+
+- Die Headless-Browser-QA des HTML-Exports ist abgeschlossen; die herstellerspezifische Sichtprüfung in Edge, Firefox und Chrome bleibt zusätzlich in `MANUAL_RELEASE_CHECKLIST.md` offen.
+- Kontrollkästchenzustände und native Titelleisten müssen mit der neuen EXE auf realem Windows 10 und Windows 11 bei Start sowie laufendem Dunkel → Hell → Dunkel geprüft werden. Dies ist keine offene Implementierungsaufgabe, sondern die ausdrücklich dokumentierte visuelle Releaseabnahme.
+
+## Nächster konkreter Arbeitsschritt (13.08.2026)
+
+Den aktualisierten Installer beziehungsweise die portable EXE auf Windows 10 und Windows 11 starten und gemäß `MANUAL_RELEASE_CHECKLIST.md` die Checkboxzustände ohne Hover, Hover/Fokus ohne helle Fläche sowie Hauptfenster-, bereits geöffnete und später geöffnete Dialogtitelleisten bei Dunkel → Hell → Dunkel visuell abnehmen.

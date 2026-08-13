@@ -63,6 +63,7 @@ public sealed class ApplicationThemeService : IApplicationThemeService, IDisposa
         CurrentTheme = theme;
         IsDark = effectiveDark;
         ApplyPalette(effectiveDark);
+        NativeWindowTitleBarTheme.ApplyToApplicationWindows(effectiveDark);
         if (changed)
         {
             ThemeChanged?.Invoke(this, EventArgs.Empty);

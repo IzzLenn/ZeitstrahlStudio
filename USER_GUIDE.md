@@ -21,11 +21,11 @@ Zeitstrahl Studio ist eine vollständig lokale Windows-Desktopanwendung zur Erst
 
 #### Variante 1: Installer
 
-Führen Sie `ZeitstrahlStudio-0.1.0-win-x64-setup.exe` aus und folgen Sie den Anweisungen des Installationsassistenten. Der Installer legt einen Startmenüeintrag an und verknüpft optional `.zeitprojekt`-Dateien mit der Anwendung.
+Führen Sie `ZeitstrahlStudio-<Version>-win-x64-setup.exe` aus und folgen Sie den Anweisungen des Installationsassistenten. Der Installer legt einen Startmenüeintrag an und verknüpft optional `.zeitprojekt`-Dateien mit der Anwendung.
 
 #### Variante 2: Portable Version
 
-Entpacken Sie `ZeitstrahlStudio-0.1.0-win-x64-portable.zip` in einen beliebigen Ordner. Starten Sie die Anwendung mit `ZeitstrahlStudio.App.exe`. Es ist keine Installation erforderlich.
+Entpacken Sie `ZeitstrahlStudio-<Version>-win-x64-portable.zip` in einen beliebigen Ordner. Starten Sie die Anwendung mit `ZeitstrahlStudio.App.exe`. Es ist keine Installation erforderlich.
 
 ### Startbildschirm
 
@@ -38,6 +38,10 @@ Beim ersten Start zeigt Zeitstrahl Studio einen Startbildschirm mit folgenden Op
 - **Wiederherstellen**: Wiederherstellung nach einem Absturz
 
 Das gewählte Farbschema wird ausschließlich lokal auf dem Gerät gespeichert. Es bleibt beim Erstellen, Öffnen und Schließen von Projekten sowie nach einem Programmneustart erhalten.
+
+### Erscheinungsbild
+
+Die globale Auswahl **Windows-Einstellung**, **Hell** oder **Dunkel** gilt projektübergreifend. Inhaltsflächen und native Titelleisten des Hauptfensters sowie aller anwendungseigenen Dialoge wechseln gemeinsam. Kontrollkästchen zeigen ungeprüfte, aktivierte, teilweise aktivierte und deaktivierte Zustände auch im Dunkelmodus dauerhaft an; Hover und Tastaturfokus verändern nur den Rahmen. Die Felder bleiben per Tabulator und Leertaste bedienbar.
 
 ## Projekte verwalten
 
@@ -189,10 +193,25 @@ Mit **Filter zurücksetzen** werden alle Filter aufgehoben.
 ### Standalone-HTML-Export
 
 1. Wählen Sie **Export → HTML-Export**.
-2. Wählen Sie Startansicht und Optionen.
-3. Speichern Sie die HTML-Datei.
+2. Legen Sie die horizontale oder vertikale Startansicht fest und entscheiden Sie, ob Miniaturen und private Notizen enthalten sein dürfen.
+3. Speichern Sie die HTML-Datei und öffnen Sie sie in einem aktuellen Browser.
 
-Die HTML-Datei ist eigenständig, funktioniert offline und enthält keine externen Ressourcen.
+Die erzeugte Einzeldatei ist eine vollständig lokale Momentaufnahme. Der Hinweis am oberen Rand macht kenntlich, dass Änderungen in der HTML-Datei nicht in das Projekt zurückgeschrieben werden. Es werden keine externen Bibliotheken oder Ressourcen nachgeladen.
+
+Der Projektkopf zeigt Titel, Kurzbeschreibung, Ereigniszahl, Projektzeitraum und Exportzeitpunkt. Die Projektbeschreibung lässt sich aufklappen. Ereignisse erscheinen als Karten mit vollständigem Rahmen in der Ereignisfarbe; sehr helle oder dunkle Farben erhalten zusätzlich eine neutrale Außenkontur.
+
+Bedienung im Browser:
+
+- **Horizontal / Vertikal** wechselt die Zeitstrahlanordnung.
+- **− / + / Zurücksetzen** steuert den Zoom; `Strg + Mausrad` zoomt ebenfalls.
+- Ziehen auf der freien Arbeitsfläche verschiebt den sichtbaren Ausschnitt.
+- Die Suche berücksichtigt Ereignis- und eingebettete Dokumenttexte; `/` setzt den Fokus direkt in das Suchfeld.
+- Das aufklappbare Filterpanel kombiniert Zeitraum, Ereignisfarbe, Schlagwort und Friststatus. Ein Zähler zeigt aktive Kriterien; **Zurücksetzen** entfernt sie. `Esc` schließt das Panel.
+- Ereignisdetails lassen sich einzeln sowie über **Alle öffnen / Alle schließen** steuern. Geöffnete Details bleiben bei Ansichts- und passenden Filterwechseln erhalten.
+- **Design: Hell / Dunkel** wechselt nur die Darstellung der exportierten Datei. Die Wahl wird als reine Darstellungspräferenz lokal im Browserspeicher abgelegt; es werden keine Projektdaten gespeichert oder übertragen.
+- **Drucken** öffnet die Browser-Druckfunktion. Für den Druck wechselt der Export vorübergehend auf eine kontrastreiche vertikale 100-%-Ansicht, öffnet Projektbeschreibung und Ereignisdetails und stellt anschließend Ausrichtung, Zoom, Scrollposition, Filterpanel und geöffnete Details wieder her.
+
+Auf schmalen Fenstern ordnen sich Kennzahlen, Werkzeuggruppen und vertikale Karten untereinander an. Dokumente bleiben aus Sicherheits- und Größengründen als Namen beziehungsweise Miniaturen eingebettet; die Originaldateien werden nicht Teil der HTML-Datei. Externe HTTP(S)-Links werden erst nach einer Bestätigung geöffnet.
 
 ### Projektexport
 

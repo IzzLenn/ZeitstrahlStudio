@@ -6,6 +6,9 @@ Alle wichtigen Änderungen an Zeitstrahl Studio werden in dieser Datei dokumenti
 
 ### Geändert
 
+- Kontrollkästchen zeigen im Dunkelmodus ungeprüften, aktivierten, teilweise aktivierten und deaktivierten Zustand ohne Hover klar an; Hover und Tastaturfokus erzeugen keine helle Fläche, Bindings, Tastaturbedienung und UI-Automation bleiben erhalten
+- Native Titelleisten des Hauptfensters und aller anwendungseigenen WPF-Dialoge folgen dem effektiven Hell-/Dunkelmodus sowohl beim Start als auch beim laufenden Wechsel
+- Der Standalone-HTML-Export wurde vollständig als responsive Offline-Projektübersicht mit Kennzahlen, neuem Zeitstrahl- und Kartenlayout, vollständigen Ereignisfarbrahmen, Suche, aufklappbaren Filtern, Themeumschaltung, Detail-/Zoom-/Drag-Bedienung und druckoptimierter Ansicht neu gestaltet
 - Das obere Hauptmenü verwendet im Dunkelmodus für hervorgehobene, geöffnete und angehakte Einträge eine dunkle Auswahlfläche mit lesbarer heller Beschriftung
 - ComboBoxen und ihre Popup-Einträge verwenden im Dunkelmodus durchgehend dunkle Flächen und lesbare Labels; `DisplayMemberPath`, Auswahlbindungen und Tastaturbedienung bleiben erhalten
 - Ausgewählte Registerkarten in Hauptansicht, Ereigniseditor und Detailinspektor sowie DatePicker und Kalender verwenden konsistente themefähige Flächen
