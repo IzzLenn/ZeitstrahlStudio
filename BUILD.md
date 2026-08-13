@@ -7,7 +7,7 @@ Diese Anleitung beschreibt, wie Zeitstrahl Studio lokal gebaut, getestet und ver
 - Windows 10 oder Windows 11 (64 Bit)
 - .NET SDK 8.x
 - PowerShell 5.1 oder höher
-- Optional für den Installer: Inno Setup 6 (https://jrsoftware.org/isinfo.php)
+- Für `BuildInstaller` und einen vollständigen Release-Build: Inno Setup 6 (https://jrsoftware.org/isinfo.php)
 - Für deutsche OCR: In Windows installiertes deutsches Sprachpaket inklusive Texterkennung
 
 ## Schnellstart
@@ -26,7 +26,7 @@ Dieser Befehl führt aus:
 4. Formatprüfung
 5. Selbstenthaltenden win-x64-Publish
 6. Portable ZIP mit Prüfsummen
-7. Inno-Setup-Installer (falls verfügbar)
+7. Inno-Setup-Installer (Inno Setup erforderlich)
 
 ## Einzelne Build-Schritte
 
@@ -88,7 +88,7 @@ Die ZIP-Datei wird in `artifacts\release` abgelegt.
 .\build.ps1 -Task BuildInstaller -Version 1.0.0
 ```
 
-Falls Inno Setup nicht installiert ist, wird der Schritt übersprungen und eine Hinweismeldung ausgegeben.
+Falls Inno Setup nicht installiert ist, schlägt `BuildInstaller` beziehungsweise `All` bewusst fehl. Dadurch kann kein älterer gleichnamiger Installer versehentlich als aktuelles Release-Artefakt übernommen werden.
 
 ## Manuelle Build-Befehle
 

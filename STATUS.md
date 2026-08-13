@@ -17,7 +17,7 @@ Implementierung, automatisierte Debug-/Release-Verifikation, HTML-Sichtprüfung 
 - Git verfügbar; Ausgangszustand war ein Commit mit Spezifikationsdokumenten und ein unversioniertes WPF-Starttemplate
 - Arbeitsbereich ist beschreibbar; durch Solution-Dateien, Builds und Tests praktisch bestätigt
 - `dotnet`, Git und die WPF-Buildwerkzeuge sind verfügbar
-- Inno Setup (`iscc`) ist derzeit nicht im `PATH`; dies blockiert die laufende Implementierung nicht, muss aber vor dem Installer-Abnahmetest behoben werden
+- Inno Setup 6.7.3 ist lokal unter `%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe` verfügbar; `build.ps1` erkennt neben `PATH` und Program Files nun auch diesen Installationsort
 - Vor Arbeitsbeginn waren keine Build-/Testprotokolle vorhanden
 
 ## Abgeschlossene Arbeiten
@@ -902,6 +902,10 @@ dotnet build ZeitstrahlStudio.sln -c Release --no-restore
 dotnet test ZeitstrahlStudio.sln -c Release --no-restore --no-build
 dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
 .\build.ps1 -Task Publish -Version 1.0.0
+git archive --format=zip --output=artifacts\committed-samples-1.0.0.zip HEAD samples
+Expand-Archive -LiteralPath artifacts\committed-samples-1.0.0.zip -DestinationPath artifacts\committed-samples-1.0.0
+Copy-Item -LiteralPath artifacts\committed-samples-1.0.0\samples -Destination artifacts\publish\win-x64\samples -Recurse
+Compress-Archive -Path artifacts\publish\win-x64\* -DestinationPath artifacts\release\ZeitstrahlStudio-1.0.0-win-x64-portable.zip -Force
 .\build.ps1 -Task BuildInstaller -Version 1.0.0
 git diff --check
 ```
@@ -909,10 +913,11 @@ git diff --check
 ### Versions- und GitHub-Release-Vorbereitung
 
 - `Directory.Build.props`, `build.ps1` und das Inno-Setup-Skript verwenden jetzt Version 1.0.0 beziehungsweise 1.0.0.0.
-- `CHANGELOG.md` enthält einen datierten Abschnitt 1.0.0. `RELEASE.md` enthält einen fehlersicheren PowerShell-Ablauf für Prüfung, Fast-Forward-Merge, vollständigen Build, Tag `v1.0.0`, atomaren Push und `gh release create`.
+- `CHANGELOG.md` enthält einen datierten Abschnitt 1.0.0. `RELEASE.md` enthält einen wiederanlaufbaren PowerShell-Ablauf für Prüfung, Fast-Forward-Merge, erzwungen frisch erzeugte Artefakte, Tag `v1.0.0`, atomaren Push und Erstellen beziehungsweise Vervollständigen des GitHub-Releases.
 - Der Vergleich mit dem zuletzt abgerufenen Remote-Stand `origin/ui/redesign-0.3.0` (`cc2e4c7`) zeigt vor diesem Meilenstein sieben lokale Commits ohne Remote-Rückstand. Seitdem kamen insbesondere global persistente Themeeinstellungen, die Darkmode-Nachkorrekturen für Auswahl-/Menü-/Checkboxzustände und native Titelleisten, visuelle Ereignis- und Standardfarbenwahl, vollständige farbige Ereignisrahmen sowie der neu gestaltete responsive Offline-HTML-Export mit mittiger vertikaler Desktopachse hinzu. Dieser Meilenstein ergänzt Dokument-Doppelklick, Archivintegrität, Warnbanner-Schalter und Dokumentpaketexport.
 - `SPEC.md`, `USER_GUIDE.md`, `PRIVACY.md`, `ARCHITECTURE.md`, `PROJECT_FORMAT.md`, `DECISIONS.md`, `CHANGELOG.md`, `MANUAL_RELEASE_CHECKLIST.md`, `README.md`, `BUILD.md` und `RELEASE.md` wurden aktualisiert.
 - Die bereits vor Arbeitsbeginn veränderten Dateien `samples/Beispielchronik Bürgerlabor Sonnenwinkel.html` und `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` wurden weder bearbeitet noch gestaged. Für die lokalen Prüfpakete wurden die committed Fassungen aus Git verwendet, damit keine nicht autorisierten Benutzeränderungen in Release-Artefakte gelangen.
+- Ein unabhängiger Abschlussaudit deckte zwei Release-Risiken auf: einen möglichen Rückgriff auf einen alten Installer bei fehlendem Inno Setup sowie einen nicht wiederanlaufbaren Teilfehler nach Tag/Push. `build.ps1` verlangt jetzt einen erfolgreichen Installer-Compiler; der Releaseblock löscht vorab ausschließlich die exakt benannten Zielartefakte, prüft deren frische Erzeugung und kann einen korrekten vorhandenen Tag beziehungsweise ein teilweise angelegtes GitHub-Release sicher fortsetzen. Abweichende Tags und Force-Push bleiben ausgeschlossen.
 - Der vorgeschriebene Patch-Helfer scheiterte erneut vor Dateizugriff am Windows-Sandbox-`spawn_ready`-Timeout. Dokumentänderungen erfolgten deshalb ausschließlich über eindeutig gezählte Einmal-Ersetzungen und wurden unmittelbar mit Diff-, Build- und Testprüfungen kontrolliert.
 
 ### Verbleibende manuelle Release-Gates

@@ -24,7 +24,7 @@ Beispiel.zeitprojekt
   "format": "ZeitstrahlStudio.Project",
   "formatVersion": 1,
   "minimumReaderVersion": 1,
-  "applicationVersion": "0.1.0",
+  "applicationVersion": "1.0.0",
   "projectId": "00000000-0000-0000-0000-000000000000",
   "projectName": "Beispielprojekt",
   "createdAtUtc": "2026-07-19T08:00:00+00:00",

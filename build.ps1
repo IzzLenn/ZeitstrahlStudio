@@ -18,7 +18,7 @@
     - TestRelease      Release-Tests
     - FormatCheck      Formatprüfung
     - Publish          win-x64-Publish erzeugen
-    - BuildInstaller   Inno-Setup-Installer erzeugen (optional)
+    - BuildInstaller   Inno-Setup-Installer erzeugen (Inno Setup erforderlich)
     - PackagePortable  Portable ZIP erzeugen
     - All              Vollständige Release-Kette
 
@@ -136,16 +136,17 @@ function Step-Publish {
 function Step-BuildInstaller {
     $iscc = Get-Command "iscc" -ErrorAction SilentlyContinue
     if (-not $iscc) {
-        $isccPath = "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe"
-        if (Test-Path $isccPath) {
+        $isccPath = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe"
+            "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
+        ) | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+        if ($isccPath) {
             $iscc = $isccPath
         }
     }
 
     if (-not $iscc) {
-        Write-Host "WARNUNG: Inno Setup (iscc) nicht gefunden. Installer wird übersprungen." -ForegroundColor Yellow
-        Write-Host "Installieren Sie Inno Setup 6 von https://jrsoftware.org/isinfo.php" -ForegroundColor Yellow
-        return
+        throw "Inno Setup 6 (iscc.exe) wurde nicht gefunden. Ein vollständiger Release-Build benötigt einen erfolgreich erzeugten Installer."
     }
 
     $issScript = Join-Path $InstallerDir "ZeitstrahlStudio.iss"

@@ -29,7 +29,7 @@ Die Versionsquellen müssen übereinstimmen:
 .\build.ps1 -Task All -Version 1.0.0
 ```
 
-Dieser Befehl führt Restore, Debug-/Release-Build und -Tests, Formatprüfung, selbstenthaltenden `win-x64`-Publish, portable ZIP, Prüfsummen und Installer aus. Falls Inno Setup nicht vorhanden ist, meldet das Skript eine Warnung; ein GitHub-Release darf dann erst nach separat erfolgreichem Installer-Build erstellt werden.
+Dieser Befehl führt Restore, Debug-/Release-Build und -Tests, Formatprüfung, selbstenthaltenden `win-x64`-Publish, portable ZIP, Prüfsummen und Installer aus. Fehlt Inno Setup oder kann kein frischer Installer erzeugt werden, schlägt der Build bewusst fehl.
 
 Erwartete Artefakte:
 
@@ -51,7 +51,7 @@ Vor der Veröffentlichung ist `MANUAL_RELEASE_CHECKLIST.md` vollständig abzuarb
 
 ## Einmaliger PowerShell-Befehl für GitHub
 
-Der folgende Block prüft Arbeitsbaum, Version, Tag, Fast-Forward-Kompatibilität, GitHub-Anmeldung, Build und Artefakte. Danach aktualisiert er `master` ohne Force-Push, pusht `master` und `v1.0.0` atomar und erstellt das GitHub-Release.
+Der folgende wiederanlaufbare Block prüft Arbeitsbaum, Version, Inno Setup, Tag, Fast-Forward-Kompatibilität, GitHub-Anmeldung, Build und frisch erzeugte Artefakte. Danach aktualisiert er `master` ohne Force-Push, pusht `master` und `v1.0.0` atomar und erstellt oder vervollständigt das GitHub-Release.
 
 ```powershell
 $ErrorActionPreference = "Stop"
@@ -67,27 +67,43 @@ if (@(git status --porcelain).Count -ne 0) {
 if (-not (Select-String -Path "Directory.Build.props" -SimpleMatch "<Version>1.0.0</Version>" -Quiet)) {
     throw "Directory.Build.props ist nicht auf Version 1.0.0 gesetzt."
 }
-
 if (-not (Select-String -Path "build.ps1" -SimpleMatch '[string]$Version = "1.0.0"' -Quiet)) {
     throw "build.ps1 ist nicht auf Version 1.0.0 gesetzt."
 }
-
 if (-not (Select-String -Path "installer\ZeitstrahlStudio.iss" -SimpleMatch '#define MyAppVersion "1.0.0"' -Quiet)) {
     throw "Das Installer-Skript ist nicht auf Version 1.0.0 gesetzt."
+}
+
+$iscc = Get-Command "iscc" -ErrorAction SilentlyContinue
+if (-not $iscc) {
+    $iscc = @(
+        "${env:ProgramFiles(x86)}\Inno Setup 6\iscc.exe"
+        "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
+    ) | Where-Object { Test-Path -LiteralPath $_ -PathType Leaf } | Select-Object -First 1
+}
+if (-not $iscc) {
+    throw "Inno Setup 6 wurde nicht gefunden. Der Release-Build wird nicht ohne frischen Installer fortgesetzt."
 }
 
 git fetch origin --prune --tags
 if ($LASTEXITCODE -ne 0) { throw "git fetch ist fehlgeschlagen." }
 
-git show-ref --verify --quiet "refs/tags/$tag"
-if ($LASTEXITCODE -eq 0) { throw "Der Tag $tag existiert bereits." }
-
-git rev-parse --verify $sourceBranch *> $null
+git rev-parse --verify "$sourceBranch^{commit}" *> $null
 if ($LASTEXITCODE -ne 0) { throw "Der Quellbranch $sourceBranch wurde nicht gefunden." }
+$sourceCommit = (git rev-parse "$sourceBranch^{commit}").Trim()
 
-git merge-base --is-ancestor origin/master $sourceBranch
+git merge-base --is-ancestor origin/master $sourceCommit
 if ($LASTEXITCODE -ne 0) {
     throw "origin/master ist nicht Fast-Forward-kompatibel. Den Branch zuerst bewusst aktualisieren."
+}
+
+git show-ref --verify --quiet "refs/tags/$tag"
+$tagExists = $LASTEXITCODE -eq 0
+if ($tagExists) {
+    $tagCommit = (git rev-list -n 1 $tag).Trim()
+    if ($tagCommit -ne $sourceCommit) {
+        throw "Der vorhandene Tag $tag zeigt nicht auf den freizugebenden Commit $sourceCommit."
+    }
 }
 
 gh auth status --hostname github.com
@@ -95,64 +111,87 @@ if ($LASTEXITCODE -ne 0) { throw "GitHub CLI ist nicht bei github.com angemeldet
 
 git switch master
 if ($LASTEXITCODE -ne 0) { throw "Wechsel auf master fehlgeschlagen." }
-
 git pull --ff-only origin master
 if ($LASTEXITCODE -ne 0) { throw "master konnte nicht per Fast-Forward aktualisiert werden." }
-
 git merge --ff-only $sourceBranch
 if ($LASTEXITCODE -ne 0) { throw "Der Quellbranch konnte nicht per Fast-Forward übernommen werden." }
-
-.\build.ps1 -Task All -Version $version
-if ($LASTEXITCODE -ne 0) { throw "Der vollständige Release-Build ist fehlgeschlagen." }
+$releaseCommit = (git rev-parse "HEAD^{commit}").Trim()
+if ($releaseCommit -ne $sourceCommit) {
+    throw "master zeigt nach dem Merge nicht exakt auf den geprüften Quellcommit."
+}
 
 $installer = ".\ZeitstrahlStudio-$version-win-x64-setup.exe"
 $portable = ".\artifacts\release\ZeitstrahlStudio-$version-win-x64-portable.zip"
 $portableHashFile = "$portable.sha256"
+$installerHashFile = ".\artifacts\release\ZeitstrahlStudio-$version-win-x64-setup.exe.sha256"
 $checksums = ".\artifacts\release\checksums.txt"
+foreach ($oldArtifact in @($installer, $portable, $portableHashFile, $installerHashFile, $checksums)) {
+    if (Test-Path -LiteralPath $oldArtifact -PathType Leaf) {
+        Remove-Item -LiteralPath $oldArtifact -Force
+    }
+}
+$buildStartedUtc = [DateTime]::UtcNow
+
+.\build.ps1 -Task All -Version $version
+if ($LASTEXITCODE -ne 0) { throw "Der vollständige Release-Build ist fehlgeschlagen." }
+
 foreach ($artifact in @($installer, $portable, $portableHashFile, $checksums)) {
     if (-not (Test-Path -LiteralPath $artifact -PathType Leaf)) {
-        throw "Release-Artefakt fehlt: $artifact"
+        throw "Frisch erwartetes Release-Artefakt fehlt: $artifact"
+    }
+    if ((Get-Item -LiteralPath $artifact).LastWriteTimeUtc -lt $buildStartedUtc.AddSeconds(-2)) {
+        throw "Release-Artefakt ist nicht frisch erzeugt worden: $artifact"
     }
 }
 
-$installerHashFile = ".\artifacts\release\ZeitstrahlStudio-$version-win-x64-setup.exe.sha256"
 $installerHash = Get-FileHash -LiteralPath $installer -Algorithm SHA256
 $portableHash = Get-FileHash -LiteralPath $portable -Algorithm SHA256
 "$($installerHash.Hash)  $(Split-Path -Leaf $installer)" | Set-Content -LiteralPath $installerHashFile -Encoding utf8
+"$($portableHash.Hash)  $(Split-Path -Leaf $portable)" | Set-Content -LiteralPath $portableHashFile -Encoding utf8
 @(
     "$($installerHash.Hash)  $(Split-Path -Leaf $installer)"
     "$($portableHash.Hash)  $(Split-Path -Leaf $portable)"
 ) | Set-Content -LiteralPath $checksums -Encoding utf8
 
-git tag -a $tag -m "Release Version $version"
-if ($LASTEXITCODE -ne 0) { throw "Der Release-Tag konnte nicht erstellt werden." }
+if (-not $tagExists) {
+    git tag -a $tag -m "Release Version $version"
+    if ($LASTEXITCODE -ne 0) { throw "Der Release-Tag konnte nicht erstellt werden." }
+}
 
 git push --atomic origin master $tag
-if ($LASTEXITCODE -ne 0) { throw "Der atomare Push von master und Tag ist fehlgeschlagen." }
+if ($LASTEXITCODE -ne 0) {
+    throw "Der atomare Push ist fehlgeschlagen. Der korrekte lokale Tag bleibt für einen sicheren Wiederholungsversuch erhalten."
+}
 
-gh release create $tag `
-    $installer `
-    $installerHashFile `
-    $portable `
-    $portableHashFile `
-    $checksums `
-    --repo $repository `
-    --verify-tag `
-    --title "Zeitstrahl Studio $version" `
-    --generate-notes `
-    --latest
-if ($LASTEXITCODE -ne 0) { throw "Das GitHub-Release konnte nicht erstellt werden." }
+$releaseAssets = @($installer, $installerHashFile, $portable, $portableHashFile, $checksums)
+gh release view $tag --repo $repository *> $null
+$releaseExists = $LASTEXITCODE -eq 0
+if ($releaseExists) {
+    gh release upload $tag @releaseAssets --repo $repository --clobber
+    if ($LASTEXITCODE -ne 0) { throw "Die Release-Artefakte konnten nicht vervollständigt werden." }
+    gh release edit $tag --repo $repository --verify-tag --title "Zeitstrahl Studio $version" --latest
+    if ($LASTEXITCODE -ne 0) { throw "Das vorhandene GitHub-Release konnte nicht aktualisiert werden." }
+}
+else {
+    gh release create $tag @releaseAssets --repo $repository --verify-tag --title "Zeitstrahl Studio $version" --generate-notes --latest
+    if ($LASTEXITCODE -ne 0) { throw "Das GitHub-Release konnte nicht erstellt werden. Derselbe Block kann erneut ausgeführt werden." }
+}
+
 ```
 
 ## Fehlerbehebung
 
 ### Inno Setup nicht gefunden
 
-Installieren Sie Inno Setup 6 und stellen Sie sicher, dass `iscc.exe` im `PATH` oder unter `C:\Program Files (x86)\Inno Setup 6\iscc.exe` erreichbar ist. Wiederholen Sie danach den vollständigen Build.
+Installieren Sie Inno Setup 6 und stellen Sie sicher, dass `iscc.exe` im `PATH`, unter `C:\Program Files (x86)\Inno Setup 6\iscc.exe` oder unter `%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe` erreichbar ist. `BuildInstaller` und `All` schlagen ohne Compiler bewusst fehl.
 
 ### Release-Befehl stoppt wegen Änderungen unter `samples/`
 
 Das ist beabsichtigt: Diese Dateien werden verteilt. Prüfen Sie die lokalen Änderungen und entscheiden Sie selbst, ob sie Teil von 1.0.0 werden, in einen eigenen Commit gehören oder außerhalb des Release-Arbeitsbaums gesichert werden sollen. Der Release-Ablauf verwendet weder `reset --hard` noch Force-Push.
+
+### Push oder GitHub-Release wurde nur teilweise abgeschlossen
+
+Derselbe Block darf erneut ausgeführt werden. Ein bereits vorhandener lokaler Tag wird nur akzeptiert, wenn er auf exakt denselben geprüften Quellcommit zeigt; ein bereits veröffentlichtes Release wird mit den frisch erzeugten Artefakten vervollständigt. Abweichende Tags werden nicht überschrieben und Force-Push wird nicht verwendet.
 
 ### Build oder Test fehlgeschlagen
 
