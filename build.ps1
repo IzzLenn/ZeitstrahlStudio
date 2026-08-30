@@ -26,10 +26,10 @@
     Build-Konfiguration für Build-/Testaufgaben (Debug oder Release).
 
 .PARAMETER Version
-    Versionsnummer für Release-Artefakte (z. B. "1.0.0").
+    Versionsnummer für Release-Artefakte (z. B. "1.1.0").
 
 .EXAMPLE
-    .\build.ps1 -Task All -Version 1.0.0
+    .\build.ps1 -Task All -Version 1.1.0
 #>
 [CmdletBinding()]
 param(
@@ -43,7 +43,7 @@ param(
     [string]$Configuration = "Release",
 
     [Parameter(Mandatory = $false)]
-    [string]$Version = "1.0.0"
+    [string]$Version = "1.1.0"
 )
 
 $ErrorActionPreference = "Stop"
@@ -91,6 +91,9 @@ function Invoke-Step {
 function Step-Restore {
     dotnet restore $Solution
     if ($LASTEXITCODE -ne 0) { throw "Restore fehlgeschlagen" }
+
+    dotnet restore $AppProject -r win-x64
+    if ($LASTEXITCODE -ne 0) { throw "RID-Restore für win-x64 fehlgeschlagen" }
 }
 
 function Step-BuildDebug {
@@ -179,7 +182,8 @@ function Step-PackagePortable {
         "README.md",
         "PRIVACY.md",
         "THIRD_PARTY_LICENSES.md",
-        "CHANGELOG.md"
+        "CHANGELOG.md",
+        "LICENSE.txt"
     )
 
     foreach ($doc in $docsToInclude) {

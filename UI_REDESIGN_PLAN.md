@@ -1,5 +1,7 @@
 # UI-Redesignplan 0.3.0
 
+> **Historischer Plan (Version 0.3.0, Stand 22.07.2026):** Dieses Dokument beschreibt den damaligen, auf Phasen 0 bis 3 begrenzten Redesignauftrag. Planangaben und Abgrenzungen sind nicht als aktueller Arbeits- oder Produktstatus zu lesen. Siehe [`README.md`](README.md) und [`STATUS.md`](STATUS.md).
+
 Stand: 22.07.2026
 Branch: ui/redesign-0.3.0
 Auftragsgrenze: ausschließlich Phase 0 bis 3

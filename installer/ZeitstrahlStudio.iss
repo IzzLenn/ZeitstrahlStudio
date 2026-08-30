@@ -4,7 +4,7 @@
 #define MyAppName "Zeitstrahl Studio"
 #define MyAppPublisher "Zeitstrahl Studio"
 #ifndef MyAppVersion
-  #define MyAppVersion "1.0.0"
+  #define MyAppVersion "1.1.0"
 #endif
 #define MyAppExeName "ZeitstrahlStudio.App.exe"
 #define MyAppAssocName "Zeitstrahl Studio Projekt"
@@ -57,7 +57,7 @@ Source: "{#SourcePath}\..\README.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\..\PRIVACY.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\..\THIRD_PARTY_LICENSES.md"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#SourcePath}\..\CHANGELOG.md"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#SourcePath}\..\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion; Check: LicenseExists
+Source: "{#SourcePath}\..\LICENSE.txt"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -75,11 +75,6 @@ Root: HKA; Subkey: "Software\Classes\{#MyAppAssocKey}\shell\open\command"; Value
 Filename: "{app}\{#MyAppExeName}"; Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; Flags: nowait postinstall skipifsilent
 
 [Code]
-function LicenseExists: Boolean;
-begin
-  Result := FileExists(ExpandConstant('{src}\..\LICENSE.txt'));
-end;
-
 function InitializeSetup: Boolean;
 begin
   Result := true;

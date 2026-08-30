@@ -1,118 +1,215 @@
 # Architektur von Zeitstrahl Studio
 
-## Ziel und Randbedingungen
+Diese Dokumentation beschreibt den implementierten Stand von Version 1.1.0. Normative Ziele stehen in [`SPEC.md`](SPEC.md); der aktuelle Produkt- und QA-Status steht in [`STATUS.md`](STATUS.md).
 
-Zeitstrahl Studio ist eine deutschsprachige WPF-Desktopanwendung für einen lokalen Einzelbenutzer. Alle Projektdaten, Dokumentanalysen, Vorschaubilder, Suchindizes, Exporte und Protokolle bleiben auf dem Windows-Rechner. Es gibt keine Telemetrie, Cloud-Synchronisation oder Hintergrundzugriffe auf Webseiten.
+## Kontext und Qualitätsziele
 
-Die Architektur ist auf Windows 10/11 x64, .NET 8, mehrere Tausend Ereignisse und potenziell große Projektarchive ausgelegt. Lange Datei-, OCR-, Datenbank- und Exportvorgänge laufen asynchron, sind über `CancellationToken` abbrechbar und melden Fortschritt.
+Zeitstrahl Studio ist eine lokale deutschsprachige Einzelbenutzer-Desktopanwendung für Windows 10 und 11 x64. Sie basiert auf .NET 8, WPF und C# 12. Zentrale Qualitätsziele sind:
 
-## Solution-Struktur
+- fachlich unverfälschte Datumsgenauigkeiten und transaktionale Projektzustände
+- vollständige lokale Verarbeitung ohne Cloud, Telemetrie oder externe KI
+- sicherer Transport in atomar geschriebenen, validierten `.zeitprojekt`-Archiven
+- robuste Verarbeitung großer Dateien und mehrerer Tausend Ereignisse mit Streaming, Limits, Virtualisierung und asynchronen Abläufen
+- testbare Fach- und Layoutlogik hinter Ports, mit WPF als äußerem Adapter
+- nachvollziehbare lokale Änderungen durch Audit, Sicherungen und Recovery
 
-```text
-ZeitstrahlStudio.sln
-├── src/
-│   ├── ZeitstrahlStudio.App                 WPF, MVVM, Composition Root
-│   ├── ZeitstrahlStudio.Application         Anwendungsfälle und Ports
-│   ├── ZeitstrahlStudio.Domain              Fachmodell und Invarianten
-│   ├── ZeitstrahlStudio.Infrastructure      SQLite, Archive, Backups, Logs
-│   ├── ZeitstrahlStudio.DocumentProcessing  PDF/Bild/DOCX/XLSX/OCR
-│   ├── ZeitstrahlStudio.Export              PDF- und Standalone-HTML-Export
-│   └── ZeitstrahlStudio.Shared              kleine schichtübergreifende Ergebnistypen
-└── tests/
-    ├── ZeitstrahlStudio.UnitTests
-    └── ZeitstrahlStudio.IntegrationTests
+SHA-256 schützt dabei die Integrität, nicht die Herkunft. Projektarchive und Exporte sind weder signiert noch verschlüsselt.
+
+## Solution und Abhängigkeiten
+
+Die Solution enthält zehn Projekte: sieben Produktionsprojekte, zwei Testprojekte und den SampleGenerator.
+
+| Projekt | Verantwortung | Direkte interne Abhängigkeiten |
+| --- | --- | --- |
+| `ZeitstrahlStudio.Domain` | Aggregat, Value Objects, Invarianten | keine |
+| `ZeitstrahlStudio.Shared` | kleine gemeinsame Ergebnis-/Fehlertypen | keine |
+| `ZeitstrahlStudio.Application` | Ports, Anwendungsmodelle, Editing- und Layoutlogik | Domain, Shared |
+| `ZeitstrahlStudio.Infrastructure` | SQLite, Archive, Workspaces, Backups, Recovery, Recent Projects, Logs | Application, Domain, Shared |
+| `ZeitstrahlStudio.DocumentProcessing` | PDF-, Bild-, DOCX-, XLSX-Analyse und Windows-OCR | Application, Domain, Shared |
+| `ZeitstrahlStudio.Export` | PDF-, HTML- und Thumbnail-Erzeugung | Application, Domain, Shared |
+| `ZeitstrahlStudio.App` | WPF, MVVM, Dialoge, Composition Root | Application und alle drei Adapterprojekte |
+| `ZeitstrahlStudio.UnitTests` | schnelle Fach-, Planner- und Layouttests | Application, Domain, Export, Shared |
+| `ZeitstrahlStudio.IntegrationTests` | reale SQLite-, Archiv-, Dokument-, Export- und WPF-Tests | App und alle fachlichen/technischen Projekte, SampleGenerator |
+| `ZeitstrahlStudio.SampleGenerator` | reproduzierbare frei erfundene Beispieldaten | Application, Domain, Infrastructure, DocumentProcessing, Export |
+
+```mermaid
+flowchart TB
+    App["ZeitstrahlStudio.App<br/>WPF und Composition Root"] --> Application["ZeitstrahlStudio.Application<br/>Ports und Anwendungslogik"]
+    App --> Infrastructure["Infrastructure<br/>SQLite, Archive, Workspace"]
+    App --> Processing["DocumentProcessing<br/>Analyzer und OCR"]
+    App --> Export["Export<br/>PDF, HTML, Thumbnails"]
+    Infrastructure --> Application
+    Processing --> Application
+    Export --> Application
+    Application --> Domain["Domain<br/>Aggregat und Invarianten"]
+    Application --> Shared["Shared<br/>Ergebnis- und Fehlertypen"]
+    Infrastructure --> Domain
+    Infrastructure --> Shared
+    Processing --> Domain
+    Processing --> Shared
+    Export --> Domain
+    Export --> Shared
+    UnitTests[UnitTests] -. prüft .-> Application
+    IntegrationTests[IntegrationTests] -. prüft .-> App
+    SampleGenerator[SampleGenerator] --> Infrastructure
 ```
 
-Abhängigkeiten zeigen nach innen: `Domain` besitzt keine Projektabhängigkeit; `Application` kennt `Domain` und `Shared`; Infrastruktur, Dokumentverarbeitung und Export implementieren Ports der Anwendungsschicht; WPF verdrahtet diese Implementierungen. Geschäftslogik gehört nicht in Code-behind.
+Die Pfeile zeigen reale Projektverweise. Domain und Shared sind unabhängig; äußere Adapter implementieren Ports aus Application. Geschäftsregeln gehören nicht in WPF-Code-behind.
 
-## Fachmodell
+## Start und Composition Root
 
-`TimelineProject` ist die Aggregatwurzel für Projektinformationen, Einstellungen und Ereignisse. `TimelineEvent` enthält beliebig lange Texte, eine präzise `EventDate`, Klassifizierung, Tags, Anhänge, Links, eine optionale unabhängige Frist und eine optionale manuelle Sortierposition. `LayoutPosition` speichert visuelle Versätze getrennt vom Datum.
+`App.xaml.cs` baut beim Start einen validierten `Microsoft.Extensions.DependencyInjection`-Container auf. Registriert werden die konkreten Infrastruktur-, Analyse- und Exportadapter sowie Editing-Service, Theme-Service, Dialogdienst, `MainWindowViewModel` und `MainWindow`. Die Dienste sind für den lokalen Einzelprozess überwiegend als Singletons verdrahtet; zustandsbehaftete Dienste serialisieren ihre eigenen kritischen Operationen.
 
-`EventDate` speichert Jahr, Monat, Tag und Uhrzeit als getrennte optionale Komponenten. Dadurch bleibt `2024` eine Jahresangabe und `Mai 2024` eine Monatsangabe. Nur der technische Sortierwert ergänzt intern fehlende Komponenten; er wird nie angezeigt oder persistiert, als wären die Komponenten eingegeben worden. Zeiträume werden als zwei exakte geschlossene Datumswerte gespeichert und vor der Übernahme validiert.
+Der Startablauf ist:
 
-Technische Zeitstempel werden als UTC-`DateTimeOffset` gespeichert. Die Umrechnung in deutsche Ortszeit erfolgt ausschließlich an Anzeigegrenzen. IDs sind GUIDs. Eine manuelle Reihenfolge greift nur bei identischen fachlichen Datumswerten und verändert kein Datum.
+1. DI-Container bauen und Registrierungen validieren.
+2. globales Theme aus `%LocalAppData%\Zeitstrahl Studio\appearance-settings.json` initialisieren.
+3. Hauptfenster und ViewModel erzeugen, Dispatcherfehlerbehandlung einhängen und Fenster anzeigen.
+4. ViewModel initialisieren: Recent Projects und Recovery-Kandidaten laden sowie den festen 60-Sekunden-Autosave starten.
+5. Optional den ersten Kommandozeilenparameter mit Endung `.zeitprojekt` nach der Initialisierung öffnen; dadurch funktioniert die Dateizuordnung.
+6. Beim Beenden ViewModel und Container geordnet freigeben.
 
-## Implementiertes normalisiertes SQLite-Schema
+Nicht abgefangene Dispatcherfehler werden in das lokale technische JSONL-Protokoll geschrieben und als deutsche Fehlermeldung angezeigt. Erwartbare Datei-, Validierungs- und Integritätsfehler werden möglichst an der Anwendungsgrenze in verständliche Ergebnisse beziehungsweise Dialogmeldungen übersetzt.
 
-Migrationen werden fortlaufend nummeriert und in `SchemaMigrations` transaktionssicher protokolliert. Migration 1 legt das folgende Schema an. Fremdschlüssel sind für jede Repository-Verbindung aktiviert; SQLite arbeitet im WAL-Modus.
+## Domain und Anwendungsschicht
 
-| Tabelle | Wesentliche Inhalte |
+`TimelineProject` ist die Aggregatwurzel. Es enthält Projektmetadaten, `ProjectSettings`, `TimelineEvent`-Objekte und `LayoutPosition`-Werte. Ein Ereignis enthält Texte, eine `EventDate`, Priorität, Status, Farbe, Tags, HTTP(S)-Links, Anhänge und optional eine unabhängige Frist.
+
+`EventDate` bewahrt die Eingabegenauigkeit `Year`, `MonthAndYear`, `ExactDate`, `ExactDateTime` oder `DateRange`. Fehlende Bestandteile werden nur für interne Sortierberechnungen abgeleitet, nicht als eingegebene Werte gespeichert oder angezeigt. Manuelle Reihenfolge gilt nur innerhalb einer vollständig identischen fachlichen Datumsgruppe. Visuelle Kartenversätze sind in `LayoutPosition` nach horizontaler beziehungsweise vertikaler Orientierung vom Datum getrennt.
+
+Application definiert asynchrone Ports für Repository, Workspace/Archiv, Attachments, Analyseablage und -queue, Suche, Preview/Thumbnail, PDF, HTML, Backups, Audit, Recent Projects, Recovery, Autosave und lokale technische Logs. `ProjectEventEditingService` ersetzt validierte Ereignisfassungen atomar und führt je Projekt eine sitzungsgebundene Undo-/Redo-Historie von höchstens 100 Einträgen. Die Historie wird beim Schließen gelöscht und ist kein Persistenzmechanismus.
+
+## SQLite-Persistenz
+
+`SqliteProjectRepository` arbeitet auf `project.db`. Jede Verbindung aktiviert Fremdschlüssel, WAL, einen begrenzten Busy-Timeout und den vorgesehenen Synchronitätsmodus. Zusammengehörige Änderungen und Migrationen laufen in Transaktionen. Unbekannte neuere Schema-Versionen werden abgelehnt.
+
+Das aktuelle Datenbankschema ist Version 2:
+
+- Migration 1 erstellt `Projects`, `Events`, `EventDates`, `Deadlines`, `Attachments`, `AttachmentMetadata`, `ExtractedTexts`, `WebLinks`, `Tags`, `EventTags`, `LayoutPositions`, `ProjectSettings`, `AuditLog`, `ApplicationLogReferences`, `Backups` und den FTS5-Index `SearchIndex`; `SchemaMigrations` protokolliert die ausgeführten Schritte.
+- Migration 2 erstellt `DocumentSearchIndex` und übernimmt vorhandene extrahierte Texte. Dieser FTS5-Index ist für Dokumenttext maßgeblich. `SearchIndex` bleibt als Legacy-Projekt-/Ereignisindex erhalten.
+
+`ProjectSettings` besitzt typisierte Spalten, unter anderem für Orientierung, Theme, Farben, Schriftgrößen, Lückenkompression, Autosave- und Backupwerte; es ist kein JSON-Blob. `ApplicationLogReferences` existiert im Schema, wird im aktuellen UI-/Logpfad aber nicht produktiv genutzt. Auditdaten liegen in SQLite, technische Anwendungslogs außerhalb des Projekts.
+
+## Archiv- und Workspace-Lebenszyklus
+
+Eine `.zeitprojekt`-Datei wird nie direkt bearbeitet. Das Archivformat steht in [`PROJECT_FORMAT.md`](PROJECT_FORMAT.md).
+
+Der Import verwendet den Geschwisterpfad `<Zielworkspace>.importing-<GUID>` als Stagingziel.
+
+```mermaid
+sequenceDiagram
+    actor User as Benutzer
+    participant VM as MainWindowViewModel
+    participant WS as LocalProjectWorkspaceService
+    participant Archive as ProjectArchiveService
+    participant Repo as SqliteProjectRepository
+    User->>VM: Projekt öffnen
+    VM->>WS: OpenAsync(Archivpfad)
+    WS->>Archive: im Geschwister-Stagingpfad validieren/extrahieren
+    Archive-->>WS: geprüfter Staging-Ordner
+    WS->>Repo: Migrationen anwenden und Aggregat laden
+    Repo-->>WS: Schema v2 und TimelineProject
+    WS-->>VM: aktiver Workspace mit Recovery-Marker
+    User->>VM: Änderung
+    alt Aktion checkpointet sofort
+        VM->>WS: CheckpointAsync
+        WS->>Repo: Aggregat transaktional speichern
+    else nur als ungespeichert markiert
+        VM-->>VM: Dirty-Zustand
+    end
+    alt manuelles Speichern oder fälliger Autosave
+        VM->>WS: SaveAsync
+        WS->>Repo: speichern und WAL-Checkpoint
+        WS->>Archive: neues Archiv streamen und validieren
+        Archive-->>WS: atomar ersetztes Ziel
+    end
+```
+
+Verwaltete Laufzeitdaten liegen unter `%LocalAppData%\Zeitstrahl Studio`:
+
+| Pfad | Zweck |
 | --- | --- |
-| `Projects` | ID, Name, Untertitel, Texte, Gesamtzeitraum, UTC-Zeitstempel |
-| `Events` | ID, Projekt-ID, Texte, Priorität, Farbe, Quelle, Status, manuelle Reihenfolge, UTC-Zeitstempel |
-| `EventDates` | Ereignis-ID, Genauigkeit, Startjahr/-monat/-tag/-zeit, Endkomponenten |
-| `Deadlines` | Ereignis-ID, Fälligkeitsdatum/-zeit, Bezeichnung, Status, Notiz |
-| `Attachments` | ID, Ereignis-ID, Originalname, Typ, Größe, SHA-256, Quellmetadatum, relativer Projektpfad, Zustand |
-| `AttachmentMetadata` | Anhang-ID, Schlüssel, Wert |
-| `ExtractedTexts` | Anhang-ID, Text, Extraktionsart, Sprache, UTC-Zeitstempel |
-| `WebLinks` | ID, Ereignis-ID, Adresse, Bezeichnung |
-| `Tags` / `EventTags` | normalisierte Schlagwörter und n:m-Zuordnung |
-| `LayoutPositions` | Ereignis-ID, Ausrichtung, X-/Y-Versatz |
-| `ProjectSettings` | versionierte JSON- oder typisierte Einstellungswerte |
-| `AuditLog` | Zeitpunkt, Vorgang, Datensatz, Beschreibung, Ergebnis, technische Details |
-| `ApplicationLogReferences` | Verweise auf rotierte lokale technische Logs |
-| `Backups` | Zeitpunkt, relativer Pfad, Größe, Prüfsumme, Sicherungsart |
-| `SchemaMigrations` | Versionsnummer, Bezeichnung, UTC-Anwendungszeitpunkt |
+| `Workspaces` | extrahierte aktive Arbeitskopien und Recovery-Marker |
+| `Backups` | geprüfte lokale Projektsicherungen |
+| `Logs` | technische rotierende JSONL-Protokolle |
+| `application-state.json` | zuletzt verwendete Projektpfade |
+| `appearance-settings.json` | globales Farbschema |
 
-Indizes bestehen für Event-/Projektzuordnung, Fristen, Anhangstypen, Tags, Audit und Sicherungen. Die mit `Microsoft.Data.Sqlite` ausgelieferte lokale e_sqlite3-Distribution stellt FTS5 bereit; `SearchIndex` wird nach Aggregatspeicherungen einschließlich vorhandener extrahierter Texte neu aufgebaut. Ein Test prüft diese Funktion mit einer realen Datenbank.
+Die Archivdatei selbst liegt am vom Benutzer gewählten Ort. Export lädt zuerst das Projekt, checkpointet WAL und sammelt die zulässigen Quellen. Danach schreibt und hasht `WriteArchiveAsync` das temporäre ZIP. Erst anschließend prüft `ValidateReferencedAttachments` die referenzierten Attachments gegen Projektmetadaten und erzeugte Manifestdateiliste. `VerifyArchiveAsync` validiert das geschlossene ZIP danach auf Struktur, Manifest, Pfade, Längen und Dateihashes, ohne die DB↔Attachment-Querverifikation zu wiederholen. Nur nach beiden Prüfungen wird das Ziel atomar ersetzt. Es gibt kein Save-Journal; Robustheit entsteht aus SQLite-Transaktionen/WAL, Staging, Dateiprüfung und atomarem Dateiersatz.
 
-## Arbeitsordner und Speicherung
+## Attachments und Dokumentverarbeitung
 
-Eine `.zeitprojekt`-Datei wird nie direkt bearbeitet. Beim Öffnen wird sie nach vollständiger Manifest-, Pfad-, Größen- und Prüfsummenvalidierung in einen eindeutigen Staging-Ordner importiert und erst nach bestandener Datenbankprüfung zum lokalen Arbeitsordner verschoben. SQLite arbeitet dort im WAL-Modus. Speichern checkpointet SQLite und erzeugt im Zielverzeichnis zunächst ein neues vollständiges Archiv. Die während des Streamens ermittelten Manifestwerte jeder in SQLite referenzierten Dokumentkopie müssen zusätzlich mit deren gespeicherter Größe und SHA-256 übereinstimmen. Erst danach wird das Archiv nochmals validiert und ersetzt atomar die vorherige Datei. Ein vorheriger gültiger Stand bleibt bis zum erfolgreichen Abschluss erhalten.
+Der Import kopiert jede Quelldatei streamend unter einen GUID-basierten kollisionsfreien Projektpfad. Währenddessen entsteht SHA-256; anschließend werden Quellgröße und Schreibzeit erneut geprüft. Teilerfolge eines Mehrfachimports bleiben erhalten, unvollständige Zielkopien werden bestmöglich entfernt. Die Anhangsmetadaten enthalten auch den ursprünglichen absoluten Quellpfad.
 
-Die Verzeichnisse `attachments`, `thumbnails`, `extracted-text`, `logs` und `metadata` sind ausschließlich über normalisierte relative Pfade adressierbar. Das detaillierte Format steht in `PROJECT_FORMAT.md`.
+Preview, explizites Öffnen und Dokumentpaket-/Archivexport verwenden den zentralen `AttachmentFileService`: Er prüft Workspace-Grenze, Reparse Points, Existenz, Länge, Schreibstabilität und SHA-256. Doppelklick blockiert zusätzlich riskante Erweiterungen; die bewusste Öffnen-Aktion kann eine validierte Datei dennoch per Shell an das Windows-Standardprogramm übergeben.
 
-## Anwendungsabläufe
+Die begrenzte Analysequeue verarbeitet höchstens zwei Jobs parallel. Windows-OCR wird innerhalb des OCR-Dienstes serialisiert. Analyzer sind vollständig lokal:
 
-Die Anwendungsschicht definiert Ports für Repository, Workspace, Archiv, Anhangsimport, Dokumentanalyse, Suche, PDF, HTML, Sicherung und Audit. Implementierungen liefern erwartbare Datei- und Validierungsfehler als handlungsorientierte `OperationResult`-Werte; Programmierfehler und verletzte fachliche Invarianten bleiben Ausnahmen.
+- PDF: eingebetteter Text und bei Bedarf OCR gerenderter Seiten; OCR-Sicherheitslimit 250 Seiten
+- PNG/JPEG/TIFF/BMP: deutsche Windows-OCR
+- DOCX/XLSX: begrenzte ZIP-/XML-Reader ohne Office-Automation, DTD oder externe Resolver
 
-Zusammengehörige Datenbankänderungen laufen in einer Transaktion. Anhangsdateien werden erst unter kollisionsfreien internen Namen kopiert und geprüft, bevor ihre Datenbankzuordnung bestätigt wird. Undo hält entfernte Dateien in einem projektinternen Papierkorb, solange die Operation wiederherstellbar ist.
+Analyzer begrenzen unter anderem Archivgrößen, Einträge, Textmenge, Kompressionsverhältnis und Datumsfundstellen. Ergebnisse werden transaktional in `ExtractedTexts` und `AttachmentMetadata` gespeichert; `DocumentSearchIndex` wird im selben Ablauf aktualisiert. Die UI zeigt Text, Metadaten und Datumsfundstellen schreibgeschützt an; eine Übernahme in Ereignisfelder ist nicht implementiert.
 
-## Oberfläche und Nebenläufigkeit
+## Autosave, Recovery, Sicherungen und Logs
 
-Der WPF-Start wird über einen validierten Microsoft.Extensions.DependencyInjection-Container aufgebaut. Das Haupt-ViewModel bindet Projektanlage, Archivöffnung, Recent Projects, Recovery, Speichern, Duplizieren, Schließen, Autosave und lokale Fehlerprotokollierung an die Oberfläche. Code-behind behandelt ausschließlich Fenster- und Dialoglebenszyklen. Asynchrone Commands verhindern Doppelaufrufe und machen laufende Vorgänge sichtbar.
+Der UI-Host startet Autosave fest alle 60 Sekunden. Das persistierte Feld `AutoSaveIntervalSeconds` wird von diesem Startpfad nicht ausgewertet und ist nicht in der UI konfigurierbar. Einige Änderungen rufen sofort `CheckpointAsync` auf, andere setzen nur den Dirty-Zustand; manuelles Speichern beziehungsweise der nächste Autosave bringt den Stand in Workspace und Archiv. Speichervorgänge werden serialisiert.
 
-Das Ereignisformular erzeugt einen vollständigen Application-Request. Bei Änderungen wird daraus zunächst ein neues validiertes Domain-Ereignis aufgebaut und anschließend atomar im Projekt ersetzt. Dadurch bleiben IDs und Anhänge erhalten, während Validierungsfehler niemals einen teilweise veränderten Eintrag hinterlassen. Erstellen und Löschen verwenden dieselbe Application-Fassade; die WPF-Dialogklasse beschränkt sich auf Bestätigen und Anzeigen von Validierungsmeldungen.
+Jeder aktive Workspace erhält `metadata/session.json`. Dieser Marker enthält Projekt-/Prozessbezug, wird nicht exportiert und ermöglicht die Erkennung verwaister Arbeitskopien; Workspaces aktiver Prozesse werden ausgeschlossen.
 
-Die Ereignis-Fassade führt pro Projekt eine auf 100 Operationen begrenzte Undo-/Redo-Historie. Jeder Eintrag enthält eine oder mehrere vollständige Ereignisfassungen; das gruppenweise Umsortieren gleicher Datumswerte bleibt deshalb ein einzelner Undo-Schritt. Erfolgreiche Benutzeroperationen schreibt ein separater Infrastrukturadapter in AuditLog und stellt sie über einen schreibgeschützten WPF-Dialog bereit. Sitzungshistorie und dauerhaftes Audit bleiben bewusst getrennt.
+Automatische Backups werden bei Speichervorgängen nach Fälligkeit erzeugt. Standardretention: 6 aktuelle, 7 tägliche und 8 wöchentliche Sicherungen; manuelle Sicherungen werden nie automatisch rotiert. Restore validiert die Sicherung, erzeugt zuerst eine manuelle Sicherheitssicherung des Ausgangsstands und liefert einen zu speichernden Workspace.
 
-Der Anhangsimport verarbeitet jede Quelldatei streamend, berechnet SHA-256 im selben Durchlauf und legt sie unter einer GUID-basierten internen Adresse ab. Batch-Ergebnisse bleiben pro Datei getrennt, sodass Teilfehler erfolgreiche Projektkopien nicht zurückrollen. Die UI akzeptiert Dateiauswahl und Drag-and-drop, zeigt Fortschritt und erlaubt den Abbruch. Erst vollständig kopierte und validierte Anhänge werden als ein Undo-fähiger Ereignis-Snapshot zugeordnet. Doppelklick und ausdrückliche Öffnen-Aktion verwenden danach denselben zentralen Dateidienst für Root-/Reparse-Point-, Stabilitäts-, Größen- und SHA-Prüfung; nur der Doppelklick sperrt zusätzlich ausführbare, skriptbasierte und verknüpfte Dateitypen.
+Das fachliche Audit liegt in `AuditLog` der Projektdatenbank und ist über `Werkzeuge > Protokoll` lesbar. Technische Fehlerlogs liegen als `application.log.jsonl` mit Rotation unter `Logs` (standardmäßig fünf Dateien zu etwa 5 MiB). Für technische Logs existiert in der WPF-Oberfläche keine Anzeige-, Export- oder Löschfunktion.
 
-DOCX- und XLSX-Analyse verwendet sichere streamende Open-XML-Reader ohne Office-Automation. Gemeinsame ZIP- und XML-Grenzen verhindern DTD-Auflösung, extrem große Einträge und Kompressionsbomben. Analyzer liefern Klartext, Kerneigenschaften und begrenzte Datumsfundstellen über den Application-Port; Warteschlange und Persistenz werden als nachgelagerte Orchestrierung getrennt gehalten.
+## Drei getrennte Darstellungswege
 
-Die Analyseablage ersetzt Text und Metadaten eines Anhangs transaktional, setzt seinen Datenbankzustand und aktualisiert FTS5 im selben Commit. Reservierte Analysefelder werden beim Laden wieder in das typisierte Application-Ergebnis zusammengesetzt; dokumenteigene Metadaten bleiben davon getrennt.
+WPF, PDF und HTML nutzen dieselben Fachdaten, aber keine gemeinsame räumliche Layoutprojektion.
 
-ViewModels stellen Commands und bindbare Zustände bereit. Der UI-Thread übernimmt nur kleine Zustandsänderungen. Listen werden virtualisiert; große Vorschaubilder und Dokumenttexte werden verzögert geladen. Dokumentanalyse und OCR verwenden eine begrenzte Warteschlange. Autosave serialisiert Speichervorgänge, damit niemals zwei Archivgenerationen konkurrieren.
+```mermaid
+flowchart LR
+    Project[TimelineProject]
+    Project --> WpfPlanner[TimelineLayoutEngine]
+    WpfPlanner --> WpfView["TimelineView<br/>horizontal oder vertikal<br/>Zoom, Viewport, manuelle Versätze"]
+    Project --> PdfPlanner[PdfExportPlanner]
+    PdfPlanner --> Skia["SkiaPdfExportService<br/>druckorientierte Seiten"]
+    Project --> HtmlPayload[StandaloneHtml-Payload]
+    HtmlPayload --> HtmlTemplate["HTML/CSS/JavaScript-Template<br/>eigenes responsives Layout"]
+```
 
-Der HTML-Port erzeugt wahlweise die bisherige atomare Einzeldatei oder ein einzelnes atomar ersetzbares ZIP-Paket. Der Paketmodus übernimmt ausschließlich über den zentralen Anhangsdateidienst validierte Projektkopien, hasht sie beim Streamen erneut, verifiziert das geschlossene ZIP und adressiert sie in `index.html` über GUID-basierte relative Pfade. Dokumentnamen bleiben reine DOM-Textknoten. Die vorhandene restriktive Content Security Policy bleibt unverändert; das Paket führt weder Netzwerkzugriffe noch Shell-Befehle aus. Der Momentaufnahmehinweis ist ein unabhängiges Payload-Flag mit sicherem Standardwert `true`.
+Die WPF-Engine berechnet interaktive Karten, Achse, Lücken und Kollisionsabstände. PDF plant A4/A3/Letter/benutzerdefinierte Seiten, Mehrseiten-, Großseiten- oder Zeitraumexport und rendert über Skia. PDF enthält Texte, Dokumentnamen und gegebenenfalls eine primäre validierte Miniatur, aber keine anklickbar eingebetteten Anlagen. HTML serialisiert einen sicheren Payload in ein CSP-geschütztes Offline-Template; optional verpackt ein ZIP validierte Dokumentkopien. HTML-Links verlangen vor externen Zielen eine Bestätigung. Beide Exporte besitzen eigene Layouts und reproduzieren WPF-Positionen, Zoom oder Gap-Kompression nicht exakt.
 
-Helles und dunkles Theme sind Resource Dictionaries. Zeitstrahl-Layouts werden aus einem testbaren Layoutmodell erzeugt; horizontale und vertikale WPF-Ansichten konsumieren dasselbe Modell. Farben werden immer durch Text, Symbole oder Rahmen ergänzt.
+## Sicherheits- und Vertrauensgrenzen
 
-## Sicherheit und Datenschutz
+- Archivimport begrenzt Dateizahl, Manifest, Einzel-/Gesamtgröße, freien Speicher und extreme Kompression; Pfade werden normalisiert, Traversal, reservierte Namen und Reparse Points werden abgewehrt.
+- Export folgt nur verwalteten Wurzeln, lehnt Reparse Points ab und übernimmt ein Ziel erst nach vollständiger Revalidierung.
+- SHA-256 im selben Archiv erkennt zufällige oder nachträgliche Änderungen, beweist aber weder Autor noch Vertrauenswürdigkeit.
+- Archive, Backups, PDF und HTML sind nicht verschlüsselt oder passwortgeschützt. Der absolute ursprüngliche Attachment-Quellpfad ist Projektmetadatum und kann personenbezogene Ordnernamen enthalten.
+- Das bewusste Öffnen übergibt validierte Dateien an externe Windows-Programme; deren Verhalten liegt außerhalb des Prozesses. Entsprechendes gilt für Browser und externe HTTP(S)-Links.
+- Technische Logs können Pfade und Fehlerdetails enthalten und sind vor Weitergabe als sensibel zu behandeln.
 
-- Keine Netzwerk- oder Telemetriekomponente wird registriert.
-- Externe Links werden nur nach expliziter Benutzeraktion über Windows geöffnet.
-- Archivpfade werden vor dem Extrahieren kanonisiert und auf das Arbeitsverzeichnis begrenzt.
-- Anzahl, Einzelgröße, Gesamtextraktionsgröße und Kompressionsverhältnis von ZIP-Einträgen werden begrenzt.
-- SHA-256-Prüfsummen werden während des Streamens berechnet und beim Import vollständig verglichen.
-- Temporäre Dateien liegen in eindeutigen Anwendungsverzeichnissen und werden in `finally`-Pfaden entfernt.
-- Technische Logs enthalten keine vollständigen Dokumenttexte und rotieren nach konfigurierbarer Größe.
+Weitere Datenschutzfolgen beschreibt [`PRIVACY.md`](PRIVACY.md).
 
-Technische Logs sind als lokale JSON-Lines-Dateien mit Größenrotation, begrenzten Textfeldern, manueller Anzeige, Export und Löschung implementiert. Der lokale Anwendungszustand für zuletzt verwendete Projekte ist getrennt davon versioniert. Workspace-Sitzungsmarker werden bewusst nicht in `.zeitprojekt`-Archive aufgenommen.
+## Belegte technische Grenzen und Risiken
 
-## Wesentliche technische Risiken
+- Es gibt keinen projektinternen Papierkorb und keine Orphan-Bereinigung für physische Attachmentdateien. Entfernte oder mit einem Ereignis gelöschte Kopien können für Undo bestehen bleiben und später weiterhin archiviert werden; Archivverkleinerung ist nicht garantiert.
+- Vor dem Duplizieren sollte manuell gespeichert werden. Die Kopie erhält eine neue Projekt-ID und wird aktiv; nur im Speicher befindlicher Zustand kann fehlen.
+- Autosave ist im UI-Host fest auf 60 Sekunden eingestellt, obwohl das Schema ein Intervallfeld besitzt.
+- Projektuntertitel, Beschreibung und übergreifende Projektdaten besitzen nach dem Erstellen keine Bearbeitungsoberfläche.
+- Code-Inferenz: Der Analysepfad vertraut stärker auf den bei Import/Workspace festgelegten Dateipfad als Preview, Öffnen und Export, die den zentralen vollständigen Pfad-/Reparse-/Hash-Check verwenden. Diese Asymmetrie sollte bei Änderungen am Analysepfad geschlossen oder bewusst getestet werden.
+- Der Archivimport prüft Dateien gegen das Manifest sowie Datenbank/Projekt-ID/-Name, führt aber keine zusätzliche DB↔Attachment-Längen-/Hash-Querverifikation aus. Der nächste Export/Save schreibt zunächst ein temporäres ZIP und führt diese Querverifikation danach vor der atomaren Übernahme aus; eine Abweichung verhindert die Übernahme.
+- Ein bereits laufender einzelner nativer PDFium-Aufruf ist nicht hart abbrechbar; Cancellation wirkt an den verwalteten Grenzen davor und danach.
+- Die aktuellen bestätigten UI-Fehler stehen in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
-| Risiko | Gegenmaßnahme |
-| --- | --- |
-| Manipulierte oder extrem große Archive | Streaming, harte Extraktionsgrenzen, kanonische Pfadprüfung, SHA-256 und atomare Zielübernahme |
-| Große Dateien blockieren UI oder Speicher | asynchrone Streams, begrenzte Puffer, Fortschritt, CancellationToken, Hintergrundwarteschlange |
-| PDF-Vorschau und OCR erhöhen native Abhängigkeiten | lokal weitergabefähige Engines, lizenzierte Binärdateien, feste x64-Pakete und Integrationstests auf sauberem Windows |
-| Unterschiedliche PDF-Betrachter bei sehr großen Seiten | Grenzwerte und Warnung in Vorschau, mehrseitiger Standardmodus |
-| WPF-Layout bei 5.000 Ereignissen | Virtualisierung, viewportbezogene Karten, gecachte Geometrie und Lasttests |
-| Defekter Zustand nach Absturz | SQLite-Transaktionen/WAL, Save-Journal, atomare Archivablage, rotierende geprüfte Sicherungen |
-| Inno Setup derzeit nicht im PATH | Installer-Skript unabhängig erstellen; Build-Skript erkennt das Werkzeug und gibt eine klare Installationsanweisung |
+## Wartung und Erweiterung
 
-## Qualitätsstrategie
+Bei neuen Fähigkeiten gilt:
 
-Domain- und Layoutlogik werden als schnelle Unit-Tests abgedeckt. Integrationstests arbeiten in isolierten temporären Verzeichnissen und prüfen SQLite, Archive, Dokumentformate, Exporte und Sicherungen. Release-Gates sind Restore, Debug-Build/-Tests, Release-Build/-Tests, selbstenthaltendes `win-x64`-Publish, portable ZIP-Prüfung und – sobald Inno Setup verfügbar ist – der Installer-Build.
+1. Fachliche Invarianten in Domain ergänzen und mit Unit-Tests absichern.
+2. Anwendungsfall und Port in Application definieren; Editing-Historie und Auditwirkung bewusst festlegen.
+3. Adapter in Infrastructure, DocumentProcessing oder Export implementieren und in `App.xaml.cs` registrieren.
+4. WPF bindet den Port über ViewModel/Command; Code-behind bleibt auf View-Interaktion beschränkt.
+5. Reale Dateisystem-, SQLite-, Archiv-, Dokument- und UI-Grenzen in IntegrationTests prüfen.
+
+Besonders zu bewahrende Invarianten sind: Datumsgenauigkeit nicht erfinden, `.zeitprojekt` nie direkt bearbeiten, gültiges Ziel bei Fehlern erhalten, Projektdateien nur unter verwalteten Wurzeln adressieren, Attachmentgröße und -SHA vor Transfer prüfen, keine Netzwerkabhängigkeit einführen, Exportlayouts nicht als WPF-Pixelkopie behandeln und bestehende Sampledateien nur über den dafür vorgesehenen Generator verändern.
+
+Build- und Testbefehle stehen in [`BUILD.md`](BUILD.md).

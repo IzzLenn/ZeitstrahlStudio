@@ -1,5 +1,7 @@
 # Iconanforderungen für UI-Redesign 0.3.0
 
+> **Nicht umgesetzte Asset- und Planungsanforderung (Stand 22.07.2026):** Die nachfolgend spezifizierten Icondateien wurden nicht geliefert oder integriert. Der aktuelle App-/Installer-Stand besitzt daher kein fertiges projektspezifisches Branding-/Iconasset und verwendet weiterhin die textbasierte Bedienung. Den aktuellen Produktstand beschreiben [`README.md`](README.md) und [`STATUS.md`](STATUS.md).
+
 Stand: 22.07.2026
 Status: Spezifikation erstellt, keine neuen Iconassets vorhanden oder erzeugt
 

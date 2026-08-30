@@ -1,5 +1,59 @@
 # Projektstatus
 
+## Aktueller Snapshot
+
+- Stand: 30.08.2026
+- Branch: `ui/redesign-0.3.0`
+- HEAD: `d4207daf3dbb99c1ae4b7e6962de7ae2ba49143e`
+- Version/Tag: `1.1.0` / Release-Tag `v1.1.0` auf dem geprüften Release-Commit
+
+Zeitstrahl Studio ist als lokale .NET-8-/WPF-Anwendung für Windows 10 und 11 x64 implementiert. Der aktuelle Ist-Stand umfasst insbesondere:
+
+- Projektlebenszyklus mit atomaren, prüfsummenvalidierten `.zeitprojekt`-Archiven, Autosave, Recovery, lokalen Sicherungen und Liste zuletzt verwendeter Projekte
+- Ereignisse mit allen vorgesehenen Datumsgenauigkeiten, Zeiträumen, Fristen, Tags, Weblinks, Priorität, Status, Notizen, manueller Reihenfolge sowie Undo/Redo und lokalem Auditprotokoll
+- horizontalen und vertikalen Zeitstrahl, Lückenkompression, Zoom-/Navigationsfunktionen, Suche und kombinierbare Filter
+- sicheren Mehrfachimport von Anhängen, lokale Analyse von PDF, Bildern, DOCX und XLSX, Windows-OCR sowie Bild- und PDF-Vorschau
+- lokalen PDF-Export und eigenständigen Offline-HTML-Export, optional als ZIP-Paket mit validierten Dokumentkopien
+- selbstenthaltenden `win-x64`-Publish, portable ZIP und Inno-Setup-Installer mit `.zeitprojekt`-Dateizuordnung
+
+### Lokale Evidenz und bekannte Grenzen
+
+- Der lokale Tag `v1.0.0` und lokale 1.0.0-Release-Artefakte bleiben historische Evidenz. Version 1.1.0 wird aus dem geprüften Release-Commit als Portable-ZIP und Installer erzeugt.
+- Die lokale, nicht versionierte QA-Aufzeichnung `Bug-such.md` vom 17.08.2026 dokumentiert einen erfolgreichen Debug-Build und als damalige Momentaufnahme 200 bestandene automatisierte Tests (63 Unit-, 137 Integrationstests). Diese Zahlen sind QA-Evidenz dieses Stands, keine dauerhafte Projektkennzahl.
+- BUG-001 (mittel): Nach dem Verkleinern auf 1280×760 kann die horizontale wie vertikale Timeline leer werden; Ereignisliste und Projekt bleiben geladen, beim Vergrößern erscheint die Timeline wieder.
+- BUG-002 (niedrig): Rote Frist- und Achsenbeschriftungen können in der WPF-Timeline überlappen. Im geprüften PDF wurde die Wirkung nicht reproduziert; die visuelle HTML-Browserprüfung blieb offen.
+- Keine kritischen oder hohen Fehler wurden in dieser QA bestätigt. Eine beim Test beobachtete mögliche Beendigungsverzögerung blieb unbestätigt und ist nicht als Fehler klassifiziert.
+
+### Offene Releasegates
+
+- Die [`MANUAL_RELEASE_CHECKLIST.md`](MANUAL_RELEASE_CHECKLIST.md) ist vollständig abzuarbeiten; offen sind insbesondere plattform- und größenbezogene UI-Prüfungen, die Offline-HTML-Abnahme in Edge, Firefox und Chrome sowie die vollständige Installer-/Dateizuordnungsprüfung.
+- Das in [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) dokumentierte Lizenzbündel enthält noch nicht für alle ausgelieferten Produktionskomponenten die vollständigen Original-Lizenz- oder Copyrighttexte.
+- Für 1.1.0 kopiert `PackagePortable` die Root-`LICENSE.txt` in die Portable-ZIP, und das Inno-Skript installiert sie ohne bedingten Check. Beide geschlossenen Artefakte müssen vor Distribution dennoch durch Inhaltsprüfung beziehungsweise reale Installation verifiziert werden.
+- Im Endvalidierungslauf scheiterte ein direkter self-contained `win-x64`-Publish mit `--no-restore` nach erfolgreichem Solution-Restore an `NETSDK1112`, weil beide `win-x64`-Runtimepacks fehlten; der explizite App-Projekt-Restore mit `-r win-x64` behob diesen Fall. Seit 1.1.0 führt `build.ps1 -Task Restore` ihn selbst aus; bei einem direkten Einzel-Publish bleibt er als robuster Preflight dokumentiert.
+- BUG-001 und BUG-002 sind vor einer Freigabe bewusst zu bewerten. Eine öffentliche Veröffentlichung darf erst nach erfolgreicher automatisierter und manueller Abnahme behauptet werden.
+
+### Dokumentationsaudit vom 30.08.2026
+
+Die folgenden Angaben sind eine datierte Momentaufnahme dieses Dokumentationslaufs:
+
+- 17 Dokumente geprüft: 16 bestehende Dokumente aktualisiert und `TROUBLESHOOTING.md` neu erstellt.
+- Debug- und Release-Build jeweils mit 0 Warnungen und 0 Fehlern abgeschlossen; in beiden Konfigurationen jeweils 63 Unit- und 137 Integrationstests bestanden.
+- `dotnet format` erfolgreich.
+- Self-contained `win-x64`-Publish nach explizitem App-RID-Restore erfolgreich; `ZeitstrahlStudio.App.exe` vorhanden.
+- Markdownprüfung für 17 Dokumente mit 102 relativen Links und Ankern, drei Mermaid-Blöcken und ausgeglichenen Codezäunen erfolgreich.
+- Unabhängiges Endreview mit 0 offenen Findings abgeschlossen.
+- Durch den Dokumentationslauf keine Produktcode-, Test-, XAML- oder Buildskriptänderung vorgenommen; die SHA-256-Werte der geschützten Sampledateien stimmen mit der Baseline überein.
+
+Dieser Audit schließt die oben genannten manuellen, lizenzbezogenen und veröffentlichungsbezogenen Releasegates nicht.
+
+Der kompakte Einstieg steht in [`README.md`](README.md); Bedienung, Architektur und Format beschreiben [`USER_GUIDE.md`](USER_GUIDE.md), [`ARCHITECTURE.md`](ARCHITECTURE.md) und [`PROJECT_FORMAT.md`](PROJECT_FORMAT.md).
+
+---
+
+## Historisches Entwicklungsjournal (Archiv)
+
+> Der folgende Text bleibt als chronologische Projekthistorie erhalten. Seine Angaben wie „aktueller Stand“, „nächste Schritte“, Testzahlen und Releasevorbereitung beziehen sich auf den jeweils damaligen Zwischenstand und sind keine Beschreibung des heutigen Ist-Stands.
+
 Status: In Entwicklung - Dokumenttransfer und optionales HTML-Exportpaket für Version 1.0.0 umgesetzt
 
 Letzte Aktualisierung: 13.08.2026

@@ -1,59 +1,70 @@
 # Zeitstrahl Studio
 
-Zeitstrahl Studio ist eine vollständig lokale, deutschsprachige Windows-Desktopanwendung für chronologische Projekte. Zielplattform ist .NET 8/WPF auf Windows 10 und 11 x64. Die Anwendung enthält keine Telemetrie, Cloud-Synchronisation oder automatische Datenübertragung.
+Zeitstrahl Studio ist eine deutschsprachige Desktopanwendung für chronologische Projekte. Sie läuft als .NET-8-/WPF-Anwendung auf Windows 10 und Windows 11 x64 und verarbeitet Projektdaten lokal: ohne Cloud-Synchronisation, Telemetrie oder automatische Datenübertragung.
 
-## Aktueller Stand
+## Funktionen
 
-Version 1.0.0 ist für die lokale Release-Erstellung vorbereitet. Solution, Schichtengrenzen, fachliches Grundmodell, SQLite-Persistenz, lokale Volltextsuche und kombinierbare Filter, sichere atomare `.zeitprojekt`-Archive, Autosave/Recovery, lokale Sicherungen, die WPF-Projekt-/Ereignisoberfläche, Dokumentimport und -analyse, lokale OCR, die virtualisierte horizontale/vertikale Zeitstrahlansicht sowie PDF-Export und responsiver Offline-HTML-Export sind implementiert und automatisiert getestet. Importierte Dokumente werden vollständig und kollisionsfrei in das Projekt übernommen, beim Projekttransfer erneut auf Größe und SHA-256 geprüft und lassen sich per Doppelklick über das Windows-Standardprogramm öffnen. Der HTML-Export kann den Momentaufnahmehinweis ausblenden und optional ein transportables ZIP mit `index.html` und allen validierten Dokumentkopien erzeugen. Ein frei erfundenes Beispielprojekt mit lokalen PDF-, Bild-, DOCX- und XLSX-Testdokumenten sowie ein 5.000-Ereignisse-Lasttest sind enthalten. Buildskript, selbstenthaltende portable Version, Installer mit `.zeitprojekt`-Dateizuordnung, Benutzerhandbuch, Datenschutzhinweis und Release-Dokumentation sind verfügbar.
+- Ereignisse mit unvollständigen oder genauen Datumsangaben, Zeiträumen, Fristen, Priorität, Status, Tags, Links, Quellen und Notizen verwalten
+- Projekte horizontal oder vertikal als zoombaren Zeitstrahl darstellen, große Zeitlücken komprimieren und Karten manuell anordnen
+- Dateien kollisionsfrei in das Projekt übernehmen, sicher prüfen und mit dem Windows-Standardprogramm öffnen
+- PDF-, Bild-, DOCX- und XLSX-Anhänge lokal analysieren; Bilder können mit der lokalen Windows-OCR verarbeitet werden
+- Projektweit im erkannten Text und in Ereignisdaten suchen und Filter kombinieren
+- Projekte als prüfsummenvalidierte `.zeitprojekt`-Archive speichern und übertragen; Autosave, Wiederherstellung, Sicherungen, Auditprotokoll sowie Undo/Redo nutzen
+- Zeitstrahlen als PDF oder als eigenständiges Offline-HTML exportieren; optional entsteht ein HTML-ZIP-Paket mit validierten Dokumentkopien
 
-## Beispielprojekt
+## Installieren und starten
 
-Das Archiv [`samples/ZeitstrahlStudio-Beispiel.zeitprojekt`](samples/ZeitstrahlStudio-Beispiel.zeitprojekt) kann direkt in Zeitstrahl Studio geöffnet werden. Es enthält zehn vollständig frei erfundene Ereignisse, alle Datumsgenauigkeiten, Fristen, große Zeitlücken, manuelle Layoutpositionen sowie lokale Testdokumente. Herkunft, Lizenz und erneute Erzeugung sind in [`samples/README.md`](samples/README.md) beschrieben.
+Für Endnutzer sind zwei selbstenthaltende `win-x64`-Releaseausgaben vorgesehen; eine separate .NET-Installation ist dafür nicht nötig. Verwenden Sie ein vom Herausgeber bereitgestelltes Paket:
 
-```powershell
-dotnet run --project tools/ZeitstrahlStudio.SampleGenerator/ZeitstrahlStudio.SampleGenerator.csproj -- --output samples
-```
+- Installer: `ZeitstrahlStudio-<Version>-win-x64-setup.exe` ausführen. Der Installer kann die Dateizuordnung für `.zeitprojekt` einrichten.
+- Portable Version: `ZeitstrahlStudio-<Version>-win-x64-portable.zip` in einen neuen Ordner entpacken und `ZeitstrahlStudio.App.exe` starten.
 
-## Lokaler Build
+Diese Dateien werden beim Release-Build erzeugt und gehören nicht zu einem frischen Quellcode-Checkout. Für Version 1.1.0 werden Portable-ZIP und Installer aus demselben geprüften Commit erzeugt und mit SHA-256-Prüfsummen veröffentlicht. Vor dem Start ist die mit dem bereitgestellten Paket veröffentlichte Prüfsumme zu vergleichen.
 
-Voraussetzungen:
-
-- Windows 10 oder 11 x64
-- .NET SDK 8.x
-- PowerShell 5.1 oder höher
-- für deutsche OCR: in Windows installiertes deutsches Sprachpaket einschließlich Texterkennung; die Anwendung erkennt eine fehlende Ressource und zeigt eine lokale Handlungsanleitung
-- für den Installer: Inno Setup 6
-
-Schnellstart für den vollständigen Release-Build:
+Start aus dem Quellcode:
 
 ```powershell
-.\build.ps1 -Task All -Version 1.0.0
+dotnet restore ZeitstrahlStudio.sln
+dotnet run --project src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj
 ```
 
-Einzelne Schritte:
+Für die Entwicklung wird das .NET SDK 8.x benötigt. Build, Tests, Publish und Paketierung beschreibt die [Build-Anleitung](BUILD.md).
 
-```powershell
-dotnet restore
-dotnet build ZeitstrahlStudio.sln -c Debug
-dotnet test ZeitstrahlStudio.sln -c Debug --no-restore
-dotnet build ZeitstrahlStudio.sln -c Release --no-restore
-dotnet test ZeitstrahlStudio.sln -c Release --no-restore
-dotnet format ZeitstrahlStudio.sln --verify-no-changes --no-restore
-dotnet publish src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -c Release -r win-x64 --self-contained true --no-restore -o artifacts\publish\win-x64
-```
+## Schnellstart
 
-OCR verwendet ausschließlich die lokale Windows-Texterkennung. Dokumente, Bilder und erkannte Texte werden weder hochgeladen noch an externe Prozesse übergeben. OCR-Ergebnisse werden im Projekt ausdrücklich als potenziell fehlerhaft gekennzeichnet.
+1. `Datei > Neues Projekt` wählen, einen Projektnamen eingeben und das neue `.zeitprojekt`-Archiv speichern.
+2. Über `Ereignis > Hinzufügen` ein Ereignis mit Titel und Datum anlegen.
+3. Optional Anhänge hinzufügen und unterstützte Dokumente über `Werkzeuge > Dokumente analysieren` lokal auswerten.
+4. Weitere Ereignisse erfassen, die Suche beziehungsweise Filter verwenden und zwischen horizontaler und vertikaler Ansicht wechseln.
+5. Mit `Datei > Speichern` sichern. Das `.zeitprojekt`-Archiv ist bereits die vollständige übertragbare Projektdatei.
+6. Bei Bedarf über `Werkzeuge` eine PDF- oder HTML-Ausgabe erzeugen.
+
+Zum Ausprobieren kann [`samples/ZeitstrahlStudio-Beispiel.zeitprojekt`](samples/ZeitstrahlStudio-Beispiel.zeitprojekt) direkt geöffnet werden. Inhalt, Lizenz und reproduzierbare Erzeugung des frei erfundenen Beispiels stehen in [`samples/README.md`](samples/README.md).
+
+## Projektstatus
+
+Der aktuelle Quellstand ist Version 1.1.0 auf Branch `ui/redesign-0.3.0`; der Release wird mit dem annotierten Tag `v1.1.0` aus dem geprüften Commit erstellt. Build- und Releaseevidenz ist dem jeweiligen Tag und seinen veröffentlichten Prüfsummen zuzuordnen.
+
+Vor einer Distribution bleiben die [manuellen Releaseprüfungen](MANUAL_RELEASE_CHECKLIST.md) vollständig abzuschließen und das [Drittanbieter-Lizenzbündel](THIRD_PARTY_LICENSES.md) um noch fehlende Originaltexte zu ergänzen. Für 1.1.0 kopiert `PackagePortable` die Root-`LICENSE.txt` in die Portable-ZIP, und der Installer führt sie ohne bedingten Installations-Check mit. Beide geschlossenen Artefakte sind dennoch vor Distribution inhaltlich zu verifizieren. Zwei bestätigte Darstellungsfehler sind offen: Bei 1280×760 kann die Timeline nach dem Verkleinern leer erscheinen (BUG-001, mittel), und rote Frist-/Achsenbeschriftungen können überlappen (BUG-002, niedrig). Details und Umgehungen stehen in der [Fehlerbehebung](TROUBLESHOOTING.md); die datierte QA-Evidenz ist im [Projektstatus](STATUS.md) eingeordnet.
 
 ## Dokumentation
 
-- `SPEC.md` – Fachliche Spezifikation
-- `ARCHITECTURE.md` – Architekturübersicht
-- `PROJECT_FORMAT.md` – Projektdateiformat `.zeitprojekt`
-- `BUILD.md` – Build- und Release-Anleitung
-- `USER_GUIDE.md` – Benutzerhandbuch
-- `PRIVACY.md` – Datenschutzerklärung
-- `THIRD_PARTY_LICENSES.md` – Drittanbieterlizenzen
-- `CHANGELOG.md` – Änderungshistorie
-- `RELEASE.md` – Release-Prozess
-- `MANUAL_RELEASE_CHECKLIST.md` – Manuelle Abnahmeprüfungen
-- `STATUS.md` – Aktueller Projektstatus
+| Dokument | Inhalt |
+| --- | --- |
+| [Benutzerhandbuch](USER_GUIDE.md) | Bedienung, Projektabläufe, Anhänge, Suche, Sicherungen und Exporte |
+| [Fehlerbehebung und bekannte Probleme](TROUBLESHOOTING.md) | Häufige Fehler, Diagnose und bestätigte Einschränkungen |
+| [Build-Anleitung](BUILD.md) | Entwicklungsumgebung, Build, Tests, Publish und Paketierung |
+| [Architektur](ARCHITECTURE.md) | Schichten, Komponenten, Datenflüsse und technische Grenzen |
+| [Projektformat](PROJECT_FORMAT.md) | Struktur und Sicherheitsregeln von `.zeitprojekt` |
+| [Projektstatus](STATUS.md) | Aktueller Snapshot und historisches Entwicklungsjournal |
+| [Spezifikation](SPEC.md) | Normative Anforderungen; kein Implementierungsnachweis |
+| [Architekturentscheidungen](DECISIONS.md) | Dauerhafte technische Entscheidungen |
+| [Datenschutz](PRIVACY.md) | Lokale Verarbeitung, gespeicherte Daten und externe Übergaben |
+| [Drittanbieter-Lizenzen](THIRD_PARTY_LICENSES.md) | Komponenten, Versionen und Lizenzstatus |
+| [Release-Anleitung](RELEASE.md) | Kontrollierter lokaler und öffentlicher Releaseablauf |
+| [Manuelle Release-Checkliste](MANUAL_RELEASE_CHECKLIST.md) | Noch auszuführende visuelle und plattformbezogene Prüfungen |
+| [Änderungshistorie](CHANGELOG.md) | Versionsbezogene Änderungen |
+
+## Lizenz
+
+Der Projektquellcode steht unter der [MIT-Lizenz](LICENSE.txt). Für mitgelieferte Komponenten und Beispieldaten gelten zusätzlich die jeweils ausgewiesenen Lizenzhinweise.

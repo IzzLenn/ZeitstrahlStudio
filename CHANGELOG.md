@@ -4,7 +4,21 @@ Alle wichtigen Änderungen an Zeitstrahl Studio werden in dieser Datei dokumenti
 
 ## [Unveröffentlicht]
 
-Noch keine Einträge.
+## [1.1.0] - 2026-08-30
+
+### Geändert
+
+- Assembly-, Build- und Installer-Version auf 1.1.0 vereinheitlicht
+- Der Release-Restore lädt die `win-x64`-Runtimepacks des App-Projekts vor dem self-contained Publish explizit nach
+- Portable ZIP enthält die Projekt-`LICENSE.txt`; der Installer installiert sie ohne bedingten Check
+
+### Dokumentation
+
+- Einstieg, aktueller Status, Benutzerhandbuch, Architektur, Projektformat, Build-, Release-, Datenschutz- und Lizenzdokumentation codegetreu auf den Stand 1.1.0 konsolidiert
+- `TROUBLESHOOTING.md` als kanonische Fehlerhilfe und Übersicht bestätigter Bugs sowie belegter Produktgrenzen ergänzt
+- ältere UI-Audits, Redesignpläne und Übergabedokumente eindeutig als historische Unterlagen gekennzeichnet
+- offene manuelle Releasegates, Paketinhalt und unvollständiges Drittanbieter-Lizenzbündel präzisiert
+- ausschließlich Dokumentation geändert; keine Produktcode-, Test- oder XAML-Funktion geändert
 
 ## [1.0.0] - 2026-08-13
 

@@ -1,5 +1,7 @@
 # Entwicklungsauftrag: Lokale Windows-10-Anwendung zur Erstellung und Verwaltung von Zeitstrahlen
 
+> **Dokumenttyp: normative Anforderung.** Diese Spezifikation beschreibt Ziele und Soll-Verhalten, ist aber weder Implementierungsnachweis noch Releasefreigabe. Den belegten Ist-Stand beschreiben [`README.md`](README.md), [`STATUS.md`](STATUS.md), [`USER_GUIDE.md`](USER_GUIDE.md) und [`ARCHITECTURE.md`](ARCHITECTURE.md).
+
 ## 1. Rolle und Zielsetzung
 
 Du bist ein erfahrener Senior-Softwareentwickler, Softwarearchitekt, UX-Designer und Qualitätssicherungsingenieur mit Schwerpunkt auf C#, .NET, WPF, lokaler Datenhaltung, Dokumentenverarbeitung und PDF-Erzeugung.

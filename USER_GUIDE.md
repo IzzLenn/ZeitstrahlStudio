@@ -1,266 +1,234 @@
-# Benutzerhandbuch Zeitstrahl Studio
+# Benutzerhandbuch Zeitstrahl Studio 1.1.0
 
-Zeitstrahl Studio ist eine vollständig lokale Windows-Desktopanwendung zur Erstellung und Verwaltung chronologischer Projekte.
+Zeitstrahl Studio ist eine lokale Windows-Desktopanwendung zum Erfassen, Darstellen und Exportieren chronologischer Projekte. Dieses Handbuch beschreibt den tatsächlich implementierten Stand von Version 1.1.0.
 
 ## Inhalt
 
-1. [Erste Schritte](#erste-schritte)
-2. [Projekte verwalten](#projekte-verwalten)
-3. [Ereignisse erstellen und bearbeiten](#ereignisse-erstellen-und-bearbeiten)
-4. [Dokumente und Anhänge](#dokumente-und-anhänge)
-5. [Zeitstrahlansicht](#zeitstrahlansicht)
+1. [Voraussetzungen und Start](#voraussetzungen-und-start)
+2. [Hauptoberfläche und Menüs](#hauptoberfläche-und-menüs)
+3. [Projekte verwalten](#projekte-verwalten)
+4. [Ereignisse verwalten](#ereignisse-verwalten)
+5. [Zeitstrahl und Reihenfolge](#zeitstrahl-und-reihenfolge)
 6. [Suche und Filter](#suche-und-filter)
-7. [Export](#export)
-8. [Sicherung und Wiederherstellung](#sicherung-und-wiederherstellung)
-9. [Tastenkürzel](#tastenkürzel)
-10. [Hinweise zum Datenschutz](#hinweise-zum-datenschutz)
+7. [Anhänge und Dokumentanalyse](#anhänge-und-dokumentanalyse)
+8. [Einstellungen und Autosave](#einstellungen-und-autosave)
+9. [Recovery, Sicherungen und Protokolle](#recovery-sicherungen-und-protokolle)
+10. [PDF exportieren](#pdf-exportieren)
+11. [HTML exportieren](#html-exportieren)
+12. [Tastenkürzel](#tastenkürzel)
+13. [Datenschutz und Sicherheit](#datenschutz-und-sicherheit)
 
-## Erste Schritte
+## Voraussetzungen und Start
 
-### Installation
+Die Anwendung ist für Windows 10 oder Windows 11 x64 vorgesehen. Installer und portable ZIP sind selbstenthaltende Releasepakete; dafür ist keine separate .NET-Installation nötig. Für deutsche OCR muss die deutsche Windows-Sprach- und OCR-Ressource installiert sein.
 
-#### Variante 1: Installer
+- Installer: Ein bereitgestelltes `ZeitstrahlStudio-<Version>-win-x64-setup.exe` ausführen. Die optionale Dateizuordnung ermöglicht das Öffnen einer `.zeitprojekt`-Datei per Doppelklick.
+- Portable Ausgabe: Ein bereitgestelltes `ZeitstrahlStudio-<Version>-win-x64-portable.zip` vollständig in einen neuen Ordner entpacken und dort `ZeitstrahlStudio.App.exe` starten.
 
-Führen Sie `ZeitstrahlStudio-<Version>-win-x64-setup.exe` aus und folgen Sie den Anweisungen des Installationsassistenten. Der Installer legt einen Startmenüeintrag an und verknüpft optional `.zeitprojekt`-Dateien mit der Anwendung.
+Releasepakete werden beim Build erzeugt und sind nicht Bestandteil eines frischen Quellcode-Checkouts. Version 1.1.0 wird als Portable-ZIP und Installer aus demselben geprüften Commit bereitgestellt. Vergleichen Sie ein bereitgestelltes Paket vor dem Start mit seiner SHA-256-Prüfsumme.
 
-#### Variante 2: Portable Version
+Zum Kennenlernen kann das frei erfundene [`samples/ZeitstrahlStudio-Beispiel.zeitprojekt`](samples/ZeitstrahlStudio-Beispiel.zeitprojekt) über `Datei > Projekt öffnen` geladen werden. Hinweise dazu stehen in [`samples/README.md`](samples/README.md).
 
-Entpacken Sie `ZeitstrahlStudio-<Version>-win-x64-portable.zip` in einen beliebigen Ordner. Starten Sie die Anwendung mit `ZeitstrahlStudio.App.exe`. Es ist keine Installation erforderlich.
+## Hauptoberfläche und Menüs
 
-### Startbildschirm
+Ohne geöffnetes Projekt zeigt die Anwendung die zuletzt verwendeten Projekte und gegebenenfalls wiederherstellbare Arbeitskopien. Bei geöffnetem Projekt gliedert sich das Hauptfenster in drei Bereiche:
 
-Beim ersten Start zeigt Zeitstrahl Studio einen Startbildschirm mit folgenden Optionen:
+- Links liegen Projekt- und Ereignisnavigation, Volltextsuche, Filter und Suchergebnisse. `Ansicht > Navigation ein-/ausblenden` schaltet diesen Bereich um.
+- In der Mitte liegen die interaktive Timeline und die chronologische Ereignisliste als Register.
+- Rechts zeigt der Detailinspektor das ausgewählte Ereignis und seine Anhänge schreibgeschützt an. `Ansicht > Details ein-/ausblenden` schaltet ihn um. Bearbeitet wird nicht im Inspektor, sondern in einem modalen Ereignisdialog.
 
-- **Neues Projekt**: Ein leeres Projekt erstellen
-- **Projekt öffnen**: Ein vorhandenes `.zeitprojekt`-Archiv öffnen
-- **Einstellungen in der oberen Befehlsleiste**: Hell, Dunkel oder die lokale Windows-Einstellung bereits vor dem Öffnen eines Projekts wählen
-- **Zuletzt verwendet**: Schnellzugriff auf kürzlich geöffnete Projekte
-- **Wiederherstellen**: Wiederherstellung nach einem Absturz
+Das Hauptmenü enthält die real verfügbaren Befehle:
 
-Das gewählte Farbschema wird ausschließlich lokal auf dem Gerät gespeichert. Es bleibt beim Erstellen, Öffnen und Schließen von Projekten sowie nach einem Programmneustart erhalten.
+| Menü | Befehle |
+| --- | --- |
+| `Datei` | Neues Projekt, Projekt öffnen, Speichern, Speichern unter, Duplizieren, Projekt schließen |
+| `Bearbeiten` | Rückgängig, Wiederholen |
+| `Ansicht` | Horizontal, Vertikal, Lücken komprimieren, Gesamtprojekt anzeigen, Auswahl zentrieren, Timeline-Ansicht zurücksetzen, Navigation, Details, Einstellungen |
+| `Ereignis` | Hinzufügen, Bearbeiten, früher/später verschieben, Löschen, Anhänge hinzufügen/öffnen/entfernen |
+| `Werkzeuge` | Suchen, Dokumente analysieren, Analyse anzeigen, Bildvorschau, PDF-Vorschau, Sicherungen, Protokoll, Als PDF exportieren, Als HTML exportieren |
+| `Hilfe` | Info zu Zeitstrahl Studio |
 
-### Erscheinungsbild
-
-Die globale Auswahl **Windows-Einstellung**, **Hell** oder **Dunkel** gilt projektübergreifend. Inhaltsflächen und native Titelleisten des Hauptfensters sowie aller anwendungseigenen Dialoge wechseln gemeinsam. Kontrollkästchen zeigen ungeprüfte, aktivierte, teilweise aktivierte und deaktivierte Zustände auch im Dunkelmodus dauerhaft an; Hover und Tastaturfokus verändern nur den Rahmen. Die Felder bleiben per Tabulator und Leertaste bedienbar.
+Häufige Aktionen sind zusätzlich in der Befehlsleiste erreichbar.
 
 ## Projekte verwalten
 
-### Neues Projekt erstellen
+### Neues Projekt
 
-1. Klicken Sie auf **Neues Projekt** oder wählen Sie **Datei → Neu**.
-2. Geben Sie einen Projektnamen und optional einen Untertitel ein.
-3. Speichern Sie das Projekt mit `Strg + S`.
+1. `Datei > Neues Projekt` wählen.
+2. Nur den Projektnamen eingeben.
+3. Im folgenden Speicherdialog den Zielpfad der `.zeitprojekt`-Datei festlegen.
 
-### Projekt öffnen
+Das Projekt wird sofort erstellt und gespeichert. Untertitel, Beschreibung und übergreifende Projektdaten sind im aktuellen Dialog nicht bearbeitbar.
 
-- Doppelklicken Sie auf eine `.zeitprojekt`-Datei (nach Installation).
-- Oder wählen Sie in der Anwendung **Datei → Öffnen**.
+### Öffnen
 
-### Projekt speichern
+Projekte lassen sich über `Datei > Projekt öffnen`, die Liste der zuletzt verwendeten Projekte oder eine zugeordnete `.zeitprojekt`-Datei öffnen. Beim Öffnen prüft die Anwendung Format, Pfade, Größen und SHA-256-Prüfsummen, bevor sie den Inhalt in einen verwalteten Arbeitsordner extrahiert.
 
-- `Strg + S`: Aktuelles Projekt speichern
-- **Datei → Speichern unter**: Projekt unter neuem Namen speichern
-- **Datei → Duplizieren**: Eine Kopie des Projekts erstellen
+### Speichern, Speichern unter und Duplizieren
 
-### Projekt schließen
+- `Datei > Speichern` aktualisiert das aktive Archiv.
+- `Datei > Speichern unter` speichert an einem neuen Ziel; dieses Ziel wird zum aktiven Projektarchiv.
+- `Datei > Duplizieren` erstellt eine Kopie mit neuer Projekt-ID und wechselt anschließend zur geöffneten Kopie.
 
-Wählen Sie **Datei → Schließen**. Ungespeicherte Änderungen werden abgefragt.
+Speichern Sie unmittelbar vor dem Duplizieren manuell. So ist sichergestellt, dass auch der zuletzt beabsichtigte Arbeitsstand im Ausgangsarchiv liegt; nur im Speicher befindliche Änderungen können andernfalls fehlen.
 
-## Ereignisse erstellen und bearbeiten
+### Schließen und Übertragen
 
-### Neues Ereignis
+`Datei > Projekt schließen` fragt bei ungespeicherten Änderungen nach Speichern, Verwerfen oder Abbrechen. Dasselbe gilt beim geordneten Beenden der Anwendung.
 
-- Klicken Sie auf **Neuer Eintrag** oder drücken Sie `Strg + N`.
-- Füllen Sie die Felder aus:
-  - Titel (Pflichtfeld)
-  - Infotext
-  - Ausführliche Beschreibung
-  - Datum mit Genauigkeit (exakt, Jahr/Monat, Zeitraum)
-  - Optionale Uhrzeit
-  - Frist
-  - Priorität, Farbe, Schlagwörter, Quelle, Notizen
-  - Webseitenlinks
+Die `.zeitprojekt`-Datei ist bereits das vollständige, übertragbare Projektarchiv einschließlich Ereignissen, Einstellungen, referenzierten Dokumentkopien und Analyseergebnissen. Zum Übertragen zuerst speichern, dann diese Datei kopieren und auf dem Zielgerät öffnen. Es gibt keinen separaten Projekt-Export oder -Import und keinen sichtbaren Befehl zum Löschen eines Projektarchivs oder Öffnen seines internen Arbeitsordners.
 
-Für die Ereignisfarbe steht eine direkt anklickbare und per Tastatur bedienbare Farbpalette zur Verfügung. Ein eigener Wert kann weiterhin im Feld daneben als `#RRGGBB` eingegeben werden.
+Technische Details und Sicherheitsgrenzen stehen in [`PROJECT_FORMAT.md`](PROJECT_FORMAT.md).
 
-### Ereignis bearbeiten
+## Ereignisse verwalten
 
-Wählen Sie ein Ereignis in der Liste oder im Zeitstrahl aus. Die Bearbeitungsmaske öffnet sich rechts.
+`Ereignis > Hinzufügen` öffnet einen modalen Dialog. Ein vorhandenes Ereignis wird ausgewählt und mit `Ereignis > Bearbeiten` ebenfalls modal geöffnet. Der rechte Inspektor bleibt eine reine Anzeige.
 
-### Ereignis löschen
+Verfügbare Felder sind:
 
-Wählen Sie ein Ereignis aus und drücken Sie `Entf`. Eine Bestätigungsabfrage erscheint.
+- Titel als Pflichtfeld, Kurzinfo, ausführliche Beschreibung, Quelle und interne Notizen
+- Priorität, Status, Farbe im Format `#RRGGBB` und Schlagwörter
+- Webseitenlinks als `Bezeichnung | https://adresse.example`, je ein Link pro Zeile
+- eine unabhängige Frist mit Datum, optionaler Uhrzeit, Status, Bezeichnung und Erinnerungsnotiz
+
+Für die fachliche Datumsangabe stehen fünf Genauigkeiten zur Auswahl:
+
+- Exaktes Datum
+- Datum und Uhrzeit
+- Monat und Jahr
+- Nur Jahr
+- Zeitraum mit Start- und Enddatum
+
+Die Anwendung ergänzt fehlende Datumsbestandteile nicht. Ereignisse können mit `Ereignis > Löschen` nach Bestätigung entfernt werden.
 
 ### Rückgängig und Wiederholen
 
-- `Strg + Z`: Rückgängig
-- `Strg + Y`: Wiederholen
+`Bearbeiten > Rückgängig` und `Bearbeiten > Wiederholen` gelten unter anderem für Ereignisänderungen, Anlagenzuordnungen, Reihenfolge und visuelle Kartenpositionen. Die Historie ist auf 100 Schritte begrenzt, gehört nur zur aktuellen Sitzung und wird beim Schließen des Projekts verworfen. Sie ersetzt kein Speichern oder Backup.
 
-Dies gilt für Ereignisanlage, -bearbeitung, -löschung, Friständerungen, Farbänderungen, manuelles Verschieben und Sortieränderungen.
+## Zeitstrahl und Reihenfolge
 
-## Dokumente und Anhänge
+`Ansicht > Horizontal` und `Ansicht > Vertikal` wechseln die Orientierung. `Ansicht > Lücken komprimieren` verkürzt große leere Zeiträume visuell. Die tatsächlichen Datumswerte bleiben dabei unverändert.
 
-### Dateien hinzufügen
+- Mausrad oder die Schaltflächen `-` und `+` zoomen zwischen 25 % und 800 %.
+- Ziehen auf freier Fläche verschiebt den sichtbaren Ausschnitt.
+- `Gesamtprojekt anzeigen` passt Zoom und Ausschnitt an alle Ereignisse an.
+- `Auswahl zentrieren` bringt das markierte Ereignis in die Mitte.
+- `Timeline-Ansicht zurücksetzen` setzt Zoom und sichtbaren Bereich zurück.
+- `Auto-Layout` entfernt gespeicherte manuelle Kartenversätze.
 
-- Ziehen Sie Dateien per Drag-and-drop auf ein Ereignis, die Ereignisliste oder den Anhangsbereich.
-- Oder klicken Sie in der Bearbeitungsmaske auf **Anhang hinzufügen**.
+Eine Ereigniskarte kann in der Timeline visuell gezogen werden. Das speichert nur ihren Darstellungsversatz für die jeweilige Orientierung und ändert niemals das Datum.
 
-Jede erfolgreich hinzugefügte Datei wird sofort als vollständige, intern eindeutig benannte Kopie in den Projektarbeitsordner übernommen. Der externe Ursprungspfad bleibt nur Metainformation. Beim Speichern wird die Kopie in das `.zeitprojekt`-Archiv aufgenommen; eine fehlende oder nachträglich veränderte Projektkopie verhindert, dass ein vorhandenes gültiges Archiv überschrieben wird.
-
-### Unterstützte Formate
-
-- PDF
-- Bilder: PNG, JPG, JPEG, TIFF, BMP
-- Word: DOCX
-- Excel: XLSX
-- Webseitenlinks
-
-### Dokumentvorschau und Öffnen
-
-- PDF-Dateien werden direkt in der Anwendung angezeigt.
-- Bilder werden direkt in der Vorschau dargestellt.
-- DOCX- und XLSX-Dateien zeigen Metadaten und extrahierten Text.
-- Ein Doppelklick auf einen Eintrag im Reiter **Anhänge** prüft genau diese Projektkopie und übergibt sie an das unter Windows konfigurierte Standardprogramm.
-- Mit **Öffnen** kann ein Anhang weiterhin ausdrücklich ausgewählt und im Standardprogramm geöffnet werden.
-
-Ausführbare Dateien, Skripte und Verknüpfungen werden aus Sicherheitsgründen nicht direkt per Doppelklick gestartet. Verwenden Sie dafür nur dann die bewusste Aktion **Öffnen**, wenn Sie der Datei vertrauen. Vor jeder Übergabe prüft Zeitstrahl Studio den internen Pfad, Reparse Points, Dateigröße, Stabilität und SHA-256-Prüfsumme.
-
-### OCR
-
-Bilder und bildbasierte PDFs werden lokal mit der Windows-OCR erkannt. OCR-Ergebnisse werden mit einem Warnhinweis versehen, da sie fehlerhaft sein können.
-
-## Zeitstrahlansicht
-
-### Ansichtsarten
-
-- **Horizontal**: Ereignisse werden horizontal angeordnet.
-- **Vertikal**: Ereignisse werden vertikal links und rechts der Achse angeordnet.
-
-Wechseln Sie mit den Schaltflächen in der Werkzeugleiste.
-
-### Navigation
-
-- **Zoomen**: Mausrad oder Zoom-Schaltflächen (25% bis 800%)
-- **Verschieben**: Klicken und Ziehen mit der Maus
-- **Gesamtprojekt anzeigen**: Passt den sichtbaren Bereich an alle Ereignisse an
-- **Ausgewähltes Ereignis zentrieren**: Springt zum markierten Ereignis
-- **Zurücksetzen**: Stellt die Standardansicht wieder her
-
-### Manuelle Anpassungen
-
-Ereigniskarten können mit der Maus verschoben werden. Das Ereignisdatum bleibt dabei unverändert. Mit **Auto-Layout** werden alle manuellen Positionen zurückgesetzt.
-
-### Große Zeitlücken
-
-Sehr große leere Zeiträume können komprimiert dargestellt werden. Die Unterbrechung zeigt die übersprungene Zeitspanne an.
+Die chronologische Ereignisliste unterstützt Drag-and-drop sowie `Nach früher verschieben` und `Nach später verschieben`. Eine manuelle Reihenfolge ist ausschließlich zwischen Ereignissen mit vollständig identischer fachlicher Datumsangabe möglich, einschließlich Genauigkeit, Uhrzeit oder Zeitraum. Ereignisse verschiedener Datumsgruppen lassen sich so nicht umdatieren.
 
 ## Suche und Filter
 
-### Volltextsuche
+`Werkzeuge > Suchen` oder `Strg+F` fokussiert die lokale Projektsuche. Sie berücksichtigt Ereignisinhalte, Tags, Quellen, Linkadressen, Anhangsnamen und bereits extrahierten Dokumenttext. Eine Dokumentanalyse muss abgeschlossen sein, bevor deren Text auffindbar ist.
 
-Drücken Sie `Strg + F` und geben Sie einen Suchbegriff ein. Die Suche durchsucht:
+Kombinierbar sind Suchtext, Zeitraum, Datumsart, Frist und Friststatus, Priorität, Farbe, Schlagwort, Dateityp, vorhandene Anhänge und vorhandene PDF-Dateien. Die Sortierung ist auswählbar; ein Ergebnis wählt das zugehörige Ereignis aus. `Filter zurücksetzen` entfernt alle Kriterien. Aus Schutz vor ungebremsten Ergebnismengen liefert die Suche höchstens 5.000 Treffer.
 
-- Projekttitel und -beschreibung
-- Ereignistitel, Infotext, Beschreibung, Notizen
-- Schlagwörter, Quelle, Dateinamen
-- Extrahierte Dokumenttexte (PDF, OCR, DOCX, XLSX)
-- Webseitenadressen
+## Anhänge und Dokumentanalyse
 
-### Filter
+### Dateien hinzufügen
 
-Sie können kombinieren nach:
+Zuerst das Zielereignis auswählen, dann `Ereignis > Anhänge hinzufügen` beziehungsweise `Dateien hinzufügen` verwenden. Mehrere Dateien können gewählt werden. Dateien lassen sich außerdem auf das ausgewählte Ereignis, die Ereignisliste, die Timeline oder den Anhangsbereich ziehen.
 
-- Zeitraum
-- Datumsart
-- Frist vorhanden / Friststatus
-- Priorität
-- Farbe
-- Schlagwort
-- Dateityp
-- Ereignis mit/ohne Anhang
-- Ereignis mit/ohne PDF
-- Suchbegriff
+Jede erfolgreiche Datei wird als intern eindeutig benannte Kopie in den Projektarbeitsordner übernommen. Das Original wird danach für die weitere Projektarbeit nicht benötigt. Beliebige Dateitypen sind als transportierbare Anhänge zulässig; Analyse und Vorschau sind jedoch auf folgende Formate optimiert:
 
-Mit **Filter zurücksetzen** werden alle Filter aufgehoben.
+| Format | Analyse/Vorschau |
+| --- | --- |
+| PDF | eingebetteter Text, bei Bedarf lokale OCR, Metadaten und PDF-Vorschau |
+| PNG, JPEG/JPG, TIFF, BMP | lokale OCR und Bildvorschau |
+| DOCX | lokaler Text und Metadaten |
+| XLSX | lokaler Zelltext und Metadaten |
 
-## Export
+`Werkzeuge > Dokumente analysieren` verarbeitet analysierbare Anhänge des ausgewählten Ereignisses lokal. `Analyse anzeigen` zeigt extrahierten Text, Datumsfundstellen und Metadaten schreibgeschützt. Diese Ergebnisse fließen in die Suche ein, werden aber nicht automatisch in Ereignisfelder übernommen. OCR-Ergebnisse sind potenziell fehlerhaft und müssen am Original geprüft werden. Fehlt die deutsche Windows-OCR-Ressource, hilft [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
-### PDF-Export
+### Öffnen und Integrität
 
-1. Wählen Sie **Export → PDF-Export**.
-2. Wählen Sie Papierformat, Ausrichtung und Exportmodus:
-   - Mehrseitiger Export
-   - Sehr große Einzelseite
-   - Ausgewählter Zeitraum
-3. Prüfen Sie die Vorschau.
-4. Speichern Sie die PDF-Datei.
+Vor jeder Übergabe an Windows prüft Zeitstrahl Studio internen Pfad, Reparse Points, Größe, Dateistabilität und SHA-256-Prüfsumme. Bei Abweichung wird die Datei nicht geöffnet; auch Speichern oder Export kann dann abbrechen, ohne ein gültiges vorhandenes Ziel zu überschreiben.
 
-### Standalone-HTML-Export
+Ausführbare Dateien, Skripte, Installer und Verknüpfungen sind beim Doppelklick blockiert. Die ausdrückliche Aktion `Ereignis > Anhang öffnen` beziehungsweise `Öffnen` kann eine solche Datei nach erfolgreicher Integritätsprüfung dennoch an das konfigurierte Windows-Standardprogramm übergeben. Verwenden Sie sie nur für vertrauenswürdige Inhalte.
 
-1. Wählen Sie **Export → HTML-Export**.
-2. Legen Sie die horizontale oder vertikale Startansicht fest und entscheiden Sie, ob Miniaturen und private Notizen enthalten sein dürfen.
-3. Lassen Sie den orangefarbenen Hinweis zur exportierten Momentaufnahme aktiviert oder schalten Sie ihn für diesen Export aus.
-4. Aktivieren Sie optional **Alle hinterlegten Dokumente als Kopien mitgeben**.
-5. Speichern Sie ohne Dokumentkopien eine `.html`-Einzeldatei. Mit Dokumentkopien speichern Sie ein `.zip`-Paket.
+HTTP-/HTTPS-Weblinks können im Ereignis gespeichert und im HTML-Export ausgegeben werden. Für das direkte Öffnen eines gespeicherten Weblinks ist in der WPF-Anwendung kein eigener Befehl belegt.
 
-Die erzeugte Einzeldatei ist eine vollständig lokale Momentaufnahme. Der standardmäßig sichtbare Hinweis am oberen Rand macht kenntlich, dass Änderungen in der HTML-Datei nicht in das Projekt zurückgeschrieben werden. Es werden keine externen Bibliotheken oder Ressourcen nachgeladen.
+## Einstellungen und Autosave
 
-Das Dokumentpaket enthält `index.html`, `LESMICH.txt` und alle zum Exportzeitpunkt validierten Projektkopien im Ordner `Dokumente`. Entpacken Sie das ZIP vollständig und öffnen Sie danach `index.html`. Dokumentnamen und vorhandene Vorschaubilder sind mit der jeweils mitgelieferten Kopie verknüpft. Bilder und PDFs werden abhängig vom Browser meist direkt angezeigt; andere Dateitypen werden je nach lokaler Browser- und Windows-Konfiguration heruntergeladen oder an ein Standardprogramm übergeben. Öffnen Sie `index.html` nicht direkt innerhalb des ZIP-Archivs, weil relative Dokumentverweise dort nicht zuverlässig funktionieren.
+`Ansicht > Einstellungen` zeigt ohne geöffnetes Projekt nur das globale Farbschema `Windows-Einstellung übernehmen`, `Hell` oder `Dunkel`. Mit geöffnetem Projekt kommen bevorzugte Orientierung, Lückenkompression, Standardfarbe neuer Ereignisse sowie Karten-, Achsen- und Exportschriftgrößen hinzu. Das Farbschema gilt global auf dem Gerät; die übrigen Werte werden im Projekt gespeichert. Aufbewahrungswerte für Backups liegen im Sicherungsdialog.
 
-Der Projektkopf zeigt Titel, Kurzbeschreibung, Ereigniszahl, Projektzeitraum und Exportzeitpunkt. Die Projektbeschreibung lässt sich aufklappen. Ereignisse erscheinen als Karten mit vollständigem Rahmen in der Ereignisfarbe; sehr helle oder dunkle Farben erhalten zusätzlich eine neutrale Außenkontur.
+Autosave läuft fest alle 60 Sekunden, sofern ein Projekt geändert und die Anwendung nicht beschäftigt ist. Das Intervall ist in der Oberfläche nicht konfigurierbar. Einige Aktionen checkpointen den Arbeitsstand sofort; andere markieren das Projekt zunächst nur als ungespeichert und gelangen erst durch manuelles Speichern oder den nächsten 60-Sekunden-Autosave in den Workspace beziehungsweise ins Archiv. Speichern Sie deshalb regelmäßig manuell, besonders vor Kopieren, Duplizieren oder Beenden.
 
-Bedienung im Browser:
+## Recovery, Sicherungen und Protokolle
 
-- **Horizontal / Vertikal** wechselt die Zeitstrahlanordnung.
-- **− / + / Zurücksetzen** steuert den Zoom; `Strg + Mausrad` zoomt ebenfalls.
-- Ziehen auf der freien Arbeitsfläche verschiebt den sichtbaren Ausschnitt.
-- Die Suche berücksichtigt Ereignis- und eingebettete Dokumenttexte; `/` setzt den Fokus direkt in das Suchfeld.
-- Das aufklappbare Filterpanel kombiniert Zeitraum, Ereignisfarbe, Schlagwort und Friststatus. Ein Zähler zeigt aktive Kriterien; **Zurücksetzen** entfernt sie. `Esc` schließt das Panel.
-- Ereignisdetails lassen sich einzeln sowie über **Alle öffnen / Alle schließen** steuern. Geöffnete Details bleiben bei Ansichts- und passenden Filterwechseln erhalten.
-- **Design: Hell / Dunkel** wechselt nur die Darstellung der exportierten Datei. Die Wahl wird als reine Darstellungspräferenz lokal im Browserspeicher abgelegt; es werden keine Projektdaten gespeichert oder übertragen.
-- **Drucken** öffnet die Browser-Druckfunktion. Für den Druck wechselt der Export vorübergehend auf eine kontrastreiche vertikale 100-%-Ansicht, öffnet Projektbeschreibung und Ereignisdetails und stellt anschließend Ausrichtung, Zoom, Scrollposition, Filterpanel und geöffnete Details wieder her.
+### Recovery
 
-Auf schmalen Fenstern ordnen sich Kennzahlen, Werkzeuggruppen und vertikale Karten untereinander an. In der HTML-Einzeldatei bleiben Dokumente aus Sicherheits- und Größengründen Namen beziehungsweise eingebettete Miniaturen. Nur bei ausdrücklich aktiviertem Dokumentpaket werden vollständige Kopien in das ZIP aufgenommen und relativ verlinkt. Externe HTTP(S)-Links werden erst nach einer Bestätigung geöffnet.
+Nach einem ungeordneten Ende kann der Startbildschirm verwaiste Arbeitskopien anbieten. `Wiederherstellen` öffnet die gefundene Kopie; speichern Sie das Ergebnis anschließend. `Verwerfen` löscht die angebotene Arbeitskopie nach Bestätigung. Aktive Sitzungen werden nicht als Recovery-Kandidaten angeboten.
 
-### Projektexport
+### Sicherungen
 
-Mit **Datei → Exportieren** wird das gesamte Projekt als `.zeitprojekt`-Archiv gespeichert. Dieses Archiv enthält alle Ereignisse, Dokumentkopien, Analysen und Einstellungen. Zeitstrahl Studio vergleicht jede referenzierte Dokumentkopie beim Export mit gespeicherter Größe und SHA-256. Bei einer fehlenden oder veränderten Kopie wird der Export abgebrochen und ein bereits vorhandenes Zielarchiv bleibt unverändert.
+`Werkzeuge > Sicherungen` öffnet die Sicherungsverwaltung. `Jetzt sichern` erzeugt eine manuelle Sicherung. Automatische Sicherungen werden bei Speichervorgängen nach Fälligkeit erstellt und standardmäßig in drei Stufen aufbewahrt:
 
-## Sicherung und Wiederherstellung
+- 6 Sicherungen des aktuellen Tages
+- 7 tägliche Sicherungen
+- 8 wöchentliche Sicherungen
 
-### Automatische Sicherungen
+Diese Werte können im Sicherungsdialog geändert werden. Manuelle Sicherungen werden nicht automatisch rotiert. Vor jeder Wiederherstellung erstellt die Anwendung eine manuelle Sicherheitssicherung des aktuellen Stands. Nach erfolgreicher Wiederherstellung ist das Ergebnis ausdrücklich zu speichern.
 
-Zeitstrahl Studio erstellt automatisch rotierende Sicherungen unter `%LocalAppData%\Zeitstrahl Studio\Backups\{Projekt-ID}`.
+### Protokolle
 
-### Manuelle Sicherung
+`Werkzeuge > Protokoll` zeigt das fachliche Auditprotokoll des Projekts, darunter das Erstellen, Bearbeiten und Löschen von Ereignissen, Reihenfolge, Undo/Redo und Exporte. Davon getrennt schreibt die Anwendung technische Fehler- und Diagnoseeinträge als rotierende JSONL-Dateien. Dafür gibt es in der aktuellen Oberfläche keine Anzeige-, Export- oder Löschfunktion.
 
-Wählen Sie **Datei → Sicherung erstellen**. Manuelle Sicherungen werden nie automatisch gelöscht.
+Hilfreiche lokale Pfade:
 
-### Wiederherstellung
+| Daten | Pfad unter `%LocalAppData%\Zeitstrahl Studio` |
+| --- | --- |
+| Zuletzt verwendete Projekte | `application-state.json` |
+| Globales Farbschema | `appearance-settings.json` |
+| Verwaltete Arbeitskopien und Recovery | `Workspaces` |
+| Projektsicherungen | `Backups` |
+| Technische JSONL-Protokolle | `Logs` |
 
-1. Wählen Sie **Datei → Sicherung wiederherstellen**.
-2. Wählen Sie eine Sicherung aus der Liste.
-3. Bestätigen Sie die Wiederherstellung.
+Die selbst gewählte `.zeitprojekt`-Datei liegt unabhängig davon am im Speicherdialog gewählten Ort.
 
-Vor der Wiederherstellung wird automatisch eine Sicherheitssicherung des aktuellen Stands erstellt.
+## PDF exportieren
+
+`Werkzeuge > Als PDF exportieren` öffnet eine echte Vorschau der zu erzeugenden PDF-Datei. Einstellbar sind:
+
+- A4, A3, Letter oder benutzerdefinierte Maße von 50 bis 5.080 mm
+- Hoch- oder Querformat
+- mehrseitiger Export, große Einzelseite oder ausgewählter Zeitraum
+- Einbeziehen überschneidender Zeiträume, Exportschriftgröße und interne Notizen
+
+Die Vorschau bietet Seitenwechsel, Zoom, Fensterbreite, ganze Seite und eine Prüfung im externen Standardprogramm. Sehr große Einzelseiten über 1.000 mm erzeugen eine Kompatibilitätswarnung.
+
+Der PDF-Export verwendet ein eigenes druckorientiertes Layout. Er enthält Ereignistexte und Dokumentnamen sowie gegebenenfalls eine primäre validierte PDF- oder Bildminiatur, bettet die Anlagen aber nicht als anklickbare Dateien ein. Er bildet die manuelle Kartenanordnung, den aktuellen Zoom und die WPF-Lückenkompression nicht pixelgenau ab. Entscheidend ist die PDF-Vorschau, nicht die aktuelle Hauptansicht.
+
+## HTML exportieren
+
+`Werkzeuge > Als HTML exportieren` erzeugt eine eigenständige responsive Momentaufnahme. Optionen sind horizontale oder vertikale Anfangsdarstellung, eingebettete kleine Dokumentvorschauen, interne Notizen und der standardmäßig aktive orange Momentaufnahmehinweis.
+
+- Ohne Dokumentkopien entsteht eine einzelne Offline-HTML-Datei mit eingebettetem CSS, JavaScript und Daten.
+- Mit `Alle hinterlegten Dokumente als Kopien mitgeben` entsteht ein ZIP-Paket mit `index.html`, `LESMICH.txt` und dem Ordner `Dokumente`.
+
+Ein ZIP-Paket muss vollständig entpackt werden, bevor `index.html` geöffnet wird. Nur validierte Projektkopien werden aufgenommen. Externe HTTP(S)-Links sind gekennzeichnet und verlangen in der HTML-Seite vor dem Öffnen eine Bestätigung. Interne Notizen und Dokumentkopien nur einbeziehen, wenn die Empfänger sie sehen dürfen.
+
+Die HTML-Datei besitzt eine eigene interaktive Darstellung mit Suche, Filtern, Zoom, Horizontal-/Vertikalwechsel und Druckansicht. Sie übernimmt weder die WPF-Kartenpositionen noch deren sichtbaren Ausschnitt exakt und schreibt Änderungen niemals in das Projekt zurück.
 
 ## Tastenkürzel
 
-| Tastenkürzel | Funktion |
-|--------------|----------|
-| `Strg + S` | Speichern |
-| `Strg + F` | Suchen |
-| `Strg + Z` | Rückgängig |
-| `Strg + Y` | Wiederholen |
-| `Strg + N` | Neuer Eintrag / Neues Projekt |
-| `Entf` | Ausgewähltes Element löschen |
-| `Esc` | Dialog/Vorgang abbrechen |
+| Kürzel | Wirkung |
+| --- | --- |
+| `Strg+S` | Projekt speichern |
+| `Strg+F` | Suche fokussieren |
+| `Strg+N` | Ohne Projekt: neues Projekt; mit Projekt: neues Ereignis |
+| `Strg+Z` | Rückgängig |
+| `Strg+Y` | Wiederholen |
+| `Entf` | Ausgewähltes Ereignis löschen |
+| `Esc` | Laufenden Anhangsimport abbrechen |
 
-## Hinweise zum Datenschutz
+## Datenschutz und Sicherheit
 
-- Alle Daten werden ausschließlich lokal verarbeitet.
-- Es gibt keine Telemetrie, keine Nutzungsanalyse und keine Cloud-Synchronisation.
-- Externe Links werden nur nach expliziter Bestätigung im Browser geöffnet.
-- Technische Protokolle bleiben lokal und enthalten keine vollständigen Dokumentinhalte.
+Die Kernverarbeitung erfolgt lokal; es gibt keine Telemetrie, Cloud-Synchronisation oder automatische Datenübertragung. Beim bewussten Öffnen eines Anhangs wird seine geprüfte Projektkopie jedoch an ein externes Windows-Standardprogramm übergeben. Externe Links im HTML-Export öffnen nach Bestätigung den Browser.
 
-Weitere Informationen finden Sie in `PRIVACY.md`.
+`.zeitprojekt`-Archive, PDF-/HTML-Exporte und Sicherungen sind nicht verschlüsselt oder kennwortgeschützt. Behandeln Sie sie wie die enthaltenen Originaldokumente. Anhangsmetadaten speichern außerdem den ursprünglichen absoluten Quellpfad im Projekt. Prüfen Sie vor einer Weitergabe insbesondere diese Pfadangabe, interne Notizen, Anhänge und Analyseinhalte.
+
+Weitere Hinweise: [`PRIVACY.md`](PRIVACY.md), [`PROJECT_FORMAT.md`](PROJECT_FORMAT.md) und [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).

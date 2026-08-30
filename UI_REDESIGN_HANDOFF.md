@@ -1,6 +1,8 @@
 # UI-Redesign - Übergabeprotokoll
 
-- Letzte Aktualisierung: 2026-07-22 14:27:54 +02:00
+> **Archiviertes Übergabeprotokoll (UI-Redesign 0.3.0, 22.–25.07.2026):** Commit-, Push-, Phasen- und Restarbeitsangaben dokumentieren ausschließlich die damalige Übergabe. Für den aktuellen Repository- und Produktstand gelten [`README.md`](README.md) und [`STATUS.md`](STATUS.md).
+
+- Zeitpunkt der ursprünglichen Übergabe: 2026-07-22 14:27:54 +02:00
 - Repository: `C:\Projekte\ZeitstrahlStudio`
 - Branch: `ui/redesign-0.3.0`
 - Remote: `origin` (`https://github.com/IzzLenn/ZeitstrahlStudio.git`)

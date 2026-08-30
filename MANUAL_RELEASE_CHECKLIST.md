@@ -1,140 +1,268 @@
 # Manuelle Release-Checkliste
 
-Diese Checkliste enthält Prüfungen, die in der Entwicklungsumgebung nicht vollständig automatisiert werden können. Sie müssen vor einem Release auf geeigneten Windows-10-/Windows-11-Systemen manuell durchgeführt werden.
+Diese Checkliste ist für eine konkrete Freigabe neu zu kopieren und vollständig auszufüllen. Leere Kästchen sind bewusst keine Bestätigung. Abweichungen, Blocker und akzeptierte Risiken gehören ins Ergebnisprotokoll.
 
-## Vorbereitung
+## Freigabekopf
 
-- [ ] Installer-Version auf einem sauberen Windows-10-System installieren
-- [ ] Portable ZIP-Version auf einem sauberen Windows-11-System entpacken
-- [ ] Beispielprojekt `samples/ZeitstrahlStudio-Beispiel.zeitprojekt` zur Verfügung haben
+| Feld | Eintrag |
+| --- | --- |
+| Version | |
+| vollständiger Commit | |
+| Branch | |
+| Tag | |
+| Prüfzeitraum | |
+| Release-Verantwortlicher | |
+| Tester Windows 10 | |
+| Tester Windows 11 | |
+| Installer SHA-256 | |
+| Portable ZIP SHA-256 | |
+| Ergebnisprotokoll / Ablage | |
 
-## UI- und DPI-Abnahme
+Referenzen: [`RELEASE.md`](RELEASE.md), [`STATUS.md`](STATUS.md), [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).
 
-- [ ] Hauptfenster bei 100% Skalierung auf Lesbarkeit und Bedienbarkeit prüfen
-- [ ] Hauptfenster bei 125% Skalierung auf Lesbarkeit und Bedienbarkeit prüfen
-- [ ] Hauptfenster bei 150% Skalierung auf Lesbarkeit und Bedienbarkeit prüfen
-- [ ] Hauptfenster bei 200% Skalierung auf Lesbarkeit und Bedienbarkeit prüfen
-- [ ] Dialoge (Ereignis, Export, Sicherung, Vorschau) bei 150% Skalierung prüfen
-- [ ] Zeitstrahl bei unterschiedlichen Skalierungen auf Überlappungen prüfen
-- [ ] PDF-/Bildvorschau bei unterschiedlichen Skalierungen prüfen
-- [ ] Exportvorschau bei unterschiedlichen Skalierungen prüfen
+## 1. Vorbedingungen und automatische Gates
 
-## Tastaturbedienung
+- [ ] Vorgesehener Commit, Branch, Version und Releaseumfang sind schriftlich freigegeben.
+- [ ] `git status --short` ist vor Paketierung vollständig leer.
+- [ ] `samples/` entspricht exakt dem beabsichtigten, versionierten Releaseinhalt.
+- [ ] Verwendetes Windows, PowerShell- und .NET-8-SDK aus `dotnet --info` protokolliert.
+- [ ] Restore erfolgreich.
+- [ ] Vor einem direkten Einzel-Task `Publish` wurde `dotnet restore src\ZeitstrahlStudio.App\ZeitstrahlStudio.App.csproj -r win-x64` erfolgreich ausgeführt oder die Verfügbarkeit von `Microsoft.NETCore.App.Runtime.win-x64` und `Microsoft.WindowsDesktop.App.Runtime.win-x64` anderweitig belegt; `All` führt diesen RID-Restore seit 1.1.0 selbst aus.
+- [ ] Debug-Build erfolgreich.
+- [ ] Debug-Tests vollständig erfolgreich; Ergebnisdatei oder Konsolenausgabe archiviert.
+- [ ] Release-Build erfolgreich.
+- [ ] Release-Tests vollständig erfolgreich; Ergebnisdatei oder Konsolenausgabe archiviert.
+- [ ] `dotnet format --verify-no-changes` erfolgreich.
+- [ ] Frischer self-contained `win-x64`-Publish erfolgreich und ohne PDB-Dateien.
+- [ ] Portable ZIP aus genau diesem Publish erfolgreich erzeugt.
+- [ ] Installer aus genau diesem Publish/Paketierungsstand erfolgreich erzeugt.
+- [ ] Portable- und Installer-SHA-256 frisch berechnet und in endgültiger Checksummenliste enthalten.
+- [ ] Vollständige Original-Lizenz-/Copyrighttexte aller ausgelieferten Produktionskomponenten im Paket geprüft.
+- [ ] README, `PRIVACY.md`, `THIRD_PARTY_LICENSES.md`, `CHANGELOG.md`, `licenses/` und freigegebene Samples in den Artefakten vorhanden.
+- [ ] Kein älteres gleichnamiges Artefakt wurde versehentlich übernommen.
 
-- [ ] Vollständige Navigation durch den Startbildschirm ohne Maus
-- [ ] Vollständige Navigation durch das Hauptfenster ohne Maus
-- [ ] Ereignisdialog mit Tastatur bedienen
-- [ ] Suchfeld mit `Strg + F` fokussieren und Suche mit Tastatur steuern
-- [ ] Sicherungsdialog mit Tastatur bedienen
-- [ ] PDF-/HTML-Exportdialog mit Tastatur bedienen
-- [ ] Vorschaufenster mit Tastatur bedienen
-- [ ] Fokusvisualisierung in allen Dialogen erkennbar
+## 2. Prüfsysteme und Installation
 
-## Kontrast und visuelle DPI-Abnahme
+### Windows 10 x64, sauber
 
-- [ ] Hell-Thema auf realem Display prüfen
-- [ ] Dunkel-Thema auf realem Display prüfen
-- [ ] Zeitstrahlpalette im Hell-Thema auf Kontrast prüfen
-- [ ] Zeitstrahlpalette im Dunkel-Thema auf Kontrast prüfen
-- [ ] Kartenlesbarkeit bei kleinen Schriftgrößen prüfen
-- [ ] Kartenlesbarkeit bei großen Schriftgrößen prüfen
-- [ ] Fokusvisualisierung in Listen und Buttons prüfen
-- [ ] Kontrollkästchen im Dunkelmodus ungeprüft, aktiviert, teilweise aktiviert und deaktiviert ohne Hover prüfen
-- [ ] Bei Kontrollkästchen Hover und Tastaturfokus prüfen: keine helle Fläche, Haken beziehungsweise Teilmarkierung weiterhin sichtbar
-- [ ] Native Titelleiste des Hauptfensters beim Start in Hell und Dunkel auf Windows 10 sowie Windows 11 prüfen
-- [ ] Bereits geöffneten Dialog bei laufendem Wechsel Dunkel → Hell → Dunkel prüfen
-- [ ] Nach dem Themewechsel neu geöffneten Dialog auf passende native Titelleiste prüfen
+- [ ] Betriebssystemversion, Hardware und Anzeige protokolliert.
+- [ ] Keine separate .NET-Runtime vorinstalliert oder deren Einfluss durch sauberes System ausgeschlossen.
+- [ ] Installer startet; Herausgeber-/Signaturstatus und Windows-Warnungen dokumentiert.
+- [ ] Standardinstallation nach 64-Bit-Program Files mit erwartetem Admin-Dialog erfolgreich.
+- [ ] Startmenüeintrag startet die Anwendung.
+- [ ] Optionale Desktopverknüpfung abgewählt: keine Verknüpfung angelegt.
+- [ ] Erneute Installation mit Desktopoption: Verknüpfung korrekt angelegt.
+- [ ] `.zeitprojekt`-Dateizuordnung aktiviert und per Doppelklick geprüft.
+- [ ] Zugeordneter Projektpfad mit Leerzeichen und Umlaut korrekt als einzelnes CLI-Argument geöffnet.
+- [ ] Reparatur-/erneuter Installationslauf bewertet.
+- [ ] Deinstallation erfolgreich; Anwendung, Startmenü-/Desktoplinks und Dateizuordnung entfernt.
+- [ ] Lokale Nutzerdaten nur gemäß dokumentierter Datenschutz-/Deinstallationsentscheidung verblieben.
 
-## Dokumentkopien und Öffnen
+### Windows 11 x64, sauber
 
-- [ ] PDF, Bild, DOCX und XLSX hinzufügen; externe Quelldateien anschließend verschieben oder löschen
-- [ ] Im Detailreiter **Anhänge** jeden Eintrag doppelklicken und prüfen, dass genau die Projektkopie im jeweiligen Windows-Standardprogramm geöffnet wird
-- [ ] Doppelklick auf freien Listenbereich ausführen und prüfen, dass keine Datei geöffnet wird
-- [ ] Testanhang mit riskanter Skript- oder Verknüpfungsendung doppelklicken und die verständliche Blockade prüfen
-- [ ] Denselben vertrauenswürdigen Testanhang nur bewusst über **Öffnen** auswählen; Sicherheitsauswirkung ausdrücklich beurteilen
-- [ ] Projekt speichern, auf einen zweiten Rechner übertragen und dort alle Dokumentkopien erneut öffnen
+- [ ] Betriebssystemversion, Hardware und Anzeige protokolliert.
+- [ ] Portable ZIP ohne installierte .NET-Runtime vollständig in einen neuen Ordner entpackt.
+- [ ] `ZeitstrahlStudio.App.exe` startet aus dem entpackten Ordner.
+- [ ] Start von einem Pfad mit Leerzeichen und Umlaut erfolgreich.
+- [ ] Beispielprojekt geöffnet, gespeichert, geschlossen und erneut geöffnet.
+- [ ] Optionaler Start von einem geeigneten USB-/Wechseldatenträger bewertet.
+- [ ] Installer-, Dateizuordnungs- und Deinstallationssmoke auch unter Windows 11 erfolgreich.
 
-## Standalone-HTML-Export
+## 3. Hauptoberfläche, DPI und Barrierearmut
 
-- [ ] HTML-Export in Microsoft Edge öffnen
-- [ ] HTML-Export in Mozilla Firefox öffnen
-- [ ] HTML-Export in Google Chrome öffnen
-- [ ] Offline-Verhalten mit deaktiviertem Netzwerk prüfen
-- [ ] Desktoplayout und schmale Ansicht einschließlich 200-%-Browserzoom prüfen
-- [ ] Horizontale und vertikale Ausrichtung sowie vollständige farbige Kartenrahmen prüfen
-- [ ] In der vertikalen Desktopansicht prüfen, dass die Zeitachse bei breitem und schmalem Browserfenster mittig im sichtbaren Arbeitsbereich liegt
-- [ ] Systemdesign beim ersten Start, manuelle Hell-/Dunkel-Umschaltung und lokale Persistenz nach Neuladen prüfen
-- [ ] Volltextsuche und `/`-Tastenkürzel testen
-- [ ] Filterpanel, Aktivzähler, `Esc`, Zurücksetzen und kombinierte Zeitraum-/Farbe-/Schlagwort-/Fristfilter testen
-- [ ] Ereignisdetails einzeln sowie über **Alle öffnen / Alle schließen** testen
-- [ ] Detailzustand bei Ansichts- und Filterwechsel prüfen
-- [ ] Zoom über Schaltflächen und `Strg + Mausrad` testen
-- [ ] Verschieben des Zeitstrahls per Ziehen testen
-- [ ] Projektkennzahlen, Projektbeschreibung und optionale Miniaturen prüfen
-- [ ] Export mit aktiviertem orangefarbenem Momentaufnahmehinweis öffnen und Banner prüfen
-- [ ] Hinweis im Exportdialog deaktivieren; zweite Datei öffnen und prüfen, dass keine helle oder leere Bannerfläche verbleibt
-- [ ] Dokumentoption deaktivieren und prüfen, dass eine einzelne `.html` ohne lokale Dokumentpfade entsteht
-- [ ] Dokumentoption aktivieren und vollständiges ZIP mit `index.html`, `LESMICH.txt` und allen Dateien unter `Dokumente` prüfen
-- [ ] ZIP vollständig entpacken; Dokumentnamen und vorhandene Vorschaubilder anklicken und die jeweils richtige lokale Kopie prüfen
-- [ ] Gleichnamige Anhänge prüfen: beide müssen unterschiedliche GUID-Pfade besitzen und byteidentisch zum Projektbestand sein
-- [ ] HTML-Dokumentpaket offline in Edge, Firefox und Chrome testen; Browserunterschiede bei Anzeige, Download oder Übergabe an Windows dokumentieren
-- [ ] Druckbutton und Browser-Druckvorschau im Hell- sowie Dunkeldesign prüfen
-- [ ] Im Druck prüfen: Werkzeugleiste verborgen, vertikale 100-%-Ansicht, Projektbeschreibung und alle Ereignisdetails sichtbar, sinnvolle Seitenumbrüche
-- [ ] Nach Abbruch beziehungsweise Ende des Druckens Wiederherstellung von Ausrichtung, Zoom, Scrollposition, Filterpanel, Projektbeschreibung und Ereignisdetails prüfen
-- [ ] Externe Linkwarnung anzeigen, einmal abbrechen und einmal bestätigen
+Jede Kombination ist mindestens mit Beispielprojekt, horizontaler und vertikaler Timeline sowie geöffnetem Ereignis-/Exportdialog zu prüfen.
 
-## PDF-Export
+- [ ] 1280×760 bei 100 % DPI geprüft.
+- [ ] 1920×1080 bei 100 % DPI geprüft.
+- [ ] 2560×1400 bei 100 % DPI geprüft.
+- [ ] 125 % DPI geprüft.
+- [ ] 150 % DPI geprüft.
+- [ ] 200 % DPI geprüft.
+- [ ] Wechsel zwischen Monitoren mit unterschiedlicher Skalierung geprüft.
+- [ ] Hell, Dunkel und `Windows-Einstellung übernehmen` einschließlich nativer Titelleisten geprüft.
+- [ ] Laufender Themewechsel mit bereits geöffnetem und anschließend neu geöffnetem Dialog geprüft.
+- [ ] Menüs, globale Befehlsleiste, linke Navigation, Timeline/Liste und rechter Inspector vollständig erreichbar.
+- [ ] Navigation und Details ein-/ausblenden; Layout bleibt nutzbar.
+- [ ] Tab-Reihenfolge, sichtbarer Fokus, Access Keys und Screenreader-Namen stichprobenartig geprüft.
+- [ ] Hauptabläufe ohne Maus bedienbar.
+- [ ] Kontrollkästchen ungeprüft, aktiviert, teilweise aktiviert und deaktiviert in beiden Themes eindeutig.
+- [ ] Schriftgrößen 8 und 48 pt auf Clipping und Bedienbarkeit geprüft.
 
-- [ ] PDF-Export im Standard-PDF-Betrachter öffnen
-- [ ] Druckvorschau des PDF-Exports prüfen
-- [ ] Mehrseitiger Export auf korrekte Seitenumbrüche prüfen
-- [ ] Große Einzelseite auf Warnhinweis prüfen
-- [ ] Zeitraumexport auf korrekten Bereich prüfen
-- [ ] Texte vektorbasiert und scharf darstellbar
-- [ ] Miniaturen korrekt eingebettet oder als Textverweis vorhanden
+### Bekannte Gate-Funde
 
-## Projekttransfer und große Archive
+- [ ] BUG-001 bei 1280×760 gezielt reproduziert oder mit belastbarer Gegenprobe widerlegt; Auswirkung und Releaseentscheidung dokumentiert. Kein erwarteter PASS.
+- [ ] BUG-002 für rote Frist-/Achsenlabels bei 1920×1080 und 2560×1400 bewertet; Lesbarkeit, Exporte und Releaseentscheidung dokumentiert. Kein erwarteter PASS.
+- [ ] Weitere visuelle Funde mit Schweregrad, Reproduktion und Screenshot ins Ergebnisprotokoll übernommen.
 
-- [ ] Beispielprojekt importieren
-- [ ] Beispielprojekt speichern
-- [ ] Beispielprojekt exportieren
-- [ ] Exportiertes Projekt auf einem zweiten Rechner importieren
-- [ ] Nach dem Transfer jede hinterlegte Dokumentkopie öffnen und mit Dateigröße sowie SHA-256 des Ausgangsprojekts vergleichen
-- [ ] Reales mehrgigabytegroßes `.zeitprojekt`-Archiv importieren
-- [ ] Großes Archiv speichern
-- [ ] Großes Archiv sichern
-- [ ] Sicherung eines großen Archivs wiederherstellen
+## 4. Projektlebenszyklus
 
-## Fehlerszenarien
+- [ ] Neues Projekt fragt nur Name und Zielpfad; Archiv wird sofort erzeugt.
+- [ ] Öffnen über Dialog, Recent-Liste und Dateizuordnung erfolgreich.
+- [ ] Fehlender Recent-Pfad liefert verständliche Meldung und wird entfernt.
+- [ ] Speichern aktualisiert das aktive Archiv und erhält bei Fehler ein vorheriges gültiges Ziel.
+- [ ] Speichern unter wechselt auf das neue aktive Archiv.
+- [ ] Vor Duplizieren gespeichert; Kopie besitzt neue Projekt-ID und wird zum aktiven Projekt.
+- [ ] Projekt schließen mit Speichern, Verwerfen und Abbrechen jeweils geprüft.
+- [ ] Geordnetes Beenden mit ungespeicherten Änderungen geprüft.
+- [ ] `.zeitprojekt` als vollständige Transferdatei auf zweites System kopiert und geöffnet.
+- [ ] Keine nicht dokumentierten Projekt-Export-, Projektlöschen- oder Projektordnerbefehle erwartet.
+- [ ] Beschädigtes, neues/unbekanntes oder in der Prüfsumme verändertes Archiv wird verständlich und ohne Teilimport abgelehnt.
 
-- [ ] Gesperrte Zieldatei beim Speichern simulieren und Fehlermeldung prüfen
-- [ ] Volles Laufwerk beim Export simulieren und Fehlermeldung prüfen
-- [ ] Nicht löschbare Sicherung simulieren und Fehlermeldung prüfen
-- [ ] Beschädigtes `.zeitprojekt`-Archiv importieren und Fehlermeldung prüfen
-- [ ] Referenzierte Projektkopie löschen sowie bei gleicher Länge manipulieren; Speichern muss jeweils abbrechen und das vorhandene `.zeitprojekt` byteidentisch erhalten
-- [ ] Für das HTML-Dokumentpaket eine Projektkopie manipulieren; Export muss abbrechen und ein vorhandenes Ziel-ZIP byteidentisch erhalten
-- [ ] Projektordner während der Bearbeitung extern löschen und Verhalten prüfen
+## 5. Ereignisse, Timeline und Suche
 
-## Installer und Deinstallation
+- [ ] Ereignisse für exaktes Datum, Datum/Uhrzeit, Monat/Jahr, nur Jahr und Zeitraum angelegt und roundtripgeprüft.
+- [ ] Texte, Quelle, Notizen, Priorität, Status, Farbe, Tags und HTTP(S)-Links bearbeitet.
+- [ ] Unabhängige Frist mit Uhrzeit, Status, Bezeichnung und Erinnerungsnotiz geprüft.
+- [ ] Validierungsfehler hinterlassen kein teilweise geändertes Ereignis.
+- [ ] Erstellen, Bearbeiten und Löschen mit Undo/Redo geprüft.
+- [ ] 100-Schritte-Grenze und sitzungsbezogenes Verwerfen der Historie bewertet.
+- [ ] Früher/später und Listendrag nur bei vollständig identischer Datumsgruppe möglich.
+- [ ] Kartenverschieben ändert nur visuelle Position, niemals Datum.
+- [ ] Auto-Layout entfernt manuelle Versätze.
+- [ ] Horizontal/Vertikal, Lückenkompression, 25–800 % Zoom, Pan, Gesamtprojekt, Auswahl zentrieren und Reset geprüft.
+- [ ] Volltextsuche findet Ereignisdaten, Attachmentnamen und analysierten Dokumenttext.
+- [ ] Zeitraum-, Datumsart-, Frist-, Prioritäts-, Farb-, Tag-, Dateityp-, Attachment- und PDF-Filter kombiniert.
+- [ ] Filterreset, Sortierung, Ergebnisnavigation und 5.000-Treffergrenze bewertet.
 
-- [ ] Installer auf sauberem System ausführen
-- [ ] Startmenüeintrag prüfen
-- [ ] Optionale Desktopverknüpfung prüfen
-- [ ] `.zeitprojekt`-Datei per Doppelklick öffnen
-- [ ] Deinstallation über Systemsteuerung ausführen
-- [ ] Nach Deinstallation keine `.zeitprojekt`-Zuordnung mehr vorhanden
+## 6. Attachments, Vorschau und OCR
 
-## Portable Version
+- [ ] Mehrfachimport per Dateidialog erfolgreich.
+- [ ] Drag-and-drop auf ausgewähltes Ereignis, Ereignisliste, Timeline und Anhangsbereich erfolgreich.
+- [ ] Gleichnamige Dateien erhalten kollisionsfreie interne Pfade und bleiben byteidentisch.
+- [ ] Quelldatei nach Import verschoben/gelöscht; Projektkopie bleibt verwendbar.
+- [ ] Teilfehler und Abbruch erhalten erfolgreiche Dateien und entfernen unvollständige Kopien.
+- [ ] PDF-, PNG-, JPEG-, TIFF-, BMP-, DOCX- und XLSX-Analyse geprüft.
+- [ ] Bild- und PDF-Vorschau einschließlich Seitenwechsel/Zoom geprüft.
+- [ ] Deutsche Windows-OCR mit echter Ressource und bildbasierter PDF geprüft.
+- [ ] Fehlende OCR-Ressource liefert verständliche lokale Handlungsanleitung.
+- [ ] OCR-Ergebnis sichtbar als potenziell fehlerhaft behandelt und gegen Original kontrolliert.
+- [ ] Analyseergebnisse/Datumsfundstellen bleiben schreibgeschützt und werden nicht automatisch in Ereignisse übernommen.
+- [ ] Dokumenttext erscheint nach Analyse in der Suche.
+- [ ] Doppelklick öffnet eine normale validierte Projektkopie im richtigen Windows-Standardprogramm.
+- [ ] Riskante Erweiterung wird beim Doppelklick blockiert.
+- [ ] Bewusstes `Öffnen` einer kontrollierten riskanten Testdatei und Sicherheitsauswirkung bewertet.
+- [ ] Fehlende, verkürzte, verlängerte und bei gleicher Länge manipulierte Projektkopie wird durch Integritätsprüfung abgelehnt.
+- [ ] Reparse-Point-/Traversal-Versuch wird abgelehnt.
+- [ ] Ursprünglicher absoluter Quellpfad in Attachmentmetadaten vor Weitergabe als sensibler Inhalt bewertet.
+- [ ] Entfernen eines Attachments nicht fälschlich als sichere physische Löschung zugesichert.
+- [ ] Gespeicherter Weblink besitzt in WPF keinen erwarteten direkten Öffnen-Befehl; HTML-Verhalten separat geprüft.
 
-- [ ] ZIP-Datei entpacken
-- [ ] Anwendung ohne Installation starten
-- [ ] Beispielprojekt aus dem entpackten Ordner öffnen
-- [ ] Projekt speichern und erneut öffnen
-- [ ] Anwendung von einem USB-Laufwerk starten
+## 7. Autosave, Recovery, Sicherungen und Audit
 
-## Abschluss
+- [ ] Manueller Save und fester 60-Sekunden-Autosave mit Dirty-Projekt geprüft.
+- [ ] Autosave pausiert während Busy-Vorgang und läuft danach weiter.
+- [ ] Ungeordnetes Ende in kontrollierter Kopie simuliert; verwaiste Recovery-Arbeitskopie angeboten.
+- [ ] Recovery wiederhergestellt, geprüft und anschließend ausdrücklich gespeichert.
+- [ ] Recovery-Verwerfen mit Bestätigung geprüft.
+- [ ] Aktive Sitzung wird nicht als Recovery-Kandidat angeboten.
+- [ ] `Werkzeuge > Sicherungen` lädt und aktualisiert die Liste.
+- [ ] Manuelle Sicherung erzeugt und validiert.
+- [ ] Retention 6 aktuell/7 täglich/8 wöchentlich mit kontrollierten Testdaten bewertet.
+- [ ] Manuelle Sicherung wird nicht automatisch rotiert.
+- [ ] Restore erzeugt vorher eine Sicherheitssicherung und Ergebnis wird danach gespeichert.
+- [ ] Manipulierte Sicherung wird abgelehnt.
+- [ ] `Werkzeuge > Protokoll` zeigt fachliche Ereignis-/Undo-/Reorder-/Export-Auditeinträge schreibgeschützt.
+- [ ] Technische JSONL-Logs liegen unter `%LocalAppData%\Zeitstrahl Studio\Logs` und sind nicht mit Audit verwechselt.
 
-- [ ] Alle manuellen Prüfungen dokumentiert
-- [ ] Gefundene Probleme in `STATUS.md` eingetragen
-- [ ] Release-Artefakte mit Prüfsummen verifiziert
-- [ ] Freigabe durch Release-Verantwortlichen
+## 8. PDF-Export
+
+- [ ] A4, A3 und Letter in Hoch- und Querformat geprüft.
+- [ ] Benutzerdefinierte gültige Mindest-/Maximalmaße und verständliche Ablehnung ungültiger Maße geprüft.
+- [ ] Mehrseitiger Export mit sinnvollen Seitenumbrüchen geprüft.
+- [ ] Große Einzelseite einschließlich Warnung über 1.000 mm in mehreren Betrachtern geprüft.
+- [ ] Zeitraumexport mit und ohne überschneidende Zeiträume geprüft.
+- [ ] Interne Notizen ein- und ausgeschaltet.
+- [ ] Echte PDF-Vorschau: Aktualisieren, Seitenwechsel, Zoom, Fensterbreite, ganze Seite und extern prüfen.
+- [ ] Texte, Farben, Fristen, Dokumentnamen und gegebenenfalls primäre Miniatur korrekt.
+- [ ] Keine anklickbar eingebetteten Attachmentdateien erwartet.
+- [ ] Unterschied zwischen druckorientiertem PDF-Layout und manueller WPF-Anordnung/Gaps dokumentiert.
+- [ ] PDF aus Standardbetrachter geöffnet und reale Druckvorschau geprüft.
+
+## 9. Offline-HTML und Dokument-ZIP
+
+Die folgenden Prüfungen jeweils in Microsoft Edge, Mozilla Firefox und Google Chrome ausführen.
+
+- [ ] HTML-Einzeldatei offline mit deaktiviertem Netzwerk geöffnet.
+- [ ] HTML-ZIP vollständig entpackt und erst danach `index.html` geöffnet.
+- [ ] `index.html`, `LESMICH.txt` und erwartete GUID-Dokumentpfade vorhanden.
+- [ ] Option ohne Dokumentkopien enthält keine vollständigen lokalen Dokumentdateien.
+- [ ] Option mit Dokumentkopien enthält ausschließlich validierte referenzierte Kopien.
+- [ ] Dokumentnamen und Miniaturen öffnen jeweils die richtige Paketkopie; Browserunterschiede dokumentiert.
+- [ ] Horizontal/Vertikal, Zoom, Pan und Reset geprüft.
+- [ ] Suche, `/`, Filterpanel, aktive Kriterien, `Esc` und Filterreset geprüft.
+- [ ] Details einzeln sowie alle öffnen/schließen; Zustand bei Filter-/Ansichtswechsel geprüft.
+- [ ] Hell/Dunkel, Browserpersistenz, schmales Layout und 200-%-Browserzoom geprüft.
+- [ ] Orange Momentaufnahmehinweis ein- und ausgeschaltet; keine leere Restfläche.
+- [ ] Interne Notizen ein- und ausgeschaltet.
+- [ ] Externer HTTP(S)-Link: Warnung abbrechen und bestätigen.
+- [ ] Druckansicht aus Hell und Dunkel geprüft; Werkzeuge verborgen, vertikale 100-%-Ansicht und Details vollständig.
+- [ ] Zustand nach Abbruch/Ende des Druckdialogs wiederhergestellt.
+- [ ] Kein unerwarteter Netzwerkzugriff oder extern nachgeladene Ressource beobachtet.
+
+## 10. Datenschutz, Sicherheit und lokale Pfade
+
+- [ ] Anwendungskern offline nutzbar; kein unerwarteter Netzwerkzugriff bei Start, Bearbeitung, Analyse, Suche, Save, Backup und Export.
+- [ ] Übergabe an Standardprogramme und bestätigte externe Browserlinks als bewusste Prozessgrenze dokumentiert.
+- [ ] Archive, Backups, PDF und HTML als unverschlüsselt/ohne Passwortschutz bewertet.
+- [ ] Interne Notizen, Dokumentkopien, Analyseergebnisse und absolute Attachment-Quellpfade vor Weitergabe geprüft.
+- [ ] `%LocalAppData%\Zeitstrahl Studio\application-state.json` enthält erwartete Recent-Pfade.
+- [ ] `appearance-settings.json`, `Workspaces`, `Backups` und `Logs` enthalten nur erwartete lokale Daten.
+- [ ] Technische JSONL-Logs auf Pfade und sensible Fehlerdetails geprüft; keine vollständigen Dokumentinhalte automatisch protokolliert.
+- [ ] Portable ZIP und Installer enthalten vollständige Datenschutz-/Lizenzdokumente und keine PDB-/Test-/temporären Dateien.
+- [ ] SHA-256 als Integritäts-, nicht Signatur-/Authentizitätsnachweis korrekt kommuniziert.
+
+## 11. Last, Abbruch und Beenden
+
+- [ ] Reproduzierbares Projekt mit 5.000 Ereignissen erstellt oder freigegebenes Lastprojekt verwendet.
+- [ ] Öffnen, Timeline horizontal/vertikal, Zoom/Pan, Liste, Suche/Filter und Auswahl ohne unvertretbare Blockade geprüft.
+- [ ] Speicher- und CPU-Beobachtung mit Systemdaten und Dauer protokolliert.
+- [ ] Große Attachment-/Analysequeue gestartet und kontrolliert abgebrochen; erfolgreiche Teilergebnisse konsistent.
+- [ ] PDF-/HTML-Exportabbruch an unterstützten Grenzen geprüft; gültiges vorhandenes Ziel bleibt erhalten.
+- [ ] Große Archivspeicherung, Backup und Restore mit ausreichend freiem Speicher geprüft.
+- [ ] Normales Schließen, Fensterschließen und Alt+F4 getrennt beobachtet; Dauer protokolliert.
+- [ ] Eine mögliche Beendigungsverzögerung nur bei reproduzierbarer Evidenz als neuer Bug klassifiziert; nicht mit BUG-001/002 vermischt.
+
+## 12. Artefakt-Smoke und Abschluss
+
+- [ ] Installer und portable ZIP direkt aus dem vorgesehenen Veröffentlichungsordner erneut SHA-256-verifiziert.
+- [ ] Beide Artefakte in neue Verzeichnisse kopiert/heruntergeladen und Hash erneut geprüft.
+- [ ] Portable ZIP vollständig entpackbar; keine unerwarteten oder fehlenden Dateien.
+- [ ] Installer vollständig startbar; Version in Datei-/Infoanzeige plausibel.
+- [ ] README-Quickstart aus dem Paket nachvollziehbar.
+- [ ] `PRIVACY.md`, `THIRD_PARTY_LICENSES.md`, `CHANGELOG.md` und alle mitgelieferten Original-Lizenztexte lesbar.
+- [ ] Portable ZIP enthält die Root-`LICENSE.txt`; der derzeitige `PackagePortable`-Fehler ist behoben oder ausdrücklich als blockierend bewertet.
+- [ ] Nach realer Installation aus dem finalen geschlossenen Installer existiert `{app}\LICENSE.txt` und ist lesbar.
+- [ ] Freigegebene Samples öffnen; keine lokalen oder vertraulichen Arbeitskopien enthalten.
+- [ ] BUG-001, BUG-002 und alle neuen Funde besitzen dokumentierte Disposition.
+- [ ] Release Notes, Checksummen, Tagziel und Artefakte beziehen sich auf denselben Commit.
+- [ ] Öffentliche Veröffentlichung noch nicht behauptet, solange Remote-Tag, Release-Seite und Downloads nicht unabhängig verifiziert sind.
+
+## Ergebnisprotokoll
+
+| Bereich | Ergebnis (PASS/FAIL/BLOCKIERT/N. A.) | Evidenz / Abweichung | Verantwortlich | Datum |
+| --- | --- | --- | --- | --- |
+| Automatische Gates | | | | |
+| Installer Windows 10 | | | | |
+| Portable Windows 11 | | | | |
+| UI/DPI/Accessibility | | | | |
+| Projekte/Ereignisse/Timeline | | | | |
+| Attachments/OCR/Suche | | | | |
+| Backup/Recovery/Audit | | | | |
+| PDF | | | | |
+| HTML/Browser | | | | |
+| Sicherheit/Datenschutz/Lizenzen | | | | |
+| Last/Abbruch/Shutdown | | | | |
+| Artefakte/Checksummen | | | | |
+
+## Finale Freigabe
+
+| Entscheidung | Name | Datum | Unterschrift/Referenz |
+| --- | --- | --- | --- |
+| Technische Freigabe | | | |
+| QA-Freigabe | | | |
+| Datenschutz-/Lizenzfreigabe | | | |
+| Release-Verantwortlicher | | | |
+
+- [ ] Alle Pflichtzeilen besitzen PASS oder eine ausdrücklich genehmigte, dokumentierte Abweichung.
+- [ ] Keine offene FAIL-/BLOCKIERT-Zeile wird verschwiegen.
+- [ ] Veröffentlichung gemäß [`RELEASE.md`](RELEASE.md) ausdrücklich freigegeben.

@@ -1,5 +1,7 @@
 # UI-Audit 0.2.1
 
+> **Archivhinweis (Version 0.2.1, Audit vom 22.07.2026):** Dieses Dokument hält den damaligen Ausgangszustand und die Planungsgrundlage des UI-Redesigns fest. Es ist keine Beschreibung der heutigen Oberfläche. Den aktuellen Stand zeigen [`README.md`](README.md) und [`STATUS.md`](STATUS.md).
+
 Stand: 22.07.2026
 Ausgangs-Commit: `38d94282bc6bbe3ecf96bf40a5efb36976d89dd1`
 Branch: `ui/redesign-0.3.0`
