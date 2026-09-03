@@ -133,6 +133,67 @@ public sealed class TimelineLayoutEngineTests
         Assert.Equal(new DateTime(2026, 7, 19), timelineEvent.Date.SortStart);
     }
 
+    [Theory]
+    [InlineData(TimelineOrientation.Horizontal, 50, -25)]
+    [InlineData(TimelineOrientation.Vertical, -25, 50)]
+    public void Create_KeepsManualPositionStableAcrossZoomLevels(
+        TimelineOrientation orientation,
+        double canonicalAxisOffset,
+        double expectedCrossOffset)
+    {
+        var project = CreateProject(
+            EventDate.Exact(new DateOnly(2026, 7, 1)),
+            EventDate.Exact(new DateOnly(2026, 7, 3)),
+            EventDate.Exact(new DateOnly(2026, 7, 5)));
+        var timelineEvent = project.Events[2];
+        var automaticAtOneHundredPercent = engine.Create(
+            project,
+            new TimelineLayoutOptions(orientation, ZoomFactor: 1));
+        var automaticAtEightHundredPercent = engine.Create(
+            project,
+            new TimelineLayoutOptions(orientation, ZoomFactor: 8));
+        var automaticCard = automaticAtOneHundredPercent.Cards.Single(
+            card => card.EventId == timelineEvent.Id);
+        var automaticZoomedCard = automaticAtEightHundredPercent.Cards.Single(
+            card => card.EventId == timelineEvent.Id);
+        project.SetLayoutPosition(
+            new LayoutPosition(
+                timelineEvent.Id,
+                orientation,
+                horizontalOffset: 50,
+                verticalOffset: -25),
+            Timestamp);
+        var storedPosition = Assert.Single(project.LayoutPositions);
+
+        var atOneHundredPercent = engine.Create(
+            project,
+            new TimelineLayoutOptions(orientation, ZoomFactor: 1));
+        var atEightHundredPercent = engine.Create(
+            project,
+            new TimelineLayoutOptions(orientation, ZoomFactor: 8));
+        var backAtOneHundredPercent = engine.Create(
+            project,
+            new TimelineLayoutOptions(orientation, ZoomFactor: 1));
+        var baselineCard = atOneHundredPercent.Cards.Single(card => card.EventId == timelineEvent.Id);
+        var zoomedCard = atEightHundredPercent.Cards.Single(card => card.EventId == timelineEvent.Id);
+        var restoredCard = backAtOneHundredPercent.Cards.Single(card => card.EventId == timelineEvent.Id);
+
+        Assert.Equal(canonicalAxisOffset, baselineCard.AxisPosition - baselineCard.AnchorAxisPosition, precision: 6);
+        Assert.Equal(
+            canonicalAxisOffset,
+            (zoomedCard.AxisPosition - zoomedCard.AnchorAxisPosition) / 8,
+            precision: 6);
+        Assert.Equal(baselineCard.CrossPosition, zoomedCard.CrossPosition, precision: 6);
+        Assert.Equal(
+            expectedCrossOffset,
+            baselineCard.CrossPosition - automaticCard.CrossPosition,
+            precision: 6);
+        Assert.NotEqual(automaticCard.Lane, automaticZoomedCard.Lane);
+        Assert.Equal(baselineCard, restoredCard);
+        Assert.Same(storedPosition, Assert.Single(project.LayoutPositions));
+        Assert.Equal(new DateTime(2026, 7, 5), timelineEvent.Date.SortStart);
+    }
+
     [Fact]
     public void Create_MarksManualCardOverlapAsConflict()
     {

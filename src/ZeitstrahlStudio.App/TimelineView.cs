@@ -13,7 +13,7 @@ using ZeitstrahlStudio.Domain;
 
 namespace ZeitstrahlStudio.App;
 
-/// <summary>Rein visuelle Verschiebung einer Zeitstrahlkarte in Viewportkoordinaten.</summary>
+/// <summary>Rein visuelle Verschiebung einer Zeitstrahlkarte in kanonischen 100-%-Layoutkoordinaten.</summary>
 public sealed record TimelineCardMoveRequest(
     Guid EventId,
     TimelineOrientation Orientation,
@@ -394,15 +394,52 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
             return;
         }
 
+        var normalizedHorizontalDelta = Orientation == TimelineOrientation.Horizontal
+            ? horizontalDelta / ZoomFactor
+            : horizontalDelta;
+        var normalizedVerticalDelta = Orientation == TimelineOrientation.Vertical
+            ? verticalDelta / ZoomFactor
+            : verticalDelta;
+        var initialCrossBasisAdjustment = GetInitialManualCrossBasisAdjustment(eventId);
+        if (Orientation == TimelineOrientation.Horizontal)
+        {
+            normalizedVerticalDelta += initialCrossBasisAdjustment;
+        }
+        else
+        {
+            normalizedHorizontalDelta += initialCrossBasisAdjustment;
+        }
+
         var request = new TimelineCardMoveRequest(
             eventId,
             Orientation,
-            Math.Round(horizontalDelta, 2),
-            Math.Round(verticalDelta, 2));
+            Math.Round(normalizedHorizontalDelta, 2),
+            Math.Round(normalizedVerticalDelta, 2));
         if (MoveCardCommand?.CanExecute(request) == true)
         {
             MoveCardCommand.Execute(request);
         }
+    }
+
+    private double GetInitialManualCrossBasisAdjustment(Guid eventId)
+    {
+        if (Project is null || layout is null)
+        {
+            return 0;
+        }
+
+        var currentCard = layout.Cards.FirstOrDefault(card => card.EventId == eventId);
+        if (currentCard is null || currentCard.HasManualPosition)
+        {
+            return 0;
+        }
+
+        var canonicalLayout = layoutEngine.Create(
+            Project,
+            CreateOptions(zoomFactor: 1),
+            VisibleEventIds?.ToHashSet());
+        var canonicalCard = canonicalLayout.Cards.FirstOrDefault(card => card.EventId == eventId);
+        return canonicalCard is null ? 0 : currentCard.CrossPosition - canonicalCard.CrossPosition;
     }
 
     public void LineUp() => SetVerticalOffset(VerticalOffset - LineScrollAmount);
@@ -422,8 +459,9 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     {
         if (visual == this)
         {
-            SetHorizontalOffset(rectangle.Left);
-            SetVerticalOffset(rectangle.Top);
+            // The viewport itself is already visible. In particular, a focus-driven
+            // BringIntoView request must not be interpreted as navigation to (0, 0).
+            return Rect.Empty;
         }
 
         return rectangle;
@@ -717,7 +755,7 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     private static void OnLayoutInputChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
     {
         var view = (TimelineView)dependencyObject;
-        view.RebuildLayout();
+        view.RebuildLayout(preserveCrossAxisPosition: e.Property == ZoomFactorProperty);
     }
 
     private static void OnProjectChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
@@ -755,7 +793,7 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
     {
         var view = (TimelineView)dependencyObject;
         view.failedThumbnails.Clear();
-        view.RebuildLayout();
+        view.RebuildLayout(preserveCrossAxisPosition: true);
     }
 
     private static void OnThemeChanged(DependencyObject dependencyObject, DependencyPropertyChangedEventArgs e)
@@ -791,12 +829,24 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         return double.IsFinite(value) ? Math.Clamp(value, 8, 48) : 14d;
     }
 
-    private void RebuildLayout()
+    private void RebuildLayout(bool preserveCrossAxisPosition = false)
     {
-        if (Project is null || viewportWidth <= 0 || viewportHeight <= 0)
+        var previousCrossAxisViewportPosition = preserveCrossAxisPosition && layout is not null
+            ? GetCrossCenter() - (Orientation == TimelineOrientation.Horizontal
+                ? verticalOffset
+                : horizontalOffset)
+            : (double?)null;
+        if (Project is null)
         {
             layout = null;
             UpdateExtent(viewportWidth, viewportHeight);
+            InvalidateVisual();
+            return;
+        }
+
+        if (!double.IsFinite(viewportWidth) || !double.IsFinite(viewportHeight) ||
+            viewportWidth <= 0 || viewportHeight <= 0)
+        {
             InvalidateVisual();
             return;
         }
@@ -812,6 +862,18 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
             ? layout.ContentCrossLength
             : layout.ContentAxisLength;
         UpdateExtent(width, height);
+        if (previousCrossAxisViewportPosition is { } crossAxisViewportPosition)
+        {
+            if (Orientation == TimelineOrientation.Horizontal)
+            {
+                SetVerticalOffset(GetCrossCenter() - crossAxisViewportPosition);
+            }
+            else
+            {
+                SetHorizontalOffset(GetCrossCenter() - crossAxisViewportPosition);
+            }
+        }
+
         InvalidateVisual();
     }
 
@@ -830,6 +892,11 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
 
     private void UpdateViewport(double width, double height)
     {
+        if (!double.IsFinite(width) || !double.IsFinite(height) || width <= 0 || height <= 0)
+        {
+            return;
+        }
+
         if (Math.Abs(width - viewportWidth) < 0.1 && Math.Abs(height - viewportHeight) < 0.1)
         {
             return;
@@ -864,11 +931,19 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
         }
 
         var visible = GetVisibleContentRect(80);
-        var lastLabelPosition = double.NegativeInfinity;
         var minimumLabelSpacing = Math.Max(72, AxisFontSize * 8);
-        var breakCenters = layout!.Breaks
-            .Select(axisBreak => (axisBreak.AxisStart + axisBreak.AxisEnd) / 2)
-            .ToArray();
+        var visibleAxisStart = Orientation == TimelineOrientation.Horizontal
+            ? visible.Left
+            : visible.Top;
+        var visibleAxisEnd = Orientation == TimelineOrientation.Horizontal
+            ? visible.Right
+            : visible.Bottom;
+        var labeledTickPositions = SelectVisibleAxisLabelPositions(
+            layout!.Ticks,
+            layout.Breaks,
+            minimumLabelSpacing,
+            visibleAxisStart,
+            visibleAxisEnd);
         foreach (var tick in layout.Ticks)
         {
             if (!IsAxisPositionVisible(tick.AxisPosition, visible))
@@ -876,15 +951,11 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
                 continue;
             }
 
-            var hasBreakLabelNearby = breakCenters.Any(center =>
-                Math.Abs(center - tick.AxisPosition) < 118);
-            var showLabel = !hasBreakLabelNearby &&
-                tick.AxisPosition - lastLabelPosition >= minimumLabelSpacing;
-            DrawTick(drawingContext, tick, crossCenter, showLabel);
-            if (showLabel)
-            {
-                lastLabelPosition = tick.AxisPosition;
-            }
+            DrawTick(
+                drawingContext,
+                tick,
+                crossCenter,
+                labeledTickPositions.Contains(tick.AxisPosition));
         }
 
         foreach (var axisBreak in layout.Breaks)
@@ -896,6 +967,47 @@ public sealed class TimelineView : FrameworkElement, IScrollInfo
 
             DrawBreak(drawingContext, axisBreak, crossCenter);
         }
+    }
+
+    internal static IReadOnlySet<double> SelectVisibleAxisLabelPositions(
+        IReadOnlyList<TimelineAxisTick> ticks,
+        IReadOnlyList<TimelineAxisBreak> breaks,
+        double minimumLabelSpacing,
+        double visibleAxisStart,
+        double visibleAxisEnd)
+    {
+        var result = new HashSet<double>();
+        var lastLabelPosition = double.NegativeInfinity;
+        var breakCenters = breaks
+            .Select(axisBreak => (axisBreak.AxisStart + axisBreak.AxisEnd) / 2)
+            .Order()
+            .ToArray();
+        var breakIndex = 0;
+        foreach (var tick in ticks)
+        {
+            while (breakIndex < breakCenters.Length &&
+                breakCenters[breakIndex] <= tick.AxisPosition - 118)
+            {
+                breakIndex++;
+            }
+
+            var hasBreakLabelNearby = breakIndex < breakCenters.Length &&
+                breakCenters[breakIndex] < tick.AxisPosition + 118;
+            var showLabel = !hasBreakLabelNearby &&
+                tick.AxisPosition - lastLabelPosition >= minimumLabelSpacing;
+            if (!showLabel)
+            {
+                continue;
+            }
+
+            lastLabelPosition = tick.AxisPosition;
+            if (tick.AxisPosition >= visibleAxisStart && tick.AxisPosition <= visibleAxisEnd)
+            {
+                result.Add(tick.AxisPosition);
+            }
+        }
+
+        return result;
     }
 
     private void DrawTick(

@@ -4,7 +4,7 @@
 #define MyAppName "Zeitstrahl Studio"
 #define MyAppPublisher "Zeitstrahl Studio"
 #ifndef MyAppVersion
-  #define MyAppVersion "1.1.0"
+  #define MyAppVersion "1.1.1"
 #endif
 #define MyAppExeName "ZeitstrahlStudio.App.exe"
 #define MyAppAssocName "Zeitstrahl Studio Projekt"

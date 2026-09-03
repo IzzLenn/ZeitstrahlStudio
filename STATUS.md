@@ -2,10 +2,10 @@
 
 ## Aktueller Snapshot
 
-- Stand: 30.08.2026
-- Branch: `ui/redesign-0.3.0`
-- HEAD: `d4207daf3dbb99c1ae4b7e6962de7ae2ba49143e`
-- Version/Tag: `1.1.0` / Release-Tag `v1.1.0` auf dem geprüften Release-Commit
+- Stand: 03.09.2026
+- Branch: `release/1.1.1`
+- Release-Commit: siehe unveränderlichen Tag `v1.1.1`
+- Version/Tag: `1.1.1` / Release-Tag `v1.1.1` auf dem geprüften Release-Commit
 
 Zeitstrahl Studio ist als lokale .NET-8-/WPF-Anwendung für Windows 10 und 11 x64 implementiert. Der aktuelle Ist-Stand umfasst insbesondere:
 
@@ -18,19 +18,22 @@ Zeitstrahl Studio ist als lokale .NET-8-/WPF-Anwendung für Windows 10 und 11 x6
 
 ### Lokale Evidenz und bekannte Grenzen
 
-- Der lokale Tag `v1.0.0` und lokale 1.0.0-Release-Artefakte bleiben historische Evidenz. Version 1.1.0 wird aus dem geprüften Release-Commit als Portable-ZIP und Installer erzeugt.
+- Der lokale Tag `v1.0.0` und lokale 1.0.0-Release-Artefakte bleiben historische Evidenz. Version 1.1.1 wird aus dem geprüften Release-Commit als Portable-ZIP und Installer erzeugt; nur diese beiden Binärdateien gehören in das GitHub Release.
+- In Version 1.1.1 sind die am 03.09.2026 offenen GitHub-Bugs #1 bis #3 ursächlich behoben: stabile manuelle Kartenpositionen über Zoomstufen, eine viewportunabhängige Tickphase der Achsenbeschriftung und kein Fokus-/Null-Viewport-bedingter Sprung nach links oben. Die Änderungen betreffen ausschließlich den WPF-/Layoutpfad und ergänzen deterministische Regressionstests für beide Orientierungen.
+- Der vollständige Bugfix-Abschlusslauf bestand in Debug und Release jeweils mit 0 Warnungen und 0 Fehlern sowie jeweils 65 Unit- und 150 Integrationstests; Restore, Formatprüfung und `git diff --check` waren ebenfalls erfolgreich.
 - Die lokale, nicht versionierte QA-Aufzeichnung `Bug-such.md` vom 17.08.2026 dokumentiert einen erfolgreichen Debug-Build und als damalige Momentaufnahme 200 bestandene automatisierte Tests (63 Unit-, 137 Integrationstests). Diese Zahlen sind QA-Evidenz dieses Stands, keine dauerhafte Projektkennzahl.
 - BUG-001 (mittel): Nach dem Verkleinern auf 1280×760 kann die horizontale wie vertikale Timeline leer werden; Ereignisliste und Projekt bleiben geladen, beim Vergrößern erscheint die Timeline wieder.
 - BUG-002 (niedrig): Rote Frist- und Achsenbeschriftungen können in der WPF-Timeline überlappen. Im geprüften PDF wurde die Wirkung nicht reproduziert; die visuelle HTML-Browserprüfung blieb offen.
+- BUG-001 und BUG-002 sind ältere, lokal nummerierte QA-Funde und nicht mit den gleich nummerierten GitHub-Issues gleichzusetzen. Sie bleiben bis zu einer erneuten realen Sichtprüfung offen; die interaktive WPF-Automation war im lokalen Bugfix-Lauf technisch nicht verfügbar.
 - Keine kritischen oder hohen Fehler wurden in dieser QA bestätigt. Eine beim Test beobachtete mögliche Beendigungsverzögerung blieb unbestätigt und ist nicht als Fehler klassifiziert.
 
 ### Offene Releasegates
 
 - Die [`MANUAL_RELEASE_CHECKLIST.md`](MANUAL_RELEASE_CHECKLIST.md) ist vollständig abzuarbeiten; offen sind insbesondere plattform- und größenbezogene UI-Prüfungen, die Offline-HTML-Abnahme in Edge, Firefox und Chrome sowie die vollständige Installer-/Dateizuordnungsprüfung.
 - Das in [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) dokumentierte Lizenzbündel enthält noch nicht für alle ausgelieferten Produktionskomponenten die vollständigen Original-Lizenz- oder Copyrighttexte.
-- Für 1.1.0 kopiert `PackagePortable` die Root-`LICENSE.txt` in die Portable-ZIP, und das Inno-Skript installiert sie ohne bedingten Check. Beide geschlossenen Artefakte müssen vor Distribution dennoch durch Inhaltsprüfung beziehungsweise reale Installation verifiziert werden.
+- Für 1.1.1 kopiert `PackagePortable` die Root-`LICENSE.txt` in die Portable-ZIP, und das Inno-Skript installiert sie ohne bedingten Check. Beide geschlossenen Artefakte müssen vor Distribution dennoch durch Inhaltsprüfung beziehungsweise reale Installation verifiziert werden.
 - Im Endvalidierungslauf scheiterte ein direkter self-contained `win-x64`-Publish mit `--no-restore` nach erfolgreichem Solution-Restore an `NETSDK1112`, weil beide `win-x64`-Runtimepacks fehlten; der explizite App-Projekt-Restore mit `-r win-x64` behob diesen Fall. Seit 1.1.0 führt `build.ps1 -Task Restore` ihn selbst aus; bei einem direkten Einzel-Publish bleibt er als robuster Preflight dokumentiert.
-- BUG-001 und BUG-002 sind vor einer Freigabe bewusst zu bewerten. Eine öffentliche Veröffentlichung darf erst nach erfolgreicher automatisierter und manueller Abnahme behauptet werden.
+- BUG-001 und BUG-002 bleiben in den Release Notes offengelegt. Die vollständige manuelle Abnahme wird nicht als bestanden behauptet; die Veröffentlichung von 1.1.1 ist eine ausdrücklich autorisierte Patchfreigabe auf Basis der erfolgreichen automatisierten Gates.
 
 ### Dokumentationsaudit vom 30.08.2026
 

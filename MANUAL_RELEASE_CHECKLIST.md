@@ -36,7 +36,8 @@ Referenzen: [`RELEASE.md`](RELEASE.md), [`STATUS.md`](STATUS.md), [`TROUBLESHOOT
 - [ ] Frischer self-contained `win-x64`-Publish erfolgreich und ohne PDB-Dateien.
 - [ ] Portable ZIP aus genau diesem Publish erfolgreich erzeugt.
 - [ ] Installer aus genau diesem Publish/Paketierungsstand erfolgreich erzeugt.
-- [ ] Portable- und Installer-SHA-256 frisch berechnet und in endgültiger Checksummenliste enthalten.
+- [ ] Portable- und Installer-SHA-256 frisch berechnet und in der lokalen Prüfevidenz festgehalten.
+- [ ] Das GitHub Release enthält genau Portable-ZIP und Setup-EXE; `.sha256`, `checksums.txt` und andere Buildausgaben werden nicht hochgeladen.
 - [ ] Vollständige Original-Lizenz-/Copyrighttexte aller ausgelieferten Produktionskomponenten im Paket geprüft.
 - [ ] README, `PRIVACY.md`, `THIRD_PARTY_LICENSES.md`, `CHANGELOG.md`, `licenses/` und freigegebene Samples in den Artefakten vorhanden.
 - [ ] Kein älteres gleichnamiges Artefakt wurde versehentlich übernommen.

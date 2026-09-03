@@ -2,18 +2,18 @@
 
 Dieses Runbook beschreibt eine bewusste, wiederholbare Freigabe. Es automatisiert keine Veröffentlichung und setzt keine CI/CD-Pipeline voraus; im Repository ist keine solche Pipeline belegt. Jeder Tag-, Push- und GitHub-Schritt bleibt eine ausdrücklich freizugebende externe Aktion.
 
-## Releaseziel 1.1.0 am 30.08.2026
+## Releaseziel 1.1.1 am 03.09.2026
 
-- Branch: `ui/redesign-0.3.0`
+- Branch: `release/1.1.1`
 - HEAD: wird nach Abschluss des Release-Commits festgelegt
-- `Directory.Build.props`: Version `1.1.0`
-- vorgesehener annotierter Tag `v1.1.0`: zeigt auf den geprüften Release-Commit
-- Portable ZIP, Installer und Prüfsummen: werden aus dem sauberen Release-Arbeitsbaum erzeugt und geprüft
+- `Directory.Build.props`: Version `1.1.1`
+- vorgesehener annotierter Tag `v1.1.1`: zeigt auf den geprüften Release-Commit
+- Portable ZIP und Installer: werden aus dem sauberen Release-Arbeitsbaum erzeugt, lokal per SHA-256 geprüft und als einzige GitHub-Release-Assets veröffentlicht
 - öffentliche Remote-Tag- und GitHub-Release-Veröffentlichung: erfolgt erst nach erfolgreicher Artefaktprüfung
 - manuelle Abnahme: nicht als vollständig belegt
 - Drittanbieter-Lizenzbündel: laut [`THIRD_PARTY_LICENSES.md`](THIRD_PARTY_LICENSES.md) fehlen noch Original-Lizenz- oder Copyrighttexte
-- Portable-Lizenzprüfung: `PackagePortable` kopiert die Root-`LICENSE.txt` für 1.1.0; der geschlossene ZIP-Inhalt wird vor Veröffentlichung geprüft
-- Installer-Lizenzprüfung: Das Inno-Skript installiert `{app}\LICENSE.txt` für 1.1.0 ohne bedingten Check; die reale Installation bleibt vor Veröffentlichung zu prüfen
+- Portable-Lizenzprüfung: `PackagePortable` kopiert die Root-`LICENSE.txt` für 1.1.1; der geschlossene ZIP-Inhalt wird vor Veröffentlichung geprüft
+- Installer-Lizenzprüfung: Das Inno-Skript installiert `{app}\LICENSE.txt` für 1.1.1 ohne bedingten Check; die reale Installation bleibt vor Veröffentlichung zu prüfen
 
 Dieser lokale Befund ist keine uneingeschränkte Releasefreigabe. Die offenen Gates und bestätigten Bugs stehen in [`STATUS.md`](STATUS.md).
 
@@ -38,7 +38,7 @@ Versionswert, Release Notes, Tagziel und Artefaktnamen müssen auf denselben vor
 ### Commit und Arbeitsbaum festlegen
 
 ```powershell
-$version = "1.1.0"
+$version = "1.1.1"
 $tag = "v$version"
 git branch --show-current
 git rev-parse HEAD
@@ -120,7 +120,16 @@ ZeitstrahlStudio-<Version>-win-x64-setup.exe
 
 Die portable ZIP enthält die self-contained Anwendung, Laufzeitabhängigkeiten, README, Datenschutz, Changelog, Drittanbieterübersicht, `licenses/` und die freigegebenen Samples. PDB-Dateien werden entfernt. Diese generierten Ausgaben sind nicht Teil eines frischen Checkouts.
 
-`build.ps1` hasht die portable ZIP. Der Installer muss anschließend separat gehasht und `checksums.txt` bewusst zu einer Gesamtliste erweitert werden, beispielsweise:
+Für das GitHub Release sind exakt diese beiden Dateien zulässig:
+
+```text
+ZeitstrahlStudio-<Version>-win-x64-portable.zip
+ZeitstrahlStudio-<Version>-win-x64-setup.exe
+```
+
+Die lokal erzeugte `.sha256`-Datei und `checksums.txt` werden nicht hochgeladen.
+
+`build.ps1` hasht die portable ZIP. Der Installer muss anschließend separat gehasht und `checksums.txt` kann für die lokale Prüfevidenz bewusst zu einer Gesamtliste erweitert werden, beispielsweise:
 
 ```powershell
 $portable = "artifacts\release\ZeitstrahlStudio-$version-win-x64-portable.zip"
@@ -131,7 +140,7 @@ $portableHash
 $installerHash
 ```
 
-Die endgültige Checksummendatei muss Dateiname und SHA-256 beider exakt zu veröffentlichenden Dateien enthalten. Vor Freigabe die Hashes aus den geschlossenen Artefakten erneut berechnen, nicht aus einer früheren Ausgabe übernehmen.
+Vor Freigabe die Hashes beider geschlossenen Artefakte frisch berechnen und im lokalen Ergebnisprotokoll festhalten. Eine Checksummendatei ist kein GitHub-Release-Asset.
 
 ## 3. Manuelle Gates
 
@@ -159,7 +168,7 @@ Release Notes sollen mindestens enthalten:
 - Nutzeränderungen seit der Vorversion
 - unterstützte Plattform und Paketarten
 - bekannte Probleme beziehungsweise deren bewusste Disposition
-- SHA-256-Verweis und Datenschutz-/Lizenzhinweise
+- Ergebnis der lokalen Artefaktprüfung sowie Datenschutz-/Lizenzhinweise
 
 Vorhandenen Tag prüfen:
 
@@ -191,14 +200,14 @@ git push origin $releaseBranch
 git push origin $tag
 ```
 
-Optional kann ein GitHub Release über die Weboberfläche oder bewusst mit `gh release create` angelegt werden. Dabei ausschließlich die geprüften Artefakte, deren endgültige Checksummen und freigegebene Release Notes verwenden. Dieses Runbook behauptet nicht, dass ein Push oder GitHub Release bereits erfolgt ist.
+Optional kann ein GitHub Release über die Weboberfläche oder bewusst mit `gh release create` angelegt werden. Dabei ausschließlich die geprüfte portable ZIP und Setup-EXE sowie die freigegebenen Release Notes verwenden. `.sha256`, `checksums.txt` und alle weiteren Buildausgaben bleiben lokal. Dieses Runbook behauptet nicht, dass ein Push oder GitHub Release bereits erfolgt ist.
 
 Nach der Veröffentlichung unabhängig prüfen:
 
 - Remote-Tag existiert und zeigt auf den freigegebenen Commit.
 - Release-Seite ist öffentlich beziehungsweise im vorgesehenen Sichtbarkeitsbereich erreichbar.
-- Installer, portable ZIP und Checksummen sind vollständig herunterladbar.
-- Heruntergeladene Dateien stimmen mit den freigegebenen SHA-256-Werten überein.
+- Installer und portable ZIP sind als einzige Assets vollständig herunterladbar.
+- Heruntergeladene Dateien stimmen mit den lokal protokollierten SHA-256-Werten überein.
 - Installations- und Portable-Smoke aus den heruntergeladenen, nicht lokalen Dateien bestehen.
 
 ## 6. Abschluss und Rücknahme

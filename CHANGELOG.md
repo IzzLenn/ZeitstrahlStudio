@@ -4,6 +4,19 @@ Alle wichtigen Änderungen an Zeitstrahl Studio werden in dieser Datei dokumenti
 
 ## [Unveröffentlicht]
 
+## [1.1.1] - 2026-09-03
+
+### Behoben
+
+- Manuell verschobene Ereigniskarten behalten ihre logische Position beim Zoomen in horizontaler und vertikaler Ansicht; Drag-Werte werden dafür in kanonischen 100-%-Layoutkoordinaten gespeichert
+- Achsenbeschriftungen verwenden beim Panning eine globale Tickphase und wechseln nicht mehr abhängig vom sichtbaren Viewport zwischen benachbarten Monatsfolgen
+- Fokusbedingte `BringIntoView`-Anforderungen sowie vorübergehende Null-Viewports setzen einen gepannten Zeitstrahl nicht mehr unerwartet nach links oben zurück
+
+### Geändert
+
+- Assembly-, Build- und Installer-Version auf 1.1.1 vereinheitlicht
+- GitHub-Releases enthalten ausschließlich Portable-ZIP und Setup-EXE; lokal erzeugte SHA-256- und Checksummendateien bleiben interne Prüfevidenz
+
 ## [1.1.0] - 2026-08-30
 
 ### Geändert

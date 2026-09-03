@@ -116,11 +116,23 @@ public sealed class TimelineLayoutEngine
         var positions = project.LayoutPositions
             .Where(position => position.Orientation == options.Orientation)
             .ToDictionary(position => position.EventId);
+        var canonicalProjection = projection;
+        if (positions.Count > 0 && options.ZoomFactor != 1)
+        {
+            var canonicalPixelsPerDay = GetPixelsPerDay(scaleUnit);
+            var canonicalGaps = options.CompressLargeGaps
+                ? DetectLargeGaps(anchors, events, scaleUnit, canonicalPixelsPerDay, 1)
+                : [];
+            canonicalProjection = new AxisProjection(start, canonicalPixelsPerDay, canonicalGaps);
+        }
+
         var cards = PlaceCards(
             events,
             projection,
+            canonicalProjection,
             positions,
             options.Orientation,
+            options.ZoomFactor,
             cardAxisLength,
             cardCrossLength);
         var breaks = gaps.Select(gap => new TimelineAxisBreak(
@@ -232,21 +244,30 @@ public sealed class TimelineLayoutEngine
     private static IReadOnlyList<TimelineCardLayout> PlaceCards(
         IReadOnlyList<TimelineEvent> events,
         AxisProjection projection,
+        AxisProjection canonicalProjection,
         IReadOnlyDictionary<Guid, LayoutPosition> positions,
         TimelineOrientation orientation,
+        double zoomFactor,
         double cardAxisLength,
         double cardCrossLength)
     {
         var positiveLanes = new List<double>();
         var negativeLanes = new List<double>();
+        var canonicalPositiveLanes = new List<double>();
+        var canonicalNegativeLanes = new List<double>();
         var result = new List<TimelineCardLayout>(events.Count);
         for (var index = 0; index < events.Count; index++)
         {
             var timelineEvent = events[index];
             var automaticAxis = projection.Map(timelineEvent.Date.SortStart);
+            var canonicalAxis = canonicalProjection.Map(timelineEvent.Date.SortStart);
             var positiveSide = index % 2 == 0;
             var lanes = positiveSide ? positiveLanes : negativeLanes;
-            var lane = FindLane(lanes, automaticAxis, cardAxisLength);
+            var canonicalLanes = positiveSide ? canonicalPositiveLanes : canonicalNegativeLanes;
+            var automaticLane = FindLane(lanes, automaticAxis, cardAxisLength);
+            var canonicalLane = FindLane(canonicalLanes, canonicalAxis, cardAxisLength);
+            var hasManualPosition = positions.TryGetValue(timelineEvent.Id, out var manual);
+            var lane = hasManualPosition ? canonicalLane : automaticLane;
             var cross = AxisToCardSpacing + (cardCrossLength / 2) +
                 (lane * (cardCrossLength + CardSpacing));
             if (!positiveSide)
@@ -254,7 +275,6 @@ public sealed class TimelineLayoutEngine
                 cross = -cross;
             }
 
-            var hasManualPosition = positions.TryGetValue(timelineEvent.Id, out var manual);
             var axisOffset = 0d;
             var crossOffset = 0d;
             if (manual is not null)
@@ -267,6 +287,7 @@ public sealed class TimelineLayoutEngine
                     : manual.HorizontalOffset;
                 axisOffset = Math.Clamp(axisOffset, -MaximumManualOffset, MaximumManualOffset);
                 crossOffset = Math.Clamp(crossOffset, -MaximumManualOffset, MaximumManualOffset);
+                axisOffset *= zoomFactor;
             }
 
             var adjustedCross = cross + crossOffset;

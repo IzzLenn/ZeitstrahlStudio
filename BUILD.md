@@ -121,14 +121,14 @@ Beispiele:
 .\build.ps1 -Task TestRelease
 .\build.ps1 -Task FormatCheck
 .\build.ps1 -Task Publish
-.\build.ps1 -Task PackagePortable -Version 1.1.0
-.\build.ps1 -Task BuildInstaller -Version 1.1.0
+.\build.ps1 -Task PackagePortable -Version 1.1.1
+.\build.ps1 -Task BuildInstaller -Version 1.1.1
 ```
 
 Die Einzelaufgaben führen ihre Vorstufen nicht automatisch aus. Für den vollständigen Releaseablauf:
 
 ```powershell
-.\build.ps1 -Task All -Version 1.1.0
+.\build.ps1 -Task All -Version 1.1.1
 ```
 
 `All` ist kein Mindestschritt für eine reine Dokumentations- oder normale Codevalidierung. Dafür genügt die Restore-/Debug-/Release-/Formatmatrix. `All` erzeugt und ersetzt lokale Paketartefakte und darf nur im bewusst vorbereiteten Releasebaum laufen.
@@ -152,6 +152,8 @@ artifacts\release\ZeitstrahlStudio-<Version>-win-x64-portable.zip
 artifacts\release\ZeitstrahlStudio-<Version>-win-x64-portable.zip.sha256
 artifacts\release\checksums.txt
 ```
+
+Die `.sha256`-Datei und `checksums.txt` bleiben lokale Prüfevidenz. In ein GitHub Release werden ausschließlich die portable ZIP und die vom Installer-Task erzeugte Setup-EXE aufgenommen.
 
 Wichtig: `build.ps1` prüft den Git-Arbeitsbaum nicht auf Sauberkeit. Lokale oder uncommittete Änderungen unter `samples` würden unverändert in portable ZIP und anschließend Installer gelangen. `PackagePortable` und `All` deshalb ausschließlich aus einem überprüften sauberen Releasebaum ausführen. Der verbindliche Preflight steht in [`RELEASE.md`](RELEASE.md).
 
@@ -178,18 +180,18 @@ Es ist keine Codesignierung konfiguriert oder durch das Buildskript belegt.
 | Ort | Inhalt |
 | --- | --- |
 | `artifacts\publish\win-x64` | entpackter self-contained Publish |
-| `artifacts\release` | portable ZIP, ZIP-Prüfsumme und `checksums.txt` |
+| `artifacts\release` | portable ZIP sowie lokale ZIP-Prüfsumme und `checksums.txt` |
 | Repository-Root | Installer-EXE |
 
 Diese Ausgaben sind generiert und per `.gitignore` ausgeschlossen; ein frischer Checkout enthält sie nicht. ZIP-Prüfsumme prüfen:
 
 ```powershell
-$zip = "artifacts\release\ZeitstrahlStudio-1.1.0-win-x64-portable.zip"
+$zip = "artifacts\release\ZeitstrahlStudio-1.1.1-win-x64-portable.zip"
 Get-FileHash -LiteralPath $zip -Algorithm SHA256
 Get-Content -LiteralPath "$zip.sha256"
 ```
 
-`build.ps1` erzeugt keine Installer-Prüfsummendatei. Der Release-Verantwortliche muss den Installer separat hashen und die veröffentlichte Gesamtliste bewusst vervollständigen.
+`build.ps1` erzeugt keine Installer-Prüfsummendatei. Der Release-Verantwortliche hasht den Installer separat für die lokale Prüfevidenz. Prüfsummendateien werden nicht als GitHub-Release-Assets veröffentlicht.
 
 ## Fehlerbehebung
 

@@ -125,6 +125,15 @@ Verwende keine destruktiven Git-Befehle wie:
 
 Überschreibe keine erkennbaren Benutzeränderungen.
 
+## Release-Regeln
+
+Ein GitHub Release enthält genau zwei Binärartefakte aus demselben geprüften Release-Commit:
+
+* `ZeitstrahlStudio-<Version>-win-x64-portable.zip`
+* `ZeitstrahlStudio-<Version>-win-x64-setup.exe`
+
+Lokale `.sha256`-Dateien und `checksums.txt` dienen ausschließlich der internen Artefaktprüfung und werden nicht als GitHub-Release-Assets hochgeladen. Andere Build-, Test- oder Zwischenartefakte gehören ebenfalls nicht in ein GitHub Release.
+
 ## Statusdokumentation
 
 Halte `STATUS.md` jederzeit aktuell. Dokumentiere dort:

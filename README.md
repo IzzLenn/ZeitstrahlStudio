@@ -19,7 +19,7 @@ Für Endnutzer sind zwei selbstenthaltende `win-x64`-Releaseausgaben vorgesehen;
 - Installer: `ZeitstrahlStudio-<Version>-win-x64-setup.exe` ausführen. Der Installer kann die Dateizuordnung für `.zeitprojekt` einrichten.
 - Portable Version: `ZeitstrahlStudio-<Version>-win-x64-portable.zip` in einen neuen Ordner entpacken und `ZeitstrahlStudio.App.exe` starten.
 
-Diese Dateien werden beim Release-Build erzeugt und gehören nicht zu einem frischen Quellcode-Checkout. Für Version 1.1.0 werden Portable-ZIP und Installer aus demselben geprüften Commit erzeugt und mit SHA-256-Prüfsummen veröffentlicht. Vor dem Start ist die mit dem bereitgestellten Paket veröffentlichte Prüfsumme zu vergleichen.
+Diese Dateien werden beim Release-Build erzeugt und gehören nicht zu einem frischen Quellcode-Checkout. Für Version 1.1.1 werden Portable-ZIP und Installer aus demselben geprüften Commit erzeugt. Das GitHub Release enthält ausschließlich diese beiden Binärartefakte; SHA-256-Werte und Checksummendateien bleiben lokale Prüfevidenz.
 
 Start aus dem Quellcode:
 
@@ -43,9 +43,9 @@ Zum Ausprobieren kann [`samples/ZeitstrahlStudio-Beispiel.zeitprojekt`](samples/
 
 ## Projektstatus
 
-Der aktuelle Quellstand ist Version 1.1.0 auf Branch `ui/redesign-0.3.0`; der Release wird mit dem annotierten Tag `v1.1.0` aus dem geprüften Commit erstellt. Build- und Releaseevidenz ist dem jeweiligen Tag und seinen veröffentlichten Prüfsummen zuzuordnen.
+Der aktuelle Quellstand ist Version 1.1.1 auf Branch `release/1.1.1`; der Release wird mit dem annotierten Tag `v1.1.1` aus dem geprüften Commit erstellt. Build- und Releaseevidenz ist dem unveränderlichen Tag und den lokal protokollierten Artefakthashes zuzuordnen.
 
-Vor einer Distribution bleiben die [manuellen Releaseprüfungen](MANUAL_RELEASE_CHECKLIST.md) vollständig abzuschließen und das [Drittanbieter-Lizenzbündel](THIRD_PARTY_LICENSES.md) um noch fehlende Originaltexte zu ergänzen. Für 1.1.0 kopiert `PackagePortable` die Root-`LICENSE.txt` in die Portable-ZIP, und der Installer führt sie ohne bedingten Installations-Check mit. Beide geschlossenen Artefakte sind dennoch vor Distribution inhaltlich zu verifizieren. Zwei bestätigte Darstellungsfehler sind offen: Bei 1280×760 kann die Timeline nach dem Verkleinern leer erscheinen (BUG-001, mittel), und rote Frist-/Achsenbeschriftungen können überlappen (BUG-002, niedrig). Details und Umgehungen stehen in der [Fehlerbehebung](TROUBLESHOOTING.md); die datierte QA-Evidenz ist im [Projektstatus](STATUS.md) eingeordnet.
+Vor einer Distribution bleiben die [manuellen Releaseprüfungen](MANUAL_RELEASE_CHECKLIST.md) vollständig abzuschließen und das [Drittanbieter-Lizenzbündel](THIRD_PARTY_LICENSES.md) um noch fehlende Originaltexte zu ergänzen. Für 1.1.1 kopiert `PackagePortable` die Root-`LICENSE.txt` in die Portable-ZIP, und der Installer führt sie ohne bedingten Installations-Check mit. Beide geschlossenen Artefakte sind dennoch vor Distribution inhaltlich zu verifizieren. Zwei bestätigte Darstellungsfehler sind offen: Bei 1280×760 kann die Timeline nach dem Verkleinern leer erscheinen (BUG-001, mittel), und rote Frist-/Achsenbeschriftungen können überlappen (BUG-002, niedrig). Details und Umgehungen stehen in der [Fehlerbehebung](TROUBLESHOOTING.md); die datierte QA-Evidenz ist im [Projektstatus](STATUS.md) eingeordnet.
 
 ## Dokumentation
 

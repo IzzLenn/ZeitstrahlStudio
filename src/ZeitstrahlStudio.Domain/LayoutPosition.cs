@@ -1,6 +1,9 @@
 namespace ZeitstrahlStudio.Domain;
 
-/// <summary>Optionale manuelle Darstellungsposition, die niemals das Ereignisdatum ändert.</summary>
+/// <summary>
+/// Optionale manuelle Darstellungsposition in orientierungsbezogenen 100-%-Layoutkoordinaten,
+/// die niemals das Ereignisdatum ändert.
+/// </summary>
 public sealed record LayoutPosition
 {
     public LayoutPosition(Guid eventId, TimelineOrientation orientation, double horizontalOffset, double verticalOffset)

@@ -1,6 +1,6 @@
 # Fehlerbehebung und bekannte Probleme
 
-Dieses Dokument ist der kanonische Ort für Fehlerhilfe und bekannte Grenzen von Zeitstrahl Studio 1.0.0. Der datierte QA-Stand ist in [`STATUS.md`](STATUS.md) eingeordnet.
+Dieses Dokument ist der kanonische Ort für Fehlerhilfe und bekannte Grenzen von Zeitstrahl Studio 1.1.1. Der datierte QA-Stand ist in [`STATUS.md`](STATUS.md) eingeordnet.
 
 ## Vor jeder Diagnose
 

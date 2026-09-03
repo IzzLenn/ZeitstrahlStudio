@@ -1,6 +1,6 @@
-# Benutzerhandbuch Zeitstrahl Studio 1.1.0
+# Benutzerhandbuch Zeitstrahl Studio 1.1.1
 
-Zeitstrahl Studio ist eine lokale Windows-Desktopanwendung zum Erfassen, Darstellen und Exportieren chronologischer Projekte. Dieses Handbuch beschreibt den tatsächlich implementierten Stand von Version 1.1.0.
+Zeitstrahl Studio ist eine lokale Windows-Desktopanwendung zum Erfassen, Darstellen und Exportieren chronologischer Projekte. Dieses Handbuch beschreibt den tatsächlich implementierten Stand von Version 1.1.1.
 
 ## Inhalt
 
@@ -25,7 +25,7 @@ Die Anwendung ist für Windows 10 oder Windows 11 x64 vorgesehen. Installer und 
 - Installer: Ein bereitgestelltes `ZeitstrahlStudio-<Version>-win-x64-setup.exe` ausführen. Die optionale Dateizuordnung ermöglicht das Öffnen einer `.zeitprojekt`-Datei per Doppelklick.
 - Portable Ausgabe: Ein bereitgestelltes `ZeitstrahlStudio-<Version>-win-x64-portable.zip` vollständig in einen neuen Ordner entpacken und dort `ZeitstrahlStudio.App.exe` starten.
 
-Releasepakete werden beim Build erzeugt und sind nicht Bestandteil eines frischen Quellcode-Checkouts. Version 1.1.0 wird als Portable-ZIP und Installer aus demselben geprüften Commit bereitgestellt. Vergleichen Sie ein bereitgestelltes Paket vor dem Start mit seiner SHA-256-Prüfsumme.
+Releasepakete werden beim Build erzeugt und sind nicht Bestandteil eines frischen Quellcode-Checkouts. Version 1.1.1 wird als Portable-ZIP und Installer aus demselben geprüften Commit bereitgestellt. Separate SHA-256- oder Checksummendateien gehören nicht zu den veröffentlichten GitHub-Assets.
 
 Zum Kennenlernen kann das frei erfundene [`samples/ZeitstrahlStudio-Beispiel.zeitprojekt`](samples/ZeitstrahlStudio-Beispiel.zeitprojekt) über `Datei > Projekt öffnen` geladen werden. Hinweise dazu stehen in [`samples/README.md`](samples/README.md).
 
